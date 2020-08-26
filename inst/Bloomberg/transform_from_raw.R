@@ -4,6 +4,8 @@ companies <- as.character(data.table::fread(
   header = FALSE,
   nrows = 1,
   drop = 1,
+  sep = ";",
+  dec = ",",
   stringsAsFactors = FALSE
 ))
 companies <- unique(companies)
@@ -13,36 +15,49 @@ raw <- data.table::fread(
   file = "inst/data/cf_dow_30y.csv",
   na.strings = "#N/A N/A",
   skip = 1,
+  colClasses=list(numeric=2:150),
+  sep = ";",
+  dec = ",",
   header = TRUE,
   check.names = FALSE,
   stringsAsFactors = FALSE
 )
 
-raw[, Dates := as.Date(Dates, "%d.%m.%Y")]
+raw[, Dates := as.POSIXct(as.Date(Dates, "%d.%m.%Y"), tz = "UTC")]
 
-data_per_cf_type <- sapply(unique(names(raw[, -c(1)])), function(filter_obj) {
+cf_types <- unique(names(raw[, -c(1)]))
+data_per_cf_type <- sapply(cf_types, function(filter_obj) {
   type <- raw[, c(1, which(names(raw) == filter_obj)), with = FALSE]
   data.table::setnames(type, new = c("date", companies))
 }, simplify = FALSE, USE.NAMES = TRUE)
 
-# Per Company
-apple <- data.table::data.table(
-  date = data_per_cf_type$CF_FREE_CASH_FLOW$date,
-  fcf = data_per_cf_type$CF_FREE_CASH_FLOW$`AAPL UW Equity`,
-  cfo = data_per_cf_type$CF_CASH_FROM_OPER$`AAPL UW Equity`,
-  cfi = data_per_cf_type$CF_CASH_FROM_INV_ACT$`AAPL UW Equity`,
-  cff = data_per_cf_type$CF_CASH_FROM_FNC_ACT$`AAPL UW Equity`,
-  cap = data_per_cf_type$CF_CAP_EXPEND_PRPTY_ADD$`AAPL UW Equity`,
-  check.names = FALSE
+data_per_company <- data.table::rbindlist(data_per_cf_type, idcol = "type")
+
+data_long <- data.table::melt(
+  data_per_company,
+  id.vars = c("type", "date"),
+  variable.name = "company"
 )
+data <- data.table::dcast(data_long, company + date ~ type)
 
 # Transformations
-apple[, cfo := as.numeric(cfo)]
-apple[, check := cfo + cap]
+data.table::setnames(
+  data,
+  old = cf_types,
+  new = c("fcf", "cfo", "cfi", "cff", "cap")
+)
 
 # Checks
-apple[fcf != check]
-apple[, check := NULL]
+# data[, check := round(cfo + cap - fcf)]
+# data[!is.na(check) & check != 0]
+#
+# dups <- duplicated(data, by = c("company", "cap"))
+# data[!is.na(cap) & dups & company == "AAPL UW Equity"]
 
-apple[!complete.cases(apple)]
-apple[is.na(fcf)]
+# data[, counter := data.table::rowid(data.table::rleid(cap))]
+# data[!is.na(cap) & counter > 1]
+
+
+# Save data
+# dow30 <- data
+# save(dow30, file = "data/dow30.rda")
