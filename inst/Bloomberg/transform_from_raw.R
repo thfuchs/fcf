@@ -38,26 +38,31 @@ data_long <- data.table::melt(
   id.vars = c("type", "date"),
   variable.name = "company"
 )
-data <- data.table::dcast(data_long, company + date ~ type)
+dow30 <- data.table::dcast(data_long, company + date ~ type)
 
 # Transformations
 data.table::setnames(
-  data,
+  dow30,
   old = cf_types,
   new = c("fcf", "cfo", "cfi", "cff", "cap")
 )
 
-# Checks
-# data[, check := round(cfo + cap - fcf)]
-# data[!is.na(check) & check != 0]
-#
-# dups <- duplicated(data, by = c("company", "cap"))
-# data[!is.na(cap) & dups & company == "AAPL UW Equity"]
+dow30[, ticker := gsub("(^\\w*).*", "\\1", company)]
 
-# data[, counter := data.table::rowid(data.table::rleid(cap))]
-# data[!is.na(cap) & counter > 1]
+# Checks
+# dow30[, check := round(cfo + cap - fcf)]
+# dow30[!is.na(check) & check != 0]
+#
+# dups <- duplicated(dow30, by = c("company", "cap"))
+# dow30[!is.na(cap) & dups & company == "AAPL UW Equity"]
+
+# dow30[, counter := data.table::rowid(data.table::rleid(cap))]
+# dow30[!is.na(cap) & counter > 1]
 
 
 # Save data
-# dow30 <- data
+data.table::setcolorder(
+  dow30,
+  neworder = c("company", "ticker", "date", "fcf", "cfo", "cff", "cfi", "cap")
+)
 # save(dow30, file = "data/dow30.rda")
