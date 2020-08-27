@@ -4,6 +4,8 @@
 #' @param cols columns to use for differencing
 #' @param ndiff number of lags
 #'
+#' @import data.table
+#'
 #' @return nothing returned but data.table edited by reference
 add_diffs <- function(DT, cols, ndiff){
   for (colname in cols){
@@ -17,6 +19,8 @@ add_diffs <- function(DT, cols, ndiff){
 #' @param DT  data.table object with indexed time variable
 #' @param cols columns to use for growth rates
 #' @param ndiff number of lags
+#'
+#' @import data.table
 #'
 #' @return nothing returned but data.table edited by reference
 add_growth_rates <- function(DT, cols, ndiff){
