@@ -4,26 +4,36 @@
 \alias{forecast_baseline}
 \title{baseline models to get benchmark results for advanced models}
 \usage{
-forecast_baseline(data, h = NULL, acc_measure)
+forecast_baseline(data, test_size = NULL, acc_measure)
 }
 \arguments{
-\item{data}{univariate time series object}
+\item{data}{Univariate time series object}
 
-\item{h}{atomic vector specifying forecasting horizon}
+\item{test_size}{Numeric vector of length one specifying length of test set
+(along with forecasting horizon). \code{NULL} by default which yield 2 times the
+frequency of the time series}
 
 \item{acc_measure}{Accuracy indicator. Valid options are "ME", "RMSE", "MAE",
 "MPE", "MAPE", "MASE" and "ACF1"}
 }
 \value{
-
+list of forecasting methods with data.frame for accuracy indicators
 }
 \description{
 Get results for the following simple forecasting methods:
 \itemize{
-\item naive forecast
-\item seasonal naive forecast
-\item mean forecast
-\item Exponential smoothing forecasts (\link[forecast]{ses})
-\item holt
+\item Naive forecast (\link[forecast]{naive})
+\item Seasonal naive forecast (\link[forecast]{snaive})
+\item Mean forecast (\link[forecast]{meanf})
+\item Simple exponential smoothing forecasts (\link[forecast]{ses})
+\item Exponential smoothing with Holt's trend (\link[forecast]{holt})
 }
+}
+\examples{
+# Calculate MAE and RMSE of simple forecasting models for Apple FCF
+apple <- fcf::apple_fcf
+forecast_baseline(apple, h = NULL, acc_measure = c("MAE", "RMSE"))
+
+# Change forecast horizom to 4 years
+forecast_baseline(apple, h = 16, acc_measure = c("MAE", "RMSE"))
 }
