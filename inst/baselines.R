@@ -109,6 +109,9 @@ summary(fc_hw_fcf)
 checkresiduals(fc_hw_fcf)
 accuracy(fc_hw_fcf, myts_fcf)
 
+# Summary:
+forecast_baseline(train)
+
 # Cross Validation (Forecast evaluation on a rolling origin) for best
 # simple approach (seasonal naive forecast)
 e <- tsCV(myts_fcf, forecastfunction = snaive, h = 8)
