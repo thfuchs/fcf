@@ -88,7 +88,7 @@ results$basic$test_mae <- mean(abs(predict(model, x_test_vec) - y_test_vec))
 keras::k_clear_session()
 
 model <- keras_model_sequential() %>%
-  layer_gru(units = 16, input_shape = c(1, 1)) %>%
+  layer_gru(units = 32, input_shape = c(1, 1)) %>%
   layer_dense(units = 1)
 
 model %>% compile(
@@ -115,7 +115,7 @@ results$simple_gru$test_mae <- mean(abs(predict(model, x_test_arr) - y_test_vec)
 keras::k_clear_session()
 
 model <- keras_model_sequential() %>%
-  layer_lstm(units = 16, input_shape = c(1, 1)) %>%
+  layer_lstm(units = 32, input_shape = c(1, 1)) %>%
   layer_dense(units = 1)
 
 model %>% compile(
@@ -140,9 +140,9 @@ results$simple_lstm$test_mae <- mean(abs(predict(model, x_test_arr) - y_test_vec
 
 ### Using recurrent dropout with GRU -------------------------------------------
 keras::k_clear_session()
-
+set.seed(123)
 model <- keras_model_sequential() %>%
-  layer_gru(units = 16, input_shape = c(1, 1), dropout = 0.2, recurrent_dropout = 0.2) %>%
+  layer_gru(units = 32, input_shape = c(1, 1), dropout = 0.2, recurrent_dropout = 0.2) %>%
   layer_dense(units = 1)
 
 model %>% compile(
