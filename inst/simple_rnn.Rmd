@@ -1,0 +1,176 @@
+---
+title: "Simple RNN"
+author: "Thomas Fuchs"
+date: "1 9 2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(keras)
+```
+
+## Data Preparation
+
+```{r data_preparation, echo=FALSE, cache=TRUE}
+apple <- fcf::dow30[
+  ticker == "AAPL" & date > as.POSIXct("1995-01-01"),
+  .SD, .SDcols = -c("company", "ticker", "date")]
+apple[is.na(cff), cff := 0]
+
+# Check
+apple[!complete.cases(apple)]
+
+# Normalizing the data
+data <- data.matrix(apple)
+n <- nrow(data) - 16
+train_data <- data[1:n,]
+
+mean <- apply(train_data, 2, mean)
+std <- apply(train_data, 2, sd)
+
+data <- scale(data, center = mean, scale = std)
+```
+
+## Problem
+
+Given data going as far back as `lookback` timesteps (a timestep is one quarter), can you predict the Free Cash Flow in delay timesteps?
+You'll use the following parameter values:
+
+```{r model_input}
+# Observations will go back 2 years:
+lookback <- 2 * 4
+# Targets will be 1 years in the future
+delay <- 4
+# batch size
+batch_size <- 4
+# Indices
+train_min_index <- 1
+train_max_index <- nrow(data) - 32
+val_min_index <- nrow(data) - 31
+val_max_index <- nrow(data) - 16
+test_min_index <- nrow(data) - 15
+test_max_index <- NULL
+
+# How many steps to draw from val_gen in order to see the entire validation set
+val_steps <- (val_max_index - val_min_index - lookback) / batch_size
+test_steps <- (nrow(data) - test_min_index - lookback) / batch_size
+```
+
+## Generator
+
+```{r generators}
+train_gen <- generator(
+  data,
+  lookback = lookback,
+  delay = delay,
+  min_index = train_min_index,
+  max_index = train_max_index,
+  shuffle = FALSE,
+  step = 1,
+  batch_size = batch_size
+)
+
+val_gen <- generator(
+  data,
+  lookback = lookback,
+  delay = delay,
+  min_index = val_min_index,
+  max_index = val_max_index,
+  shuffle = FALSE,
+  step = 1,
+  batch_size = batch_size
+)
+
+test_gen <- generator(
+  data,
+  lookback = lookback,
+  delay = delay,
+  min_index = test_min_index,
+  max_index = test_max_index,
+  shuffle = FALSE,
+  step = 1,
+  batch_size = batch_size
+)
+```
+
+## A common sense, non ML baseline
+```{r baseline}
+evaluate_naive_method <- function() {
+  batch_maes <- c()
+  
+  c(samples, targets) %<-% val_gen()
+  preds <- samples[, dim(samples)[[2]], 2]
+  mae <- mean(abs(preds - targets))
+  batch_maes <- c(batch_maes, mae)
+  
+  return(mean(batch_maes))
+}
+evaluate_naive_method() * std[[2]]
+```
+
+## A basic ML approach
+
+```{r basic_ML}
+model <- keras_model_sequential() %>% 
+  layer_flatten(input_shape = c(lookback, dim(data)[-1])) %>% 
+  layer_dense(units = 16, activation = "relu") %>% 
+  layer_dense(units = 1)
+
+model %>% compile(
+  optimizer = optimizer_rmsprop(),
+  loss = "mae"
+)
+history <- model %>% fit_generator(
+  keras:::as_generator.function(train_gen),
+  steps_per_epoch = 300,
+  epochs = 10,
+  validation_data = keras:::as_generator.function(val_gen),
+  validation_steps = val_steps
+)
+plot(history)
+```
+
+## A first recurrent baseline: GRU
+
+```{r gru}
+model <- keras_model_sequential() %>% 
+  layer_gru(units = 16, input_shape = list(NULL, dim(data)[[-1]])) %>% 
+  layer_dense(units = 1)
+
+model %>% compile(
+  optimizer = optimizer_rmsprop(),
+  loss = "mae"
+)
+history <- model %>% fit_generator(
+  keras:::as_generator.function(train_gen),
+  steps_per_epoch = 500,
+  epochs = 20,
+  validation_data = keras:::as_generator.function(val_gen),
+  validation_steps = val_steps
+)
+plot(history)
+history$metrics
+```
+## Add dropout regularization
+```{r gru_dropout}
+model <- keras_model_sequential() %>% 
+  layer_gru(units = 16, dropout = 0.2, recurrent_dropout = 0.2,
+            input_shape = list(NULL, dim(data)[[-1]])) %>% 
+  layer_dense(units = 1)
+
+model %>% compile(
+  optimizer = optimizer_rmsprop(),
+  loss = "mae"
+)
+history <- model %>% fit_generator(
+  keras:::as_generator.function(train_gen),
+  steps_per_epoch = 500,
+  epochs = 20,
+  validation_data = keras:::as_generator.function(val_gen),
+  validation_steps = val_steps
+)
+plot(history)
+history$metrics
+```
