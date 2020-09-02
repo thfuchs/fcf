@@ -1,4 +1,5 @@
 apple <- fcf::apple_fcf
+train <- subset(apple, end = length(apple) - 8)
 
 ### Plotting -------------------------------------------------------------------
 library(ggplot2)
@@ -33,11 +34,6 @@ ggAcf(diff(apple))
 # Ljung-Box test
 Box.test(apple, lag = 10, type = "Ljung")
 Box.test(diff(apple), lag = 10, type = "Ljung")
-
-
-### Data Preparation -----------------------------------------------------------
-
-train <- subset(apple, end = length(apple) - 8)
 
 
 ### Simple Forecasting ---------------------------------------------------------
@@ -93,12 +89,13 @@ accuracy(fc_hw_fcf, apple)
 # 7. ETS
 ets_fcf <- ets(train)
 autoplot(forecast(ets_fcf))
-summary(fc_hw_fcf)
-checkresiduals(fc_hw_fcf)
-accuracy(fc_hw_fcf, apple)
+summary(ets_fcf)
+checkresiduals(ets_fcf)
+accuracy(ets_fcf, apple)
 
 # Summary:
-forecast_baseline(data = train, test_size = 8, acc_measure = c("RMSE", "ME"))
+forecast_baseline(data = train, test_size = 8, acc_measure = c("RMSE", "MAE"))
+
 
 # Cross Validation (Forecast evaluation on a rolling origin) for best
 # simple approach (seasonal naive forecast)
