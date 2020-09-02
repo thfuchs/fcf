@@ -2,4 +2,5 @@
 
 export(check_acf)
 export(forecast_baseline)
+export(ts_nn_preparation)
 import(data.table)
