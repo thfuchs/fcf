@@ -10,3 +10,7 @@ autoplot(forecast(arima_fcf))
 summary(arima_fcf)
 checkresiduals(arima_fcf)
 accuracy(forecast(arima_fcf), apple)
+
+# 2. CV and auto.arima
+
+# https://www.tidymodels.org/learn/models/time-series/
