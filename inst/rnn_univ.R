@@ -1,3 +1,15 @@
+### Introduction ---------------------------------------------------------------
+
+# Univariate Forecast of "Apple" FCF using LSTM.
+# Instead of one-step-ahead forecasts, we use 4 timesteps to predict the next
+# 4 data points simultaneously (and thus using 4 hidden states in the RNN).
+
+# The data are preprocessed in the sense of normalization and transformation
+# from data.table objects to 3D arrays in the format
+# (sample, timesteps, features).
+
+# Source: https://www.business-science.io/timeseries-analysis/2018/07/01/keras-lstm-sunspots-part2.html
+
 library(data.table)
 library(keras)
 set.seed(123)
