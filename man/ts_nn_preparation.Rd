@@ -4,7 +4,7 @@
 \alias{ts_nn_preparation}
 \title{Timeseries data preparation for neural network Keras models}
 \usage{
-ts_nn_preparation(data, lag_setting = 8, length_val = 16, length_test = 8)
+ts_nn_preparation(data, lag_setting = 1:4, length_val = 16, length_test = 8)
 }
 \arguments{
 \item{data}{balanced timeseries data}
@@ -21,9 +21,9 @@ list of "X" and "Y" each containing "train", "val" and "test" arrays
 \description{
 The following steps are proceeded:
 \itemize{
-\item New column "lag_value", lagged by \code{lag_setting}
+\item New columns "value_lagX", with X for #lags, specified by \code{lag_setting}
 \item Split in train, validation and test split
-\item Transformation in arrays for Keras
+\item Transformation to 3D arrays for Keras
 }
 }
 \examples{
