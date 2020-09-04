@@ -14,7 +14,7 @@ add_growth_rates(DT, cols, ndiff)
 \item{ndiff}{number of lags}
 }
 \value{
-nothing returned but data.table edited by reference
+nothing returned, DT edited by reference
 }
 \description{
 Add growth rates to time series data.table object for specified columns
