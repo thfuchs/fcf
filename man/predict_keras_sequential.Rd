@@ -10,7 +10,7 @@ predict_keras_sequential(
   lag_setting = 1:4,
   length_val = 16,
   length_test = 8,
-  save_model = TRUE,
+  save_model = FALSE,
   filepath = NULL,
   ...
 )

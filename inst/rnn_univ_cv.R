@@ -12,6 +12,7 @@
 # from data.table objects to 3D arrays in the format
 # (sample, timesteps, features).
 
+# Sources: rnn_univ_lag.R and
 # https://www.business-science.io/timeseries-analysis/2018/04/18/keras-lstm-sunspots-time-series-prediction.html
 
 ### Data Preparation -----------------------------------------------------------
@@ -64,15 +65,8 @@ basic <- readRDS("inst/results/20200904_eval_pred_basicNN.rds")
 
 basic_mae <- purrr::map_df(
   basic,
-  function(x) {
-    df <- data.frame(
-      train = x$metrics$train,
-      val = x$metrics$val,
-      test = x$metrics$test
-    )
-    df["loss",] * x$metrics$normalization$scale
-  },
-  .id = "id"
+  ~ purrr::map_df(.x$metrics, "loss") * .x$metrics$normalization$scale,
+  .id = "split"
 )
 basic_pred <- purrr::map(basic, "predictions")
 
