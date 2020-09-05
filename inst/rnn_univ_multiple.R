@@ -4,7 +4,7 @@
 # Instead of one-step-ahead forecasts, we use 4 timesteps to predict the next
 # 4 data points simultaneously (and thus using 4 hidden states in the RNN).
 
-# The data are preprocessed in the sense of normalization and transformation
+# The data are pre-processed in the sense of normalization and transformation
 # from data.table objects to 3D arrays in the format
 # (sample, timesteps, features).
 
