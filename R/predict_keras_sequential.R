@@ -36,7 +36,7 @@ predict_keras_sequential <- function(
   lag_setting = 1:4,
   length_val = 16,
   length_test = 8,
-  save_model = TRUE,
+  save_model = FALSE,
   filepath = NULL,
   ...
 ) {
@@ -93,21 +93,22 @@ predict_keras_sequential <- function(
     message = "`save_model` must be a logical vector of length 1.",
     class = "predict_keras_sequential_save_model_error"
   )
-  if (length(filepath) != 1 || !grepl("\\.hdf5$", filepath)) rlang::abort(
-    message = "`filepath` must be a valid path with a valid hdf5 file name.",
-    class = "predict_keras_sequential_filepath_error"
-  )
+  if (save_model && length(filepath) != 1 ||
+      save_model && !grepl("\\.hdf5$", filepath))
+    rlang::abort(
+      message = "`filepath` must be a valid path with a valid hdf5 file name.",
+      class = "predict_keras_sequential_filepath_error"
+    )
 
   ### Function ---------------------------------------------------------------
   sequential_prediction <- function() {
 
-    # Input Parameters
-    # tsteps <- length(lag_setting)
+    ### Input Parameters
     metrics <- list()
 
-    # Preprocessing: Normalizing the data
+    ### Preprocessing: Normalizing the data
     n <- nrow(DT) - length_val - length_test
-    train <- apple[1:n,]
+    train <- DT[1:n,]
 
     mean <- mean(train$value)
     std <- sd(train$value)
@@ -119,7 +120,7 @@ predict_keras_sequential <- function(
 
     metrics$normalization <- list(center = mean, scale = std)
 
-    # Train-Validation-Test Split
+    ### Train-Validation-Test Split
     c(X, Y) %<-% ts_nn_preparation(
       data,
       lag_setting = lag_setting,
@@ -127,7 +128,7 @@ predict_keras_sequential <- function(
       length_test = length_test
     )
 
-    # Model
+    ### Model
     model <- keras_model_sequential() %>%
       layer_dense(units = 32, activation = "relu") %>%
       layer_dense(units = 1)
@@ -154,13 +155,13 @@ predict_keras_sequential <- function(
     # Save Model
     if (save_model) save_model_hdf5(model, filepath, overwrite = FALSE)
 
-    # # Accessing model performance
+    ### Accessing model performance
 
     metrics$train <- evaluate(model, X$train, Y$train)
     metrics$val <- evaluate(model, X$val, Y$val)
     metrics$test <- evaluate(model, X$test, Y$test)
 
-    # Prediction
+    ### Prediction
     pred_out <- model %>%
       predict(X$test) %>%
       .[,1,1]
