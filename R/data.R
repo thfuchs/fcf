@@ -21,8 +21,18 @@
 #' Quarterly reported free cash flow from Apple as ts object from 1995 to 2020.
 #'
 #' @docType data
-#' @usage data(apple_fcf)
+#' @usage data(ts_apple)
 #' @keywords datasets
 #'
-#' @format A quarterly ts object with from 1995 to 2020
-"apple_fcf"
+#' @format A quarterly ts object from 1995 to 2020
+"ts_apple"
+
+#' Quarterly reported free cash flow from Apple as data.table object from 1995
+#' to 2020.
+#'
+#' @docType data
+#' @usage data(DT_apple)
+#' @keywords datasets
+#'
+#' @format A quarterly data.table object from 1995 to 2020
+"DT_apple"

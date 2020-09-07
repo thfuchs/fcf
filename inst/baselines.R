@@ -1,4 +1,4 @@
-apple <- fcf::apple_fcf
+apple <- fcf::ts_apple
 train <- subset(apple, end = length(apple) - 8)
 
 ### Plotting -------------------------------------------------------------------
