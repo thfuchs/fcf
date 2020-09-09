@@ -1,64 +1,107 @@
 #' Trains a simple deep NN on the Apple FCF time series
-#'
 
-library(data.table)
-library(keras)
-
-
-# Data Preparation ---------------------------------------------------
-
+# Initialization ---------------------------------------------------------------
 apple <- fcf::DT_apple
-lag_setting <- 1:4
 
-# Cross Validation
-periods_train <- 70
-periods_test  <- 6
-skip_span     <- 7
-
-rolling_origin_resamples <- rsample::rolling_origin(
-  apple,
-  initial    = periods_train,
-  assess     = periods_test,
-  cumulative = FALSE,
-  skip       = skip_span
+tuning_grid <- list(
+  lags = list(one = 1, four = 1:4),
+  optimizer = c("rmsprop"),
+  n_epochs = 20,
+  dropout = c(0.1)
+)
+cv_setting <- list(
+  periods_train = 58,
+  periods_val = 12,
+  periods_test = 6,
+  skip_span = 7
 )
 
-# rolling_origin_resamples
-# split <- rolling_origin_resamples$splits[[1]]
-#
-# DT_train <- rsample::analysis(split)[1:58]
-# DT_val <- rsample::analysis(split)[59:.N]
-# DT_test <- rsample::assessment(split)
-#
-# DT <- rbind(DT_train, DT_val, DT_test)
-# lag_setting <- 1:4
-# length_val <- nrow(DT_val)
-# length_test <- nrow(DT_test)
+# Tuning -----------------------------------------------------------------------
 
-# Model definition, training and evaluation ------------------------------------
-purrr::map(
+library(zeallot)
+c(results, min_params) %<-% tune_keras_sequential(apple, cv_setting, tuning_grid)
+save(results, min_params, file = "inst/results/20200909_tuning_basicNN.rda")
+
+load(file = "inst/results/20200909_tuning_basicNN.rda")
+
+# Plot tuning results
+library(ggplot2)
+eval_DT <- results[[min_params$index]]$evaluation[type == "test",]
+
+eval_DT %>%
+  ggplot(aes(mse)) +
+  geom_histogram(aes(y = ..density..), fill = "grey", bins = 12) +
+  geom_density(alpha = 0.5, color = "darkgrey", fill = "grey") +
+  theme_bw() +
+  ggtitle("Histogram of Mean Squared Error (MSE)")
+
+# Train cross validated data using best performing model -----------------------
+
+n_initial <- cv_setting$periods_train + cv_setting$periods_val
+rolling_origin_resamples <- rsample::rolling_origin(
+  apple,
+  initial = n_initial,
+  assess = cv_setting$periods_test,
+  cumulative = FALSE,
+  skip       = cv_setting$skip_span
+)
+basic <- purrr::map(
   rolling_origin_resamples$splits,
   function(split) {
-    # Train-Test Split
-    DT_train <- rsample::analysis(split)[1:58]
-    DT_val <- rsample::analysis(split)[59:.N]
+    DT_train <- rsample::analysis(split)[1:cv_setting$periods_train]
+    DT_val <- rsample::analysis(split)[(cv_setting$periods_train+1):.N]
     DT_test <- rsample::assessment(split)
 
     DT <- rbind(DT_train, DT_val, DT_test)
-    length_val <- nrow(DT_val)
-    length_test <- nrow(DT_test)
-
-    # Normalization
-    data <- ts_normalization(DT, length_val, length_test, metrics = FALSE)
-
-    # Reshaping
-    c(X, Y) %<-% ts_nn_preparation(
-      data,
-      lag_setting = lag_setting,
-      length_val = length_val,
-      length_test = length_test
+    predict_keras_sequential(
+      DT,
+      lag_setting = min_params$lags,
+      length_val = cv_setting$periods_val,
+      length_test = cv_setting$periods_test,
+      optimizer_type = min_params$optimizer,
+      save_model = FALSE
     )
-
-    keras_basic_sequential(X, Y)
   }
 )
+saveRDS(basic, file = "inst/results/20200909_eval_pred_basicNN.rds")
+
+# basic <- readRDS("inst/results/20200909_eval_pred_basicNN.rds")
+basic_mae <- purrr::map_df(
+  basic,
+  ~ purrr::map_df(.x$metrics, "loss") * .x$metrics$normalization$scale,
+  .id = "split"
+)
+basic_pred <- purrr::map(basic, "predictions")
+
+mean(basic_mae$test)
+sd(basic_mae$test)
+
+plot_prediction_samples(
+  splits = basic_pred,
+  title = "Basic Machine Learning Model",
+  ncol = 2,
+  scale = as.Date(c(min(apple$index), max(apple$index)))
+)
+
+# Train entire data set using best performing model ----------------------------
+
+save_filepath <- "inst/models/best_basic.hdf5"
+c(predictions, best_model_metrics) %<-% predict_keras_sequential(
+  DT = apple,
+  epochs = min_params$n_epochs,
+  lag_setting = min_params$lags,
+  length_val = 16,
+  length_test = 8,
+  optimizer_type = min_params$optimizer,
+  save_model = TRUE,
+  filepath = save_filepath
+)
+
+model <- keras::load_model_hdf5(save_filepath)
+summary(model)
+
+# Plot Forecast
+# ---
+
+# Forecast Future
+# ---
