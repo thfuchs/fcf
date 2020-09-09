@@ -10,6 +10,7 @@ predict_keras_sequential(
   lag_setting = 1:4,
   length_val = 16,
   length_test = 8,
+  optimizer_type = "rmsprop",
   save_model = FALSE,
   filepath = NULL,
   ...

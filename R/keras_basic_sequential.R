@@ -2,42 +2,45 @@
 #'
 #' @param X list of "train", "val", and "test" with 3D (keras) arrays
 #' @param Y list of "train", "val", and "test" with 2D (keras) arrays
-#'
-#' @section FLAGS:
-#' The following parameters are currently required:
-#' - optimizer
-#' - loss
-#' - metrics
-#' - patience
+#' @param n_epochs default 200
+#' @param loss default "mae"
+#' @param metrics default "mse"
+#' @param optimizer_type One of "rmsprop" (default) and "adam"
+#' @param dropout dropout rate
+#' @param n_units 32 (currently fixed)
+#' @param patience when to stop early (default 10)
 #'
 #' @import keras
 #'
-#' @return history
+#' @return evaluation scores for training, validation and test set
 #' @export
-keras_basic_sequential <- function(X, Y) {
+keras_basic_sequential <- function(
+  X, Y,
+  return_model = FALSE,
+  n_epochs = 200,
+  loss = "mae",
+  metrics = c("mse"),
+  optimizer_type = "rmsprop",
+  dropout = 0.2,
+  n_units = 32,
+  patience = 10
+) {
 
-  # Hyperparameter flags ---------------------------------------------------
+  # Hyperparameter -------------------------------------------------------------
 
-  FLAGS <- flags(
-    flag_integer("n_epochs", 200),
-    flag_string("loss", "mae"),
-    flag_string("metrics", "mse"),
-    flag_string("optimizer_type", "rmsprop"),
-    flag_integer("n_units", 32),
-    flag_numeric("lr", 0.003),
-    flag_numeric("momentum", 0.9),
-    flag_integer("patience", 10)
-  )
+  if (is.null(n_epochs)) n_epochs <- 200
+  if (is.null(optimizer_type)) optimizer_type <- "rmsprop"
+  if (is.null(dropout)) dropout <- 0.2
+  if (is.null(patience)) patience <- 10
 
   optimizer <- switch(
-    FLAGS$optimizer_type,
+    optimizer_type,
     adam = optimizer_adam(),
-    sgd = optimizer_sgd(lr = FLAGS$lr, momentum = FLAGS$momentum),
     rmsprop = optimizer_rmsprop()
   )
 
   callbacks <- list(
-    callback_early_stopping(patience = FLAGS$patience)
+    callback_early_stopping(patience = patience)
   )
 
   # Training and Evaluation ----------------------------------------------------
@@ -49,15 +52,15 @@ keras_basic_sequential <- function(X, Y) {
 
   model %>% compile(
     optimizer = optimizer,
-    loss = FLAGS$loss,
-    metrics = FLAGS$metrics
+    loss = loss,
+    metrics = metrics
   )
 
-  history <- model %>% fit(
+  model %>% fit(
     x               = X$train,
     y               = Y$train,
     steps_per_epoch = 1,
-    epochs          = FLAGS$n_epochs,
+    epochs          = n_epochs,
     batch_size      = NULL,
     verbose         = 1,
     shuffle         = FALSE,
@@ -65,10 +68,12 @@ keras_basic_sequential <- function(X, Y) {
     callbacks       = callbacks
   )
 
-  score <- model %>% evaluate(X$test, Y$test, verbose = 0)
+  output <- list(
+    model = if (return_model) model,
+    train = evaluate(model, X$train, Y$train, verbose = 0),
+    val = evaluate(model, X$val, Y$val, verbose = 0),
+    test = evaluate(model, X$test, Y$test, verbose = 0)
+  )
 
-  cat('Test loss:', score["loss"], '\n')
-  cat('Test accuracy:', score["mse"], '\n')
-
-  return(history)
+  return(output)
 }
