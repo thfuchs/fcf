@@ -4,27 +4,41 @@
 \alias{keras_basic_sequential}
 \title{Basic sequential NN by Keras framework using \link\href{flags}{tfruns}}
 \usage{
-keras_basic_sequential(X, Y)
+keras_basic_sequential(
+  X,
+  Y,
+  return_model = FALSE,
+  n_epochs = 200,
+  loss = "mae",
+  metrics = c("mse"),
+  optimizer_type = "rmsprop",
+  dropout = 0.2,
+  n_units = 32,
+  patience = 10
+)
 }
 \arguments{
 \item{X}{list of "train", "val", and "test" with 3D (keras) arrays}
 
 \item{Y}{list of "train", "val", and "test" with 2D (keras) arrays}
+
+\item{n_epochs}{default 200}
+
+\item{loss}{default "mae"}
+
+\item{metrics}{default "mse"}
+
+\item{optimizer_type}{One of "rmsprop" (default) and "adam"}
+
+\item{dropout}{dropout rate}
+
+\item{n_units}{32 (currently fixed)}
+
+\item{patience}{when to stop early (default 10)}
 }
 \value{
-history
+evaluation scores for training, validation and test set
 }
 \description{
 Basic sequential NN by Keras framework using \link\href{flags}{tfruns}
 }
-\section{FLAGS}{
-
-The following parameters are currently required:
-\itemize{
-\item optimizer
-\item loss
-\item metrics
-\item patience
-}
-}
-

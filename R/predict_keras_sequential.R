@@ -36,6 +36,7 @@ predict_keras_sequential <- function(
   lag_setting = 1:4,
   length_val = 16,
   length_test = 8,
+  optimizer_type = "rmsprop",
   save_model = FALSE,
   filepath = NULL,
   ...
@@ -66,6 +67,8 @@ predict_keras_sequential <- function(
                       paste(class(var), collapse = " / ")),
     class = "predict_keras_sequential_length_test_error")
 
+  testr::check_class(optimizer_type, "character", "predict_keras_sequential")
+
   testr::check_class(save_model, "logical", "predict_keras_sequential")
   if (save_model)
     testr::check_class(filepath, "character", "predict_keras_sequential")
@@ -88,6 +91,10 @@ predict_keras_sequential <- function(
   if (length(length_test) != 1) rlang::abort(
     message = "`length_test` must be a numeric vector of length 1.",
     class = "predict_keras_sequential_length_test_error"
+  )
+  if (length(optimizer_type) != 1) rlang::abort(
+    message = "`optimizer_type` must be a character vector of length 1.",
+    class = "predict_keras_sequential_optimizer_type_error"
   )
   if (length(save_model) != 1) rlang::abort(
     message = "`save_model` must be a logical vector of length 1.",
@@ -120,36 +127,16 @@ predict_keras_sequential <- function(
     )
 
     ### Model
-    model <- keras_model_sequential() %>%
-      layer_dense(units = 32, activation = "relu") %>%
-      layer_dense(units = 1)
-
-    model %>% compile(
-      optimizer = optimizer_rmsprop(),
-      loss = "mae",
-      metrics = c("mse")
-    )
-
-    # Train Model
-    history <- model %>% keras::fit(
-      x               = X$train,
-      y               = Y$train,
-      steps_per_epoch = 1,
-      epochs          = epochs,
-      batch_size      = NULL,
-      verbose         = 1,
-      shuffle         = FALSE,
-      validation_data = list(X$val, Y$val),
-      callbacks       = callback_early_stopping(patience = 10)
+    c(model, metrics$train, metrics$val, metrics$test) %<-% keras_basic_sequential(
+      X, Y,
+      n_epochs = epochs,
+      optimizer_type = optimizer_type,
+      patience = 10,
+      return_model = TRUE
     )
 
     # Save Model
     if (save_model) save_model_hdf5(model, filepath, overwrite = FALSE)
-
-    # Accessing model performance
-    metrics$train <- evaluate(model, X$train, Y$train)
-    metrics$val <- evaluate(model, X$val, Y$val)
-    metrics$test <- evaluate(model, X$test, Y$test)
 
     ### Prediction
     pred_out <- model %>%
@@ -157,9 +144,12 @@ predict_keras_sequential <- function(
       .[,1,1]
 
     # Re-Transform values
+    norm_std <- metrics$normalization$scale
+    norm_mean <- metrics$normalization$center
+
     pred_df <- data.frame(
       index   = tail(DT$index, length(Y$test)),
-      value   = pred_out * std + mean
+      value   = pred_out * norm_std + norm_mean
     )
 
     # Combine actual data with predictions
