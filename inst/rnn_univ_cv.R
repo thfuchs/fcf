@@ -76,8 +76,6 @@ plot_prediction_samples(
   scale = as.Date(c(min(apple$index), max(apple$index)))
 )
 
-# Now: Hyperparameter-Tuning with `tfruns`!
-
 ### RNN - GRU ------------------------------------------------------------------
 
 ### RNN - LSTM -----------------------------------------------------------------
