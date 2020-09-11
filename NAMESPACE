@@ -3,6 +3,7 @@
 export(check_acf)
 export(forecast_baseline)
 export(keras_basic_sequential)
+export(keras_sequential)
 export(plot_prediction)
 export(plot_prediction_samples)
 export(predict_keras_sequential)

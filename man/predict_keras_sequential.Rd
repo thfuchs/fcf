@@ -6,13 +6,17 @@
 \usage{
 predict_keras_sequential(
   DT,
-  epochs = 300,
+  model_type = "basic",
+  epochs = 200,
   lag_setting = 1:4,
   length_val = 16,
   length_test = 8,
+  n_units = 32,
   optimizer_type = "rmsprop",
   save_model = FALSE,
   filepath = NULL,
+  forecast_future = FALSE,
+  forecast_length = NULL,
   ...
 )
 }

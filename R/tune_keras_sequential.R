@@ -5,6 +5,7 @@
 #' @param cv_setting list of "periods_train", "periods_val", "periods_test" and
 #'   "skip_span" for `rsample`
 #' @param tuning_grid list of "lags" "optimizer", "dropout"
+#' @param model_type One of "basic", "gru" or "lstm"
 #'
 #' @section Tuning Grid:
 #' The following parameters are (currently) available for tuning.
@@ -18,12 +19,12 @@
 #'
 #' @return list of "results" and "min_params"
 #' @export
-tune_keras_sequential <- function(data, cv_setting, tuning_grid = NULL) {
+tune_keras_sequential <- function(data, model_type, cv_setting, tuning_grid = NULL) {
 
   # Checks ---------------------------------------------------------------------
 
   # Function -------------------------------------------------------------------
-  run <- function(lag_setting, n_epochs, optimizer, dropout, patience) {
+  run <- function(lag_setting, n_epochs, n_units, optimizer, ...) {
 
     n_train <- cv_setting$periods_train
     n_val <- cv_setting$periods_val
@@ -59,12 +60,26 @@ tune_keras_sequential <- function(data, cv_setting, tuning_grid = NULL) {
           length_test = n_test
         )
 
-        keras_basic_sequential(
-          X, Y,
-          n_epochs = n_epochs,
-          optimizer_type = optimizer,
-          patience = patience
-        )
+        if (model_type == "basic") {
+          keras_basic_sequential(
+            X, Y,
+            n_epochs = n_epochs,
+            optimizer_type = optimizer,
+            patience = patience,
+            return_model = TRUE
+          )
+        } else if (model_type == "gru" || model_type == "lstm") {
+          keras_sequential(
+            X, Y,
+            model_type = model_type,
+            tsteps = length(lag_setting),
+            n_epochs = n_epochs,
+            n_units = n_units,
+            optimizer_type = optimizer,
+            return_model = TRUE,
+            ...
+          )
+        }
       }
     )
 
@@ -102,8 +117,10 @@ tune_keras_sequential <- function(data, cv_setting, tuning_grid = NULL) {
       safe_run(
         lag_setting = params$lags,
         n_epochs = params$n_epochs,
+        n_units = params$n_epochs,
         optimizer = params$optimizer,
         dropout = params$dropout,
+        recurrent_dropout = params$dropout,
         patience = params$patience
       )
     })

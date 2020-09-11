@@ -5,10 +5,12 @@
 \title{Run keras basic model over all tuning parameters and select best performing
 model}
 \usage{
-tune_keras_sequential(data, cv_setting, tuning_grid = NULL)
+tune_keras_sequential(data, model_type, cv_setting, tuning_grid = NULL)
 }
 \arguments{
 \item{data}{Univariate time series (data.frame) with columns index and value}
+
+\item{model_type}{One of "basic", "gru" or "lstm"}
 
 \item{cv_setting}{list of "periods_train", "periods_val", "periods_test" and
 "skip_span" for \code{rsample}}
