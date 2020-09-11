@@ -85,7 +85,7 @@ plot_prediction_samples(
   scale = as.Date(c(min(apple$index), max(apple$index)))
 )
 
-# Train entire data set using best performing model ----------------------------
+# Train data using best performing model ---------------------------------------
 
 # c(predictions, best_model_metrics) %<-% predict_keras_sequential(
 #   DT = apple,
@@ -111,5 +111,25 @@ plot_prediction(
   title = "Basic Machine Learning Model Prediction"
 )
 
-# Forecast Future
-# ---
+# Train entire data for future forecast ----------------------------------------
+
+# c(predictions_all, best_model_metrics_all) %<-% predict_keras_sequential(
+#   DT = apple,
+#   epochs = min_params$n_epochs,
+#   lag_setting = min_params$lags,
+#   length_val = 12,
+#   length_test = 0,
+#   optimizer_type = min_params$optimizer,
+#   save_model = TRUE,
+#   filepath = "inst/models/best_basic_all.hdf5",
+#   forecast_future = TRUE,
+#   forecast_length = 4
+# )
+# save(predictions_all, file = "inst/results/20200909_best_basic_all.rda")
+
+load("inst/results/20200909_best_basic_all.rda")
+
+plot_prediction(
+  data = predictions_all[, index := as.Date(index)],
+  title = "Basic Machine Learning Model 1 year Forecast"
+)

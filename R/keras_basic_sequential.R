@@ -71,8 +71,8 @@ keras_basic_sequential <- function(
   output <- list(
     model = if (return_model) model,
     train = evaluate(model, X$train, Y$train, verbose = 0),
-    val = evaluate(model, X$val, Y$val, verbose = 0),
-    test = evaluate(model, X$test, Y$test, verbose = 0)
+    val = if (dim(X$val)[1] > 0) evaluate(model, X$val, Y$val, verbose = 0),
+    test = if (dim(X$test)[1] > 0) evaluate(model, X$test, Y$test, verbose = 0)
   )
 
   return(output)
