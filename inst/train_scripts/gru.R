@@ -5,26 +5,31 @@
 apple <- fcf::DT_apple
 
 tuning_grid <- list(
-  lags = list(one = 1, two = 1:2, four = 1:4),
+  lags = list(1, 1:2, 1:3, 1:4),
   optimizer = c("rmsprop", "adam"),
   n_epochs = 200,
-  dropout = c(0.1),
-  recurrent_dropout = c(0.1)
+  n_units = c(16, 32, 64),
+  dropout = c(0.1, 0.2, 0.3)
 )
 cv_setting <- list(
-  periods_train = 58,
-  periods_val = 12,
-  periods_test = 6,
+  periods_train = 40,
+  periods_val = 8,
+  periods_test = 4,
   skip_span = 7
 )
 
 # Tuning -----------------------------------------------------------------------
 
 # library(zeallot)
-# c(results, min_params) %<-% tune_keras_sequential(apple, cv_setting, tuning_grid)
-# save(results, min_params, file = "inst/results/20200909_tuning_basicNN.rda")
-#
-# load(file = "inst/results/20200909_tuning_basicNN.rda")
+# c(results, min_params) %<-% tune_keras_sequential(
+#   data = apple,
+#   model_type = "gru",
+#   cv_setting = cv_setting,
+#   tuning_grid = tuning_grid
+# )
+# save(results, min_params, file = "inst/results/20200915_tuning_gru.rda")
+
+load(file = "inst/results/20200915_tuning_gru.rda")
 
 # Plot tuning results
 library(ggplot2)
@@ -56,18 +61,23 @@ eval_DT %>%
 #
 #     DT <- rbind(DT_train, DT_val, DT_test)
 #     predict_keras_sequential(
+#       model_type = "gru",
 #       DT,
 #       lag_setting = min_params$lags,
 #       length_val = cv_setting$periods_val,
 #       length_test = cv_setting$periods_test,
+#       n_units = min_params$n_units,
+#       epochs = min_params$n_epochs,
 #       optimizer_type = min_params$optimizer,
+#       dropout = min_params$dropout,
+#       recurrent_dropout = min_params$dropout,
 #       save_model = FALSE
 #     )
 #   }
 # )
-# saveRDS(basic, file = "inst/results/20200909_eval_pred_basicNN.rds")
+# saveRDS(basic, file = "inst/results/20200915_eval_pred_gru.rds")
 
-basic <- readRDS("inst/results/20200909_eval_pred_basicNN.rds")
+basic <- readRDS("inst/results/20200915_eval_pred_gru.rds")
 
 basic_mae <- purrr::map_df(
   basic,
@@ -81,63 +91,67 @@ sd(basic_mae$test)
 
 plot_prediction_samples(
   splits = basic_pred,
-  title = "Basic Machine Learning Model",
+  title = "GRU Model",
   ncol = 2,
   scale = as.Date(c(min(apple$index), max(apple$index)))
 )
 
 # Train data using best performing model ---------------------------------------
 
-apple <- fcf::DT_apple
+# c(predictions, best_model_metrics) %<-% predict_keras_sequential(
+#     DT = apple,
+#     model_type = "gru",
+#     n_units = min_params$n_units,
+#     epochs = min_params$n_epochs,
+#     lag_setting = min_params$lags,
+#     length_val = 16,
+#     length_test = 8,
+#     optimizer_type = min_params$optimizer,
+#     dropout = min_params$dropout,
+#     recurrent_dropout = min_params$dropout,
+#     patience = 100,
+#     forecast_future = FALSE,
+#     save_model = TRUE,
+#     filepath = "inst/models/best_gru.hdf5"
+# )
+# save(predictions, best_model_metrics, file = "inst/results/20200915_best_gru.rda")
 
-c(predictions, best_model_metrics) %<-% predict_keras_sequential(
-  DT = apple,
-  model_type = "gru",
-  n_units = 32,
-  epochs = 100, #min_params$n_epochs,
-  lag_setting = 1:4, #min_params$lags,
-  length_val = 8,
-  length_test = 4,
-  optimizer_type = "rmsprop", #min_params$optimizer,
-  dropout = 0.2,
-  recurrent_dropout = 0.2,
-  forecast_future = FALSE,
-  save_model = FALSE #TRUE
-  #filepath = "inst/models/best_gru.hdf5"
-)
-# save(predictions, best_model_metrics, file = "inst/results/20200909_best_basic.rda")
-
-# load("inst/results/20200909_best_basic.rda")
-# model <- keras::load_model_hdf5("inst/models/best_basic.hdf5")
-# summary(model)
+load("inst/results/20200915_best_gru.rda")
+model <- keras::load_model_hdf5("inst/models/best_gru.hdf5")
+summary(model)
 
 best_model_metrics
 
 # Plot Prediction
 plot_prediction(
   data = predictions[, index := as.Date(index)],
-  title = "Basic Machine Learning Model Prediction"
+  title = "GRU Prediction"
 )
 
 # Train entire data for future forecast ----------------------------------------
 
-# c(predictions_all, best_model_metrics_all) %<-% predict_keras_sequential(
-#   DT = apple,
-#   epochs = min_params$n_epochs,
-#   lag_setting = min_params$lags,
-#   length_val = 12,
-#   length_test = 0,
-#   optimizer_type = min_params$optimizer,
-#   save_model = TRUE,
-#   filepath = "inst/models/best_basic_all.hdf5",
-#   forecast_future = TRUE,
-#   forecast_length = 4
-# )
-# save(predictions_all, file = "inst/results/20200909_best_basic_all.rda")
+c(predictions_all, best_model_metrics_all) %<-% predict_keras_sequential(
+  DT = apple[index > "2010-01-01"],
+  model_type = "gru",
+  n_units = min_params$n_units,
+  epochs = min_params$n_epochs,
+  lag_setting = min_params$lags,
+  length_val = 8,
+  length_test = 0,
+  optimizer_type = min_params$optimizer,
+  dropout = min_params$dropout,
+  recurrent_dropout = min_params$dropout,
+  save_model = TRUE,
+  filepath = "inst/models/best_gru_all.hdf5",
+  patience = 100,
+  forecast_future = TRUE,
+  forecast_length = 4
+)
+# save(predictions_all, file = "inst/results/20200915_best_gru_all.rda")
 
-load("inst/results/20200909_best_basic_all.rda")
+load("inst/results/20200915_best_gru_all.rda")
 
 plot_prediction(
   data = predictions_all[, index := as.Date(index)],
-  title = "Basic Machine Learning Model 1 year Forecast"
+  title = "GRU 1 year Forecast"
 )

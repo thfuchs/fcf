@@ -29,7 +29,7 @@ cv_setting <- list(
 # )
 # save(results, min_params, file = "inst/results/20200911_tuning_lstm.rda")
 
-load(file = "inst/results/20200909_tuning_basicNN.rda")
+load(file = "inst/results/20200911_tuning_lstm.rda")
 
 # Plot tuning results
 library(ggplot2)
@@ -99,57 +99,59 @@ plot_prediction_samples(
 
 # Train data using best performing model ---------------------------------------
 
-apple <- fcf::DT_apple
+# c(predictions, best_model_metrics) %<-% predict_keras_sequential(
+#   DT = apple,
+#   model_type = "lstm",
+#   n_units = min_params$n_units,
+#   epochs = min_params$n_epochs,
+#   lag_setting = min_params$lags,
+#   length_val = 16,
+#   length_test = 8,
+#   optimizer_type = min_params$optimizer,
+#   dropout = min_params$dropout,
+#   recurrent_dropout = min_params$dropout,
+#   patience = 100,
+#   forecast_future = FALSE,
+#   save_model = TRUE,
+#   filepath = "inst/models/best_lstm.hdf5"
+# )
+# save(predictions, best_model_metrics, file = "inst/results/20200911_best_lstm.rda")
 
-c(predictions, best_model_metrics) %<-% predict_keras_sequential(
-  DT = apple,
-  model_type = "lstm",
-  n_units = 32,
-  epochs = min_params$n_epochs,
-  lag_setting = min_params$lags,
-  length_val = 8,
-  length_test = 0,
-  optimizer_type = "rmsprop", #min_params$optimizer,
-  dropout = 0.2,
-  patience = 100,
-  recurrent_dropout = 0.2,
-  forecast_future = FALSE,
-  save_model = FALSE #TRUE
-  #filepath = "inst/models/best_gru.hdf5"
-)
-# save(predictions, best_model_metrics, file = "inst/results/20200909_best_basic.rda")
-
-# load("inst/results/20200909_best_basic.rda")
-# model <- keras::load_model_hdf5("inst/models/best_basic.hdf5")
-# summary(model)
+load("inst/results/20200911_best_lstm.rda")
+model <- keras::load_model_hdf5("inst/models/best_lstm.hdf5")
+summary(model)
 
 best_model_metrics
 
 # Plot Prediction
 plot_prediction(
   data = predictions[, index := as.Date(index)],
-  title = "Basic Machine Learning Model Prediction"
+  title = "LSTM Prediction"
 )
 
 # Train entire data for future forecast ----------------------------------------
 
 # c(predictions_all, best_model_metrics_all) %<-% predict_keras_sequential(
 #   DT = apple,
+#   model_type = "lstm",
+#   n_units = min_params$n_units,
 #   epochs = min_params$n_epochs,
 #   lag_setting = min_params$lags,
 #   length_val = 12,
 #   length_test = 0,
 #   optimizer_type = min_params$optimizer,
+#   dropout = min_params$dropout,
+#   recurrent_dropout = min_params$dropout,
 #   save_model = TRUE,
-#   filepath = "inst/models/best_basic_all.hdf5",
+#   filepath = "inst/models/best_lstm_all.hdf5",
 #   forecast_future = TRUE,
 #   forecast_length = 4
 # )
-# save(predictions_all, file = "inst/results/20200909_best_basic_all.rda")
+# save(predictions_all, file = "inst/results/20200909_best_lstm_all.rda")
 
-load("inst/results/20200909_best_basic_all.rda")
+load("inst/results/20200909_best_lstm_all.rda")
 
 plot_prediction(
   data = predictions_all[, index := as.Date(index)],
-  title = "Basic Machine Learning Model 1 year Forecast"
+  title = "LSTM 1 year Forecast"
 )
