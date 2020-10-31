@@ -17,10 +17,10 @@ set.seed(123)
 ### Data Preparation -----------------------------------------------------------
 
 apple <- fcf::dow30[
-  ticker == "AAPL" & date > as.POSIXct("1995-01-01"),
-  .SD, .SDcols = c("date", "fcf")
+  ticker == "AAPL" & date > as.POSIXct("1990-01-01"),
+  .SD, .SDcols = c("date", "ebit")
 ]
-data.table::setnames(apple, c("date", "fcf"), c("index", "value"))
+data.table::setnames(apple, c("date", "ebit"), c("index", "value"))
 
 # Input variables
 n_timesteps <- 4

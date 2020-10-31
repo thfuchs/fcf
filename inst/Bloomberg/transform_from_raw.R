@@ -1,5 +1,5 @@
 companies <- as.character(data.table::fread(
-  file = "inst/data/cf_dow_30y.csv",
+  file = "inst/data/pl_dow_30y.csv",
   na.strings = "#N/A N/A",
   header = FALSE,
   nrows = 1,
@@ -12,7 +12,7 @@ companies <- unique(companies)
 length(companies)
 
 raw <- data.table::fread(
-  file = "inst/data/cf_dow_30y.csv",
+  file = "inst/data/pl_dow_30y.csv",
   na.strings = "#N/A N/A",
   skip = 1,
   colClasses=list(numeric=2:150),
@@ -41,13 +41,8 @@ data_long <- data.table::melt(
 dow30 <- data.table::dcast(data_long, company + date ~ type)
 
 # Transformations
-data.table::setnames(
-  dow30,
-  old = cf_types,
-  new = c("fcf", "cfo", "cfi", "cff", "cap")
-)
-
-dow30[, ticker := gsub("(^\\w*).*", "\\1", company)]
+dow30 <- janitor::clean_names(dow30)
+# dow30[, ticker := gsub("(^\\w*).*", "\\1", company)]
 
 # Checks
 # dow30[, check := round(cfo + cap - fcf)]
@@ -63,6 +58,6 @@ dow30[, ticker := gsub("(^\\w*).*", "\\1", company)]
 # Save data
 data.table::setcolorder(
   dow30,
-  neworder = c("company", "ticker", "date", "fcf", "cfo", "cff", "cfi", "cap")
+  neworder = c("company", "ticker", "date", "ebit", "ebitda", "net_income", "revenue")
 )
 # save(dow30, file = "data/dow30.rda")
