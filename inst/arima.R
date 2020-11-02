@@ -1,8 +1,8 @@
-apple <- fcf::ts_apple
-train <- subset(apple, end = length(apple) - 8)
-
 library(forecast)
 library(ggplot2)
+
+apple <- fcf::ts_apple
+train <- subset(apple, end = length(apple) - 8)
 
 # 1. auto.arima
 arima_fcf <- auto.arima(train, stepwise = FALSE, parallel = TRUE, num.cores = NULL)

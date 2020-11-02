@@ -61,3 +61,14 @@ data.table::setcolorder(
   neworder = c("company", "ticker", "date", "ebit", "ebitda", "net_income", "revenue")
 )
 # save(dow30, file = "data/dow30.rda")
+
+
+DT_unh <- fcf::dow30[
+  ticker == "UNH" & date > as.POSIXct("1990-01-01"),
+  .SD, .SDcols = c("date", "ebit")
+]
+data.table::setnames(DT_unh, c("date", "ebit"), c("index", "value"))
+# save(DT_unh, file = "data/DT_unh.rda")
+
+ts_unh <- ts(DT_unh[,value], frequency = 4, start = c(1990, 3))
+# save(ts_unh, file = "data/ts_unh.rda")
