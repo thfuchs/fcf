@@ -4,15 +4,21 @@
 \alias{plot_prediction_samples}
 \title{Plot multiple splits from same \code{rsample} split}
 \usage{
-plot_prediction_samples(splits, title, ncol = 2, scale)
+plot_prediction_samples(splits, title, date_type = "datetime", ncol = 2, scale)
 }
 \arguments{
 \item{splits}{list of prediction data.frames}
 
+\item{title}{diagram title}
+
+\item{date_type}{string vector - one of "datetime", "date" or "character"}
+
+\item{ncol}{Number of columns}
+
 \item{scale}{NULL or two Date values to scale x-axis}
 }
 \value{
-list of ggplot2 object
+ggplot2 object
 }
 \description{
 Plot multiple splits from same \code{rsample} split

@@ -32,8 +32,7 @@ predict_baselines <- function(data, cv_setting, normalize) {
     rolling_origin_resamples$splits,
     function(split) {
       # Train-Test Split
-      DT_train <- rsample::analysis(split)[1:n_train]
-      # DT_val <- rsample::analysis(split)[(n_train+1):.N]
+      DT_train <- rsample::analysis(split)
       DT_test <- rsample::assessment(split)
 
       DT <- rbind(DT_train, DT_test)
@@ -41,6 +40,7 @@ predict_baselines <- function(data, cv_setting, normalize) {
       # Normalization
       data <- if (normalize)
         ts_normalization(DT, n_val, n_test, metrics = FALSE) else DT
+      data[, key := "actual"]
 
       # Reshaping to ts object
       min_date <- data[, c(year(min(index)), quarter(min(index)))]
@@ -49,60 +49,81 @@ predict_baselines <- function(data, cv_setting, normalize) {
       ts_data <- stats::ts(data$value, frequency = 4, start = min_date, end = max_date)
       ts_train <- subset(ts_data, end = n_train+n_val)
 
-      old_names <- c("Point Forecast", "Lo 95", "Hi 95")
-      new_names <- c("fc", "lo95", "hi95")
       old_names_acc <- c("Training set", "Test set")
       new_names_acc <- c("train", "test")
 
       # Naive forecast
       fc_naive <- forecast::naive(ts_train, h = n_test, level = 95)
+
       acc_naive <- forecast::accuracy(fc_naive, ts_data)
+      acc_naive <- data.table::as.data.table(acc_naive)[2][, type := "Naive"]
 
-      fc_naive <- data.table::as.data.table(fc_naive, keep.rownames = "index")
-      data.table::setnames(fc_naive, old_names, paste("naive", new_names, sep = "_"))
-
-      acc_naive <- data.table::as.data.table(acc_naive)[2][, index := "Naive"]
+      fc_naive <- data.table::data.table(
+        index = data[(.N-n_test+1):.N, index],
+        value = as.numeric(fc_naive$mean),
+        lo95 = as.numeric(fc_naive$lower),
+        hi95 = as.numeric(fc_naive$upper)
+      )
+      fc_naive[, `:=` (key = "predict", type = "Naive")]
 
       # Seasonal naive forecast
       fc_snaive <- forecast::snaive(ts_train, h = n_test, level = 95)
+
       acc_snaive <- forecast::accuracy(fc_snaive, ts_data)
+      acc_snaive <- data.table::as.data.table(acc_snaive)[2][, type := "Snaive"]
 
-      fc_snaive <- data.table::as.data.table(fc_snaive, keep.rownames = "index")
-      data.table::setnames(fc_snaive, old_names, paste("snaive", new_names, sep = "_"))
-
-      acc_snaive <- data.table::as.data.table(acc_snaive)[2][, index := "Snaive"]
+      fc_snaive <- data.table::data.table(
+        index = data[(.N-n_test+1):.N, index],
+        value = as.numeric(fc_snaive$mean),
+        lo95 = as.numeric(fc_snaive$lower),
+        hi95 = as.numeric(fc_snaive$upper)
+      )
+      fc_snaive[, `:=` (key = "predict", type = "Snaive")]
 
       # Mean Forecast
       fc_mean <- forecast::meanf(ts_train, h = n_test, level = 95)
+
       acc_mean <- forecast::accuracy(fc_mean, ts_data)
+      acc_mean <- data.table::as.data.table(acc_mean)[2][, type := "Mean"]
 
-      fc_mean <- data.table::as.data.table(fc_mean, keep.rownames = "index")
-      data.table::setnames(fc_mean, old_names, paste("mean", new_names, sep = "_"))
-
-      acc_mean <- data.table::as.data.table(acc_mean)[2][, index := "Mean"]
+      fc_mean <- data.table::data.table(
+        index = data[(.N-n_test+1):.N, index],
+        value = as.numeric(fc_mean$mean),
+        lo95 = as.numeric(fc_mean$lower),
+        hi95 = as.numeric(fc_mean$upper)
+      )
+      fc_mean[, `:=` (key = "predict", type = "Mean")]
 
       # Simple exponential smoothing
       fc_ses <- forecast::ses(ts_train, h = n_test, level = 95)
+
       acc_ses <- forecast::accuracy(fc_ses, ts_data)
+      acc_ses <- data.table::as.data.table(acc_ses)[2][, type := "SES"]
 
-      fc_ses <- data.table::as.data.table(fc_ses, keep.rownames = "index")
-      data.table::setnames(fc_ses, old_names, paste("ses", new_names, sep = "_"))
-
-      acc_ses <- data.table::as.data.table(acc_ses)[2][, index := "SES"]
+      fc_ses <- data.table::data.table(
+        index = data[(.N-n_test+1):.N, index],
+        value = as.numeric(fc_ses$mean),
+        lo95 = as.numeric(fc_ses$lower),
+        hi95 = as.numeric(fc_ses$upper)
+      )
+      fc_ses[, `:=` (key = "predict", type = "SES")]
 
       # Exponential smoothing with trend: Holt's trend
       fc_holt <- forecast::holt(ts_train, h = n_test, level = 95)
+
       acc_holt <- forecast::accuracy(fc_holt, ts_data)
+      acc_holt <- data.table::as.data.table(acc_holt)[2][, type := "Holt"]
 
-      fc_holt <- data.table::as.data.table(fc_holt, keep.rownames = "index")
-      data.table::setnames(fc_holt, old_names, paste("holt", new_names, sep = "_"))
-
-      acc_holt <- data.table::as.data.table(acc_holt)[2][, index := "Holt"]
+      fc_holt <- data.table::data.table(
+        index = data[(.N-n_test+1):.N, index],
+        value = as.numeric(fc_holt$mean),
+        lo95 = as.numeric(fc_holt$lower),
+        hi95 = as.numeric(fc_holt$upper)
+      )
+      fc_holt[, `:=` (key = "predict", type = "Holt")]
 
       ### Output
-      fc <- fc_naive[fc_snaive, on = "index"][fc_mean, on = "index"][
-        fc_ses, on = "index"][fc_holt, on = "index"]
-
+      fc <- rbind(data, fc_naive, fc_snaive, fc_mean, fc_ses, fc_holt, fill = TRUE)
       acc <- rbind(acc_naive, acc_snaive, acc_mean, acc_ses, acc_holt)
 
       list(forecast = fc, accuracy = acc)

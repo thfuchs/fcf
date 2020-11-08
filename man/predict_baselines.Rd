@@ -7,6 +7,8 @@
 predict_baselines(data, cv_setting, normalize)
 }
 \arguments{
+\item{data}{data.table object}
+
 \item{cv_setting}{cross valudation settings. List Requiring \itemize{
 \item periods_train
 \item periods_val
