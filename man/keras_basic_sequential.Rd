@@ -2,7 +2,7 @@
 % Please edit documentation in R/keras_basic_sequential.R
 \name{keras_basic_sequential}
 \alias{keras_basic_sequential}
-\title{Basic sequential NN by Keras framework using \link\href{flags}{tfruns}}
+\title{Basic sequential NN by Keras framework}
 \usage{
 keras_basic_sequential(
   X,
@@ -40,5 +40,5 @@ keras_basic_sequential(
 evaluation scores for training, validation and test set
 }
 \description{
-Basic sequential NN by Keras framework using \link\href{flags}{tfruns}
+Using \link\href{flags}{tfruns}
 }

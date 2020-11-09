@@ -1,4 +1,6 @@
-#' Basic sequential NN by Keras framework using \link[tfruns](flags)
+#' Basic sequential NN by Keras framework
+#'
+#' Using \link[tfruns](flags)
 #'
 #' @param X list of "train", "val", and "test" with 3D (keras) arrays
 #' @param Y list of "train", "val", and "test" with 2D (keras) arrays
