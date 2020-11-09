@@ -4,7 +4,7 @@
 \alias{predict_baselines}
 \title{Prediction and evaluation for baseline models including cross validation}
 \usage{
-predict_baselines(data, cv_setting, normalize)
+predict_baselines(data, cv_setting, transform = NULL)
 }
 \arguments{
 \item{data}{data.table object}
@@ -16,7 +16,7 @@ predict_baselines(data, cv_setting, normalize)
 \item skip_span
 }}
 
-\item{normalize}{normalize data?}
+\item{transform}{One of NULL, "normalize" and "box" for Box-Cox transformation}
 }
 \value{
 list with accuracy and forecasts (point forecast and PI)

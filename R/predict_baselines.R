@@ -7,13 +7,14 @@
 #'   \item periods_test
 #'   \item skip_span
 #' }
-#' @param normalize normalize data?
+#' @param transform One of NULL, "normalize" and "box" for Box-Cox transformation
 #'
 #' @import data.table
+#' @import forecast
 #'
 #' @return list with accuracy and forecasts (point forecast and PI)
 #' @export
-predict_baselines <- function(data, cv_setting, normalize) {
+predict_baselines <- function(data, cv_setting, transform = NULL) {
 
   n_train <- cv_setting$periods_train
   n_val <- cv_setting$periods_val
@@ -38,7 +39,7 @@ predict_baselines <- function(data, cv_setting, normalize) {
       DT <- rbind(DT_train, DT_test)
 
       # Normalization
-      data <- if (normalize)
+      data <- if (!is.null(transform) && transform == "normalize")
         ts_normalization(DT, n_val, n_test, metrics = FALSE) else DT
       data[, key := "actual"]
 
@@ -53,7 +54,12 @@ predict_baselines <- function(data, cv_setting, normalize) {
       new_names_acc <- c("train", "test")
 
       # Naive forecast
-      fc_naive <- forecast::naive(ts_train, h = n_test, level = 95)
+      fc_naive <- forecast::naive(
+        ts_train,
+        h = n_test,
+        level = 95,
+        lambda = if (!is.null(transform) && transform == "box") "auto"
+      )
 
       acc_naive <- forecast::accuracy(fc_naive, ts_data)
       acc_naive <- data.table::as.data.table(acc_naive)[2][, type := "Naive"]
@@ -67,7 +73,12 @@ predict_baselines <- function(data, cv_setting, normalize) {
       fc_naive[, `:=` (key = "predict", type = "Naive")]
 
       # Seasonal naive forecast
-      fc_snaive <- forecast::snaive(ts_train, h = n_test, level = 95)
+      fc_snaive <- forecast::snaive(
+        ts_train,
+        h = n_test,
+        level = 95,
+        lambda = if (!is.null(transform) && transform == "box") "auto"
+      )
 
       acc_snaive <- forecast::accuracy(fc_snaive, ts_data)
       acc_snaive <- data.table::as.data.table(acc_snaive)[2][, type := "Snaive"]
@@ -81,7 +92,12 @@ predict_baselines <- function(data, cv_setting, normalize) {
       fc_snaive[, `:=` (key = "predict", type = "Snaive")]
 
       # Mean Forecast
-      fc_mean <- forecast::meanf(ts_train, h = n_test, level = 95)
+      fc_mean <- forecast::meanf(
+        ts_train,
+        h = n_test,
+        level = 95,
+        lambda = if (!is.null(transform) && transform == "box") "auto"
+      )
 
       acc_mean <- forecast::accuracy(fc_mean, ts_data)
       acc_mean <- data.table::as.data.table(acc_mean)[2][, type := "Mean"]
@@ -95,7 +111,12 @@ predict_baselines <- function(data, cv_setting, normalize) {
       fc_mean[, `:=` (key = "predict", type = "Mean")]
 
       # Simple exponential smoothing
-      fc_ses <- forecast::ses(ts_train, h = n_test, level = 95)
+      fc_ses <- forecast::ses(
+        ts_train,
+        h = n_test,
+        level = 95,
+        lambda = if (!is.null(transform) && transform == "box") "auto"
+      )
 
       acc_ses <- forecast::accuracy(fc_ses, ts_data)
       acc_ses <- data.table::as.data.table(acc_ses)[2][, type := "SES"]
@@ -109,7 +130,12 @@ predict_baselines <- function(data, cv_setting, normalize) {
       fc_ses[, `:=` (key = "predict", type = "SES")]
 
       # Exponential smoothing with trend: Holt's trend
-      fc_holt <- forecast::holt(ts_train, h = n_test, level = 95)
+      fc_holt <- forecast::holt(
+        ts_train,
+        h = n_test,
+        level = 95,
+        lambda = if (!is.null(transform) && transform == "box") "auto"
+      )
 
       acc_holt <- forecast::accuracy(fc_holt, ts_data)
       acc_holt <- data.table::as.data.table(acc_holt)[2][, type := "Holt"]
