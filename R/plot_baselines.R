@@ -56,7 +56,7 @@ plot_baselines_samples <- function(
       if (date_type == "datetime") split[, index := as.Date(index)]
 
       plot_baselines(
-        split,
+        data = split,
         title = paste("Split", position),
         colors = colors,
         legend = "none",
