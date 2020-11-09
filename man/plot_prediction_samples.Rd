@@ -4,7 +4,14 @@
 \alias{plot_prediction_samples}
 \title{Plot multiple splits from same \code{rsample} split}
 \usage{
-plot_prediction_samples(splits, title, date_type = "datetime", ncol = 2, scale)
+plot_prediction_samples(
+  splits,
+  title,
+  date_type = "datetime",
+  ncol = 2,
+  scale,
+  PI = FALSE
+)
 }
 \arguments{
 \item{splits}{list of prediction data.frames}

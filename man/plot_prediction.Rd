@@ -10,12 +10,15 @@ plot_prediction(
   size = 0.6,
   alpha = 0.8,
   legend = "bottom",
-  scale = NULL
+  scale = NULL,
+  PI = FALSE
 )
 }
 \arguments{
 \item{data}{data.frame containing "index" (Date), "value" (numeric) and key
 (character - "actual" and "predict")}
+
+\item{title}{plot title}
 
 \item{size}{line size}
 
@@ -24,6 +27,8 @@ plot_prediction(
 \item{legend}{legend position}
 
 \item{scale}{NULL or two Date values to scale x-axis}
+
+\item{PI}{add prediction intervall? Then specify columns lo95 and hi95}
 }
 \value{
 ggplot2 object
