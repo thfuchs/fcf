@@ -2,34 +2,41 @@
 #'
 #' @param data data.frame containing "index" (Date), "value" (numeric) and key
 #'   (character - "actual" and "predict")
+#' @param title plot title
 #' @param size line size
 #' @param alpha line alpha value
 #' @param legend legend position
 #' @param scale NULL or two Date values to scale x-axis
+#' @param PI add prediction intervall? Then specify columns lo95 and hi95
 #'
 #' @import ggplot2
 #'
 #' @return ggplot2 object
 #' @export
 plot_prediction <- function(
-  data, title, size = 0.6, alpha = 0.8, legend = "bottom", scale = NULL
+  data, title, size = 0.6, alpha = 0.8, legend = "bottom", scale = NULL, PI = FALSE
 ) {
 
   g <- ggplot(data, aes(x = index, y = value, color = key)) +
-    geom_line(size = size, alpha = alpha) +
-    labs(
-      title    = title,
-      subtitle = sprintf("%s to %s", min(data$index), max(data$index)),
-      y = NULL, x = NULL
-    ) +
+    geom_line(size = size, alpha = alpha)
+
+  if (PI) g <- g + geom_ribbon(
+    data = data[key == "predict"],
+    aes(ymin = lo95, ymax = hi95), fill = "red", alpha = 0.2, linetype = 0
+  )
+
+  g <- g + labs(
+    title    = title,
+    subtitle = sprintf("%s to %s", min(data$index), max(data$index)),
+    y = NULL, x = NULL
+  ) +
     scale_colour_manual(values = c("actual" = "black", "predict" = "red")) +
     theme(
       plot.background = element_rect(fill = NA),
       panel.background = element_rect(fill = NA, colour = "black"),
       panel.grid.major = element_line(colour = "lightgrey"),
       legend.position = legend
-    )  +
-    scale_x_date(limits = scale)
+    ) + scale_x_date(limits = scale)
 
   return(g)
 }
@@ -44,7 +51,9 @@ plot_prediction <- function(
 #'
 #' @return ggplot2 object
 #' @export
-plot_prediction_samples <- function(splits, title, date_type = "datetime", ncol = 2, scale) {
+plot_prediction_samples <- function(
+  splits, title, date_type = "datetime", ncol = 2, scale, PI = FALSE
+) {
 
   plot_list <- purrr::imap(
     splits,
@@ -52,10 +61,11 @@ plot_prediction_samples <- function(splits, title, date_type = "datetime", ncol 
       if (date_type == "datetime") split[, index := as.Date(index)]
 
       plot_prediction(
-        split,
+        data = split,
         title = paste("Split", position),
         legend = "none",
-        scale = scale
+        scale = scale,
+        PI = PI
       )
     }
   )
