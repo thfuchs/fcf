@@ -20,7 +20,7 @@ purrr::map_df(forecast, "accuracy", .id = "split") %>%
 
 # RMSE means
 rmse <- purrr::map_df(forecast, "accuracy")[, .(mean = mean(RMSE)), by = type]
-latex_table(rmse)
+# latex_table(rmse)
 
 rmse %>% ggplot(aes(x = type, y = mean)) + ggplot2::geom_col() +
   theme_minimal() +
