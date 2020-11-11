@@ -9,7 +9,7 @@ cv_setting <- list(
   skip_span = 7
 )
 
-forecast <- predict_baselines(data, cv_setting, normalize = FALSE)
+forecast <- predict_baselines(data, cv_setting, transform = NULL)
 
 ### test plot
 library(ggplot2)

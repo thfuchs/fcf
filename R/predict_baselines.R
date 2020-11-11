@@ -35,7 +35,6 @@ predict_baselines <- function(data, cv_setting, transform = NULL) {
       # Train-Test Split
       DT_train <- rsample::analysis(split)
       DT_test <- rsample::assessment(split)
-
       DT <- rbind(DT_train, DT_test)
 
       # Normalization
@@ -48,7 +47,7 @@ predict_baselines <- function(data, cv_setting, transform = NULL) {
       max_date <- data[, c(year(max(index)), quarter(max(index)))]
 
       ts_data <- stats::ts(data$value, frequency = 4, start = min_date, end = max_date)
-      ts_train <- subset(ts_data, end = n_train+n_val)
+      ts_train <- subset(ts_data, end = n_initial)
 
       old_names_acc <- c("Training set", "Test set")
       new_names_acc <- c("train", "test")
@@ -58,11 +57,10 @@ predict_baselines <- function(data, cv_setting, transform = NULL) {
         ts_train,
         h = n_test,
         level = 95,
+        bootstrap = TRUE,
+        npaths = 2000,
         lambda = if (!is.null(transform) && transform == "box") "auto"
       )
-
-      acc_naive <- forecast::accuracy(fc_naive, ts_data)
-      acc_naive <- data.table::as.data.table(acc_naive)[2][, type := "Naive"]
 
       fc_naive <- data.table::data.table(
         index = data[(.N-n_test+1):.N, index],
@@ -77,11 +75,10 @@ predict_baselines <- function(data, cv_setting, transform = NULL) {
         ts_train,
         h = n_test,
         level = 95,
+        bootstrap = TRUE,
+        npaths = 2000,
         lambda = if (!is.null(transform) && transform == "box") "auto"
       )
-
-      acc_snaive <- forecast::accuracy(fc_snaive, ts_data)
-      acc_snaive <- data.table::as.data.table(acc_snaive)[2][, type := "Snaive"]
 
       fc_snaive <- data.table::data.table(
         index = data[(.N-n_test+1):.N, index],
@@ -91,54 +88,34 @@ predict_baselines <- function(data, cv_setting, transform = NULL) {
       )
       fc_snaive[, `:=` (key = "predict", type = "Snaive")]
 
-      # Mean Forecast
-      fc_mean <- forecast::meanf(
+      # Random walk with drift
+      fc_drift <- forecast::rwf(
         ts_train,
         h = n_test,
+        drift = TRUE,
+        bootstrap = TRUE,
+        npaths = 2000,
         level = 95,
         lambda = if (!is.null(transform) && transform == "box") "auto"
       )
 
-      acc_mean <- forecast::accuracy(fc_mean, ts_data)
-      acc_mean <- data.table::as.data.table(acc_mean)[2][, type := "Mean"]
-
-      fc_mean <- data.table::data.table(
+      fc_drift <- data.table::data.table(
         index = data[(.N-n_test+1):.N, index],
-        value = as.numeric(fc_mean$mean),
-        lo95 = as.numeric(fc_mean$lower),
-        hi95 = as.numeric(fc_mean$upper)
+        value = as.numeric(fc_drift$mean),
+        lo95 = as.numeric(fc_drift$lower),
+        hi95 = as.numeric(fc_drift$upper)
       )
-      fc_mean[, `:=` (key = "predict", type = "Mean")]
-
-      # Simple exponential smoothing
-      fc_ses <- forecast::ses(
-        ts_train,
-        h = n_test,
-        level = 95,
-        lambda = if (!is.null(transform) && transform == "box") "auto"
-      )
-
-      acc_ses <- forecast::accuracy(fc_ses, ts_data)
-      acc_ses <- data.table::as.data.table(acc_ses)[2][, type := "SES"]
-
-      fc_ses <- data.table::data.table(
-        index = data[(.N-n_test+1):.N, index],
-        value = as.numeric(fc_ses$mean),
-        lo95 = as.numeric(fc_ses$lower),
-        hi95 = as.numeric(fc_ses$upper)
-      )
-      fc_ses[, `:=` (key = "predict", type = "SES")]
+      fc_drift[, `:=` (key = "predict", type = "Drift")]
 
       # Exponential smoothing with trend: Holt's trend
       fc_holt <- forecast::holt(
         ts_train,
         h = n_test,
         level = 95,
+        bootstrap = TRUE,
+        npaths = 2000,
         lambda = if (!is.null(transform) && transform == "box") "auto"
       )
-
-      acc_holt <- forecast::accuracy(fc_holt, ts_data)
-      acc_holt <- data.table::as.data.table(acc_holt)[2][, type := "Holt"]
 
       fc_holt <- data.table::data.table(
         index = data[(.N-n_test+1):.N, index],
@@ -149,8 +126,32 @@ predict_baselines <- function(data, cv_setting, transform = NULL) {
       fc_holt[, `:=` (key = "predict", type = "Holt")]
 
       ### Output
-      fc <- rbind(data, fc_naive, fc_snaive, fc_mean, fc_ses, fc_holt, fill = TRUE)
-      acc <- rbind(acc_naive, acc_snaive, acc_mean, acc_ses, acc_holt)
+      fc <- rbind(data, fc_naive, fc_snaive, fc_drift, fc_holt, fill = TRUE)
+      if (!is.null(fc[["ticker"]])) fc[, ticker := unique(DT$ticker)]
+
+      acc <- purrr::map_df(
+        list(fc_naive, fc_snaive, fc_drift, fc_holt),
+        function(x) {
+          # Point Forecast Measures
+          acc_MAPE <- mape(actual = DT_test$value, forecast = x$value)
+          acc_sMAPE <- smape(actual = DT_test$value, forecast = x$value)
+          acc_MASE <- mase(data = DT$value, forecast = x$value, m = 4)
+
+          # Prediction Interval Measures
+          acc_SMIS <- smis(
+            data = DT$value, lower = x$lo95, upper = x$hi95,
+            h = 8, m = 4, level = 0.95)
+          acc_ACD <- acd(
+            actual = DT_test$value, lower = x$lo95, upper = x$hi95,
+            level = 0.95)
+
+          data.table(
+            type = unique(x$type),
+            MAPE = acc_MAPE, sMAPE = acc_sMAPE, MASE = acc_MASE,
+            SMIS = acc_SMIS, ACD = acc_ACD
+          )
+        }
+      )
 
       list(forecast = fc, accuracy = acc)
     }
