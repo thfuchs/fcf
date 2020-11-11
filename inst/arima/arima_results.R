@@ -13,18 +13,18 @@ companies <- unique(data$ticker)
 
 ### EBIT -----------------------------------------------------------------------
 
-forecast <- purrr::map(
-  companies,
-  purrr::possibly(function(x) {
-    d <- data[ticker == x]
-    predict_arima(d, cv_setting)
-  }, otherwise = NULL)
-)
-
-fc_arima_ebit <- purrr::compact(forecast)
-str(fc_arima_ebit, max.level = 1)
-
-save(fc_arima_ebit, file = "inst/arima/fc_arima_ebit.rda")
+# forecast <- purrr::map(
+#   companies,
+#   purrr::possibly(function(x) {
+#     d <- data[ticker == x]
+#     predict_arima(d, cv_setting)
+#   }, otherwise = NULL)
+# )
+#
+# fc_arima_ebit <- purrr::compact(forecast)
+# str(fc_arima_ebit, max.level = 1)
+#
+# save(fc_arima_ebit, file = "inst/arima/fc_arima_ebit.rda")
 load(file = "inst/arima/fc_arima_ebit.rda")
 
 # Accuracy Measures
