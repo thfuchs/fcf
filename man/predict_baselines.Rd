@@ -4,7 +4,13 @@
 \alias{predict_baselines}
 \title{Prediction and evaluation for baseline models including cross validation}
 \usage{
-predict_baselines(data, cv_setting, transform = NULL)
+predict_baselines(
+  data,
+  cv_setting,
+  transform = NULL,
+  frequency = 4,
+  multiple_h = NULL
+)
 }
 \arguments{
 \item{data}{data.table object}
@@ -17,6 +23,11 @@ predict_baselines(data, cv_setting, transform = NULL)
 }}
 
 \item{transform}{One of NULL, "normalize" and "box" for Box-Cox transformation}
+
+\item{frequency}{time series frequency, e.g. 4 for quarters and 12 for months}
+
+\item{multiple_h}{NULL if forecast horizon equals cv_setting$n_test, else
+named list of forecast horizons for accuracy measures}
 }
 \value{
 list with accuracy and forecasts (point forecast and PI)

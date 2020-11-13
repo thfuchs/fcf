@@ -8,15 +8,34 @@
 #'   \item skip_span
 #' }
 #' @param transform One of NULL (default) and "normalize"
+#' @param frequency time series frequency, e.g. 4 for quarters and 12 for months
+#' @param multiple_h NULL if forecast horizon equals cv_setting$n_test, else
+#'   named list of forecast horizons for accuracy measures
 #'
 #' @return list with accuracy and forecasts (point forecast and PI)
 #' @export
-predict_arima <- function(data, cv_setting, transform = NULL) {
+predict_arima <- function(
+  data, cv_setting, transform = NULL, frequency = 4, multiple_h = NULL
+) {
 
+  ### Checks -------------------------------------------------------------------
+  testr::check_class(data, "data.frame", "predict_baselines")
+  data.table::setDT(data)
+  if (any(!c("index", "value") %in% names(data))) rlang::abort(
+    message = "`data` requires variables `index` and `value`",
+    class = "predict_baselines_data_error"
+  )
+  testr::check_class(cv_setting, "list", "predict_baselines")
+  testr::check_class(transform, "character", "predict_baselines", allowNULL = TRUE)
+  testr::check_class(frequency, "numeric", "predict_baselines")
+  testr::check_class(multiple_h, "list", "predict_baselines", allowNULL = TRUE)
+
+  ### Settings -----------------------------------------------------------------
   n_train <- cv_setting$periods_train
   n_val <- cv_setting$periods_val
   n_initial <- n_train + n_val
   n_test <- cv_setting$periods_test
+  if (is.null(multiple_h)) multiple_h <- list(1:n_test)
 
   rolling_origin_resamples <- rsample::rolling_origin(
     data,
@@ -26,6 +45,7 @@ predict_arima <- function(data, cv_setting, transform = NULL) {
     skip       = cv_setting$skip_span
   )
 
+  ### Function -----------------------------------------------------------------
   resample <- purrr::map(
     rolling_origin_resamples$splits,
     function(split) {
@@ -90,24 +110,40 @@ predict_arima <- function(data, cv_setting, transform = NULL) {
 
       ### Accuracy Measures
       fc_values <- fc[key == "predict"]
+
       # Point Forecast Measures
-      acc_MAPE <- mape(actual = DT_test$value, forecast = fc_values$value)
-      acc_sMAPE <- smape(actual = DT_test$value, forecast = fc_values$value)
-      acc_MASE <- mase(data = DT$value, forecast = fc_values$value, m = 4)
+      acc_MAPE <- sapply(
+        multiple_h,
+        function(h) mape(actual = DT_test[h,value], forecast = fc_values[h,value]))
+      acc_sMAPE <- sapply(
+        multiple_h,
+        function(h) smape(actual = DT_test[h,value], forecast = fc_values[h,value]))
+      acc_MASE <- sapply(
+        multiple_h, function(h) mase(
+          data = DT[1:(n_initial+max(h)),value],
+          forecast = fc_values[h,value], m = frequency)
+      )
 
       # Prediction Interval Measures
-      acc_SMIS <- smis(
-        data = DT$value, lower = fc_values$lo95, upper = fc_values$hi95,
-        h = 8, m = 4, level = 0.95)
-      acc_ACD <- acd(
-        actual = DT_test$value, lower = fc_values$lo95, upper = fc_values$hi95,
+      acc_SMIS <- sapply(
+        multiple_h, function(h) smis(
+          data = DT[1:(n_initial+max(h)),value],
+          lower = fc_values[h,lo95],
+          upper = fc_values[h,hi95],
+          h = max(h), m = frequency, level = 0.95)
+      )
+      acc_ACD <- sapply(multiple_h, function(h) acd(
+        actual = DT_test[h,value],
+        lower = fc_values[h,lo95],
+        upper = fc_values[h,hi95],
         level = 0.95)
+      )
 
-      # Result
-      acc <- data.table(
-        type = "ARIMA",
-        MAPE = acc_MAPE, sMAPE = acc_sMAPE, MASE = acc_MASE,
-        SMIS = acc_SMIS, ACD = acc_ACD
+      # Accuracy result
+      acc <- data.table::data.table(
+        type = "ARIMA", h = names(multiple_h),
+        mape = acc_MAPE, smape = acc_sMAPE, mase = acc_MASE,
+        smis = acc_SMIS, acd = acc_ACD
       )
 
       ### Output

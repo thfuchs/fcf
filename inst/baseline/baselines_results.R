@@ -5,24 +5,26 @@
 data <- fcf::dow30_clean
 
 cv_setting <- list(
-  periods_train = 30,
-  periods_val = 4,
-  periods_test = 4,
-  skip_span = 7
+  periods_train = 40,
+  periods_val = 6,
+  periods_test = 6,
+  skip_span = 5
 )
 
 companies <- unique(data$ticker)
+multiple_h <- list(short = 1, medium = 1:4, long = 5:6, total = 1:6)
 
-# seed for bootstrapped based PI
-set.seed(123)
 
 ### EBIT -----------------------------------------------------------------------
 
+# # seed for bootstrapped based PI
+# set.seed(123)
+#
 # forecast <- purrr::map(
 #   companies,
 #   purrr::possibly(function(x) {
 #     d <- data[ticker == x]
-#     predict_baselines(d, cv_setting)
+#     predict_baselines(d, cv_setting, multiple_h = multiple_h)
 #   }, otherwise = NULL)
 # )
 #
@@ -33,8 +35,8 @@ set.seed(123)
 load(file = "inst/baseline/fc_baselines_ebit.rda")
 
 # Accuracy Measures
-str_point_acc <- c("sMAPE", "MASE")
-str_dist_acc <- c("SMIS", "ACD")
+str_point_acc <- c("smape", "mase")
+str_dist_acc <- c("smis", "acd")
 
 samples <- purrr::map_df(
   fc_baselines_ebit,
@@ -42,8 +44,8 @@ samples <- purrr::map_df(
     , lapply(.SD, mean), by = type, .SDcols = c(str_point_acc, str_dist_acc)],
   .id = "id"
 )
-point_acc <- samples[, lapply(.SD, mean), .SDcols = str_point_acc, by = "type"]
-dist_acc <- samples[, lapply(.SD, mean), .SDcols = str_dist_acc, by = "type"]
+point_acc <- samples[, lapply(.SD, mean), .SDcols = str_point_acc, by = "type"]; point_acc
+dist_acc <- samples[, lapply(.SD, mean), .SDcols = str_dist_acc, by = "type"]; dist_acc
 
 
 ### EBITDA ---------------------------------------------------------------------

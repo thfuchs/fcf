@@ -4,7 +4,13 @@
 \alias{predict_arima}
 \title{Forecast the next n steps by ARIMA for each split}
 \usage{
-predict_arima(data, cv_setting, transform = NULL)
+predict_arima(
+  data,
+  cv_setting,
+  transform = NULL,
+  frequency = 4,
+  multiple_h = NULL
+)
 }
 \arguments{
 \item{data}{data.table object}
@@ -17,6 +23,11 @@ predict_arima(data, cv_setting, transform = NULL)
 }}
 
 \item{transform}{One of NULL (default) and "normalize"}
+
+\item{frequency}{time series frequency, e.g. 4 for quarters and 12 for months}
+
+\item{multiple_h}{NULL if forecast horizon equals cv_setting$n_test, else
+named list of forecast horizons for accuracy measures}
 }
 \value{
 list with accuracy and forecasts (point forecast and PI)
