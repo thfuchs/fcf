@@ -28,11 +28,58 @@ acc[
 str_point_acc <- c("smape", "rank_smape", "mase", "rank_mase")
 str_dist_acc <- c("smis", "rank_smis", "acd", "rank_acd")
 
-point_acc <- acc[, lapply(.SD, mean), .SDcols = str_point_acc, by = c("type", "h")]; point_acc
-dist_acc <- acc[, lapply(.SD, mean), .SDcols = str_dist_acc, by = c("type", "h")]; dist_acc
+point_acc <- data.table::dcast(
+  acc,
+  factor(type, levels = unique(type)) ~ factor(h, levels = unique(h)),
+  fun = mean,
+  value.var = str_point_acc
+)
+point_acc
+
+dist_acc <- data.table::dcast(
+  acc,
+  factor(type, levels = unique(type)) ~ factor(h, levels = unique(h)),
+  fun = mean,
+  value.var = str_dist_acc
+)
+dist_acc
 
 ### EBITDA ---------------------------------------------------------------------
 
 
 ### Net Income -----------------------------------------------------------------
 
+
+### Latex Tabular --------------------------------------------------------------
+
+knitr::kable(
+  point_acc,
+  format = "latex",
+  booktabs = TRUE,
+  digits = 1,
+  caption = "Forecasting performance acieved per forecasting horizon - Point Forecasts",
+  label = "label",
+  linesep = "",
+  format.args = list(big.mark = ",", nsmall = 1),
+  col.names = c("type", rep(c("1 Q", "1-4 Q", "5-6 Q", "Total"), 4))
+) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "hold_position")) %>%
+  kableExtra::add_header_above(c(
+    " " = 1, "Mean sMAPE" = 4, "sMAPE (rank)" = 4, "Mean MASE" = 4, "MASE (rank)" = 4))
+  # group_rows(index = c("EBIT" = 5, "EBITDA" = 5, "Net Income" = 5))
+
+knitr::kable(
+  dist_acc,
+  format = "latex",
+  booktabs = TRUE,
+  digits = 1,
+  caption = "Forecasting performance acieved per forecasting horizon - Prediction Intervals",
+  label = "label",
+  linesep = "",
+  format.args = list(big.mark = ",", nsmall = 1),
+  col.names = c("type", rep(c("1 Q", "1-4 Q", "5-6 Q", "Total"), 4))
+) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "hold_position")) %>%
+  kableExtra::add_header_above(c(
+    " " = 1, "Mean sMAPE" = 4, "sMAPE (rank)" = 4, "Mean MASE" = 4, "MASE (rank)" = 4))
+# group_rows(index = c("EBIT" = 5, "EBITDA" = 5, "Net Income" = 5))
