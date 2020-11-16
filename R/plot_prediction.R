@@ -7,7 +7,7 @@
 #' @param alpha line alpha value
 #' @param legend legend position
 #' @param scale NULL or two Date values to scale x-axis
-#' @param PI add prediction intervall? Then specify columns lo95 and hi95
+#' @param PI add prediction interval?
 #'
 #' @import ggplot2
 #'
@@ -48,6 +48,7 @@ plot_prediction <- function(
 #' @param title diagram title
 #' @param date_type string vector - one of "datetime", "date" or "character"
 #' @param ncol Number of columns
+#' @param PI add prediction interval?
 #'
 #' @return ggplot2 object
 #' @export

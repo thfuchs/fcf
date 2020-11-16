@@ -1,11 +1,11 @@
 #' baseline models to get benchmark results for advanced models
 #'
 #' Get results for the following simple forecasting methods:
-#' - Naive forecast (\link[forecast]{naive})
-#' - Seasonal naive forecast (\link[forecast]{snaive})
-#' - Mean forecast (\link[forecast]{meanf})
-#' - Simple exponential smoothing forecasts (\link[forecast]{ses})
-#' - Exponential smoothing with Holt's trend (\link[forecast]{holt})
+#'   - Naive forecast (\link[forecast]{naive})
+#'   - Seasonal naive forecast (\link[forecast]{snaive})
+#'   - Mean forecast (\link[forecast]{meanf})
+#'   - Simple exponential smoothing forecasts (\link[forecast]{ses})
+#'   - Exponential smoothing with Holt's trend (\link[forecast]{holt})
 #'
 #' @param data Univariate time series object
 #' @param test_size Numeric vector of length one specifying length of test set
@@ -20,10 +20,10 @@
 #' @examples
 #' # Calculate MAE and RMSE of simple forecasting models for Apple FCF
 #' apple <- fcf::ts_apple
-#' forecast_baseline(apple, h = NULL, acc_measure = c("MAE", "RMSE"))
+#' forecast_baseline(apple, acc_measure = c("MAE", "RMSE"))
 #'
 #' # Change forecast horizom to 4 years
-#' forecast_baseline(apple, h = 16, acc_measure = c("MAE", "RMSE"))
+#' forecast_baseline(apple, test_size = 16, acc_measure = c("MAE", "RMSE"))
 forecast_baseline <- function(data, test_size = NULL, acc_measure) {
 
   ### Checks -------------------------------------------------------------------

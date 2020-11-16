@@ -1,5 +1,5 @@
 companies <- as.character(data.table::fread(
-  file = "inst/data/pl_dow_30y.csv",
+  file = "inst/rawdata/pl_dow_30y.csv",
   na.strings = "#N/A N/A",
   header = FALSE,
   nrows = 1,
@@ -12,7 +12,7 @@ companies <- unique(companies)
 length(companies)
 
 raw <- data.table::fread(
-  file = "inst/data/pl_dow_30y.csv",
+  file = "inst/rawdata/pl_dow_30y.csv",
   na.strings = "#N/A N/A",
   skip = 1,
   colClasses=list(numeric=2:150),

@@ -15,7 +15,7 @@ ts_normalization <- function(DT, length_val, length_test, metrics = FALSE) {
   train <- DT[1:n,]
 
   mean <- mean(train$value)
-  std <- sd(train$value)
+  std <- stats::sd(train$value)
 
   data <- data.table(
     index = DT$index,

@@ -26,6 +26,12 @@ keras_sequential(
 
 \item{Y}{list of "train", "val", and "test" with 2D (keras) arrays}
 
+\item{model_type}{One of "basic", "gru" and "lstm"}
+
+\item{tsteps}{number of time steps for keras input shape}
+
+\item{return_model}{logical, return model?}
+
 \item{n_epochs}{default 200}
 
 \item{n_units}{32 (currently fixed)}
@@ -37,6 +43,8 @@ keras_sequential(
 \item{optimizer_type}{One of "rmsprop" (default) and "adam"}
 
 \item{dropout}{dropout rate}
+
+\item{recurrent_dropout}{Dropout rate applied to reccurent layer. Default 0}
 
 \item{patience}{when to stop early (default 10)}
 }

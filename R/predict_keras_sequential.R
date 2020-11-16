@@ -2,12 +2,17 @@
 #'
 #' @param DT univariate time series - data.table object with 2 variables:
 #'   "index" (Posixct date-time) and "value". Usually single DT from `rsample`
+#' @param model_type One of "basic", "gru" and "lstm"
 #' @param epochs number of epochs to train model (default to 300)
 #' @param lag_setting numeric vector specifying lags to train on
 #' @param length_val length of validation set
 #' @param length_test length of test set
+#' @param n_units 32 (currently fixed)
+#' @param optimizer_type One of "rmsprop" (default) and "adam"
 #' @param save_model save model? If TRUE, `file_path` required
 #' @param filepath path to save model. Must end with `.hdf5`
+#' @param forecast_future produce forecasts?
+#' @param forecast_length of `forecast_future`, specify forecast horizon
 #' @param ... additional parameters passed to Keras
 #'
 #' @import keras
@@ -191,7 +196,7 @@ predict_keras_sequential <- function(
       # Y_new$test
 
       for (i in 1:forecast_length) {
-        pred_new <- predict(model, X_pred)[1]
+        pred_new <- stats::predict(model, X_pred)[1]
 
         Y_pred <- c(pred_new, Y_pred)
         X_pred <- c(pred_new, X_pred[1:(n_lag-1)])
@@ -199,7 +204,7 @@ predict_keras_sequential <- function(
       }
 
       index_new <- as.POSIXct(seq(
-        as.Date(tail(DT$index, 1))+1,
+        as.Date(utils::tail(DT$index, 1))+1,
         length.out = length(Y_pred)+1, by = "quarter") - 1)[-1]
 
       data.frame(
@@ -210,10 +215,10 @@ predict_keras_sequential <- function(
     } else {
 
       # b. Forecast on test set
-      pred_out <- predict(model, X$test)[,1] #[,1,1] error for basic...
+      pred_out <- stats::predict(model, X$test)[,1] #[,1,1] error for basic...
 
       data.frame(
-        index = tail(DT$index, length(Y$test)),
+        index = utils::tail(DT$index, length(Y$test)),
         value = pred_out * norm_std + norm_mean
       )
     }

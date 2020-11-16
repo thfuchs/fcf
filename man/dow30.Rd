@@ -5,17 +5,18 @@
 \alias{dow30}
 \title{US index Dow Jones 30 quarterly cashflow data from 1990 to 2020.}
 \format{
-A data.table with 3600 rows and 8 variables:
+A data.table with 3600 rows and 9 variables (xz-compressed):
 \describe{
 \item{company}{Dow Jones listed companies in (August 2020)}
 \item{ticker}{bbreviation of company title}
 \item{date}{Publishing date of (quarterly) report in POSIX format.
 Month and year of interest}
-\item{fcf}{Free Cash Flow - Bloomberg: CF_FREE_CASH_FLOW}
-\item{cfo}{Operating Cash Flow - Bloomberg: CF_CASH_FROM_OPER}
-\item{cfi}{Investing Cash Flow - Bloomberg: CF_CASH_FROM_INV_ACT}
-\item{cff}{Financing Cash Flow - Bloomberg: CF_CASH_FROM_FNC_ACT}
-\item{cap}{Bloomberg: CF_CAP_EXPEND_PRPTY_ADD}
+\item{ebit}{Earnings before interest and taxes}
+\item{ebitda}{Earnings before intterest, taxes, depreciation and amortization}
+\item{net_income}{Net Income}
+\item{revenue}{Revenue}
+\item{is_adjusted_operating_income}{adjustment}
+\item{is_ni_available_to_common_adj}{adjusted net income}
 }
 }
 \usage{

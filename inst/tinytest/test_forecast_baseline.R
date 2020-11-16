@@ -6,11 +6,11 @@ apple <- fcf::ts_apple
 expect_equivalent(
   forecast_baseline(apple, test_size = NULL, acc_measure = "MAE"),
   list(
-    fc_naive = c(2818.67741935484, 6026.375),
-    fc_snaive = c(1477.76666666667, 2832.125),
-    fc_mean = c(5325.07990040742, 11568.9281914894),
-    fc_ses = c(2093.51614469345, 5375.66012724925),
-    fc_holt = c(2197.17212020866, 6520.34066856645)
+    fc_naive = c(1526.4020990991, 4100.125),
+    fc_snaive = c(1030.41442592593, 2025.375),
+    fc_mean = c(5436.21973469388, 12091.9524285714),
+    fc_ses = c(1312.16683455669, 3761.18603739016),
+    fc_holt = c(1376.71452624072, 3626.45927344563)
   )
 )
 
@@ -20,15 +20,15 @@ output <-
 expect_equivalent(
   output$fc_snaive,
   structure(list(
-    MAE = c(1477.76666666667, 2832.125),
-    ACF1 = c(0.47423302949862, 0.0422430876126011)
+    MAE = c(1030.41442592593, 2025.375),
+    ACF1 = c(0.750972255655298, -0.180061537209642)
   ), class = "data.frame", row.names = c("Training set", "Test set"))
 )
 expect_equivalent(
   output$fc_holt,
   structure(list(
-    MAE = c(2197.17212020866, 6520.34066856645),
-    ACF1 = c(-0.0103074264379004, -0.139309411878353)
+    MAE = c(1376.71452624072, 3626.45927344563),
+    ACF1 = c(0.0987116209006875, -0.182995418018833)
   ), class = "data.frame", row.names = c("Training set", "Test set"))
 )
 

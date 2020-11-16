@@ -1,11 +1,7 @@
 Package: fcf
 Title: Free Cash Flow Forecasting
-Version: 0.0.1
-Authors@R: 
-    person(given = "Thomas",
-           family = "Fuchs",
-           role = c("aut", "cre"),
-           email = "thomasfuchs-re@web.de")
+Version: 0.0.2
+Authors@R: person("Thomas", "Fuchs", email = "thomasfuchs-re@web.de", role = c("aut", "cre"))
 Description: Free Cash Flow Forecasting using naive forecasting methods up tp
   neural networks.
 License: MIT + file LICENSE
@@ -14,11 +10,20 @@ LazyData: true
 Imports: 
     keras,
     purrr,
+    magrittr,
+    rlang,
     data.table,
+    ggplot2,
+    cowplot,
     forecast,
-    uroot
+    rsample,
+    uroot,
+    testr
+Remotes:
+    thfuchs/testr
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 URL: https://github.com/thfuchs/fcf
 BugReports: https://github.com/thfuchs/fcf/issues
-Suggests: tinytest
+Depends: R (>= 4.0.0)
+Suggests: tinytest (>= 1.2.0)

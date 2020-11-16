@@ -28,7 +28,7 @@ plot_prediction(
 
 \item{scale}{NULL or two Date values to scale x-axis}
 
-\item{PI}{add prediction intervall? Then specify columns lo95 and hi95}
+\item{PI}{add prediction interval?}
 }
 \value{
 ggplot2 object

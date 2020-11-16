@@ -3,12 +3,16 @@
 #'
 #' @param X list of "train", "val", and "test" with 3D (keras) arrays
 #' @param Y list of "train", "val", and "test" with 2D (keras) arrays
+#' @param model_type One of "basic", "gru" and "lstm"
+#' @param tsteps number of time steps for keras input shape
+#' @param return_model logical, return model?
 #' @param n_epochs default 200
 #' @param loss default "mae"
 #' @param metrics default "mse"
 #' @param optimizer_type One of "rmsprop" (default) and "adam"
 #' @param dropout dropout rate
 #' @param n_units 32 (currently fixed)
+#' @param recurrent_dropout Dropout rate applied to reccurent layer. Default 0
 #' @param patience when to stop early (default 10)
 #'
 #' @import keras

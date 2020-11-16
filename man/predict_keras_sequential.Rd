@@ -24,6 +24,8 @@ predict_keras_sequential(
 \item{DT}{univariate time series - data.table object with 2 variables:
 "index" (Posixct date-time) and "value". Usually single DT from \code{rsample}}
 
+\item{model_type}{One of "basic", "gru" and "lstm"}
+
 \item{epochs}{number of epochs to train model (default to 300)}
 
 \item{lag_setting}{numeric vector specifying lags to train on}
@@ -32,9 +34,17 @@ predict_keras_sequential(
 
 \item{length_test}{length of test set}
 
+\item{n_units}{32 (currently fixed)}
+
+\item{optimizer_type}{One of "rmsprop" (default) and "adam"}
+
 \item{save_model}{save model? If TRUE, \code{file_path} required}
 
 \item{filepath}{path to save model. Must end with \code{.hdf5}}
+
+\item{forecast_future}{produce forecasts?}
+
+\item{forecast_length}{of \code{forecast_future}, specify forecast horizon}
 
 \item{...}{additional parameters passed to Keras}
 }

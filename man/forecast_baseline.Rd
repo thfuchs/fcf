@@ -32,8 +32,8 @@ Get results for the following simple forecasting methods:
 \examples{
 # Calculate MAE and RMSE of simple forecasting models for Apple FCF
 apple <- fcf::ts_apple
-forecast_baseline(apple, h = NULL, acc_measure = c("MAE", "RMSE"))
+forecast_baseline(apple, acc_measure = c("MAE", "RMSE"))
 
 # Change forecast horizom to 4 years
-forecast_baseline(apple, h = 16, acc_measure = c("MAE", "RMSE"))
+forecast_baseline(apple, test_size = 16, acc_measure = c("MAE", "RMSE"))
 }

@@ -22,6 +22,8 @@ keras_basic_sequential(
 
 \item{Y}{list of "train", "val", and "test" with 2D (keras) arrays}
 
+\item{return_model}{logical, return model?}
+
 \item{n_epochs}{default 200}
 
 \item{loss}{default "mae"}
@@ -37,8 +39,8 @@ keras_basic_sequential(
 \item{patience}{when to stop early (default 10)}
 }
 \value{
-evaluation scores for training, validation and test set
+evaluation scores for training, validation and test set and model (optional)
 }
 \description{
-Using \link\href{flags}{tfruns}
+Basic sequential NN by Keras framework
 }

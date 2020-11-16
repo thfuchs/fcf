@@ -18,6 +18,8 @@ plot_baselines(
 \item{data}{data.frame containing "index" (Date), "value" (numeric) and type
 (character - "Actual" and forecast type)}
 
+\item{title}{diagram title}
+
 \item{size}{line size}
 
 \item{alpha}{line alpha value}

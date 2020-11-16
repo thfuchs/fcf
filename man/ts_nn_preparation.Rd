@@ -26,6 +26,3 @@ The following steps are proceeded:
 \item Transformation to 3D arrays for Keras
 }
 }
-\examples{
-
-}

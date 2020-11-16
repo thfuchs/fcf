@@ -1,7 +1,5 @@
 #' Basic sequential NN by Keras framework
 #'
-#' Using \link[tfruns](flags)
-#'
 #' @param X list of "train", "val", and "test" with 3D (keras) arrays
 #' @param Y list of "train", "val", and "test" with 2D (keras) arrays
 #' @param n_epochs default 200
@@ -11,10 +9,11 @@
 #' @param dropout dropout rate
 #' @param n_units 32 (currently fixed)
 #' @param patience when to stop early (default 10)
+#' @param return_model logical, return model?
 #'
 #' @import keras
 #'
-#' @return evaluation scores for training, validation and test set
+#' @return evaluation scores for training, validation and test set and model (optional)
 #' @export
 keras_basic_sequential <- function(
   X, Y,

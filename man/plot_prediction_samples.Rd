@@ -23,6 +23,8 @@ plot_prediction_samples(
 \item{ncol}{Number of columns}
 
 \item{scale}{NULL or two Date values to scale x-axis}
+
+\item{PI}{add prediction interval?}
 }
 \value{
 ggplot2 object

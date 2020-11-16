@@ -2,6 +2,7 @@
 #'
 #' @param data data.frame containing "index" (Date), "value" (numeric) and type
 #'   (character - "Actual" and forecast type)
+#' @param title diagram title
 #' @param size line size
 #' @param alpha line alpha value
 #' @param colors named character vector to fit color to type

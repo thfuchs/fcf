@@ -1,9 +1,9 @@
 #' Timeseries data preparation for neural network Keras models
 #'
 #' The following steps are proceeded:
-#' - New columns "value_lagX", with X for #lags, specified by `lag_setting`
-#' - Split in train, validation and test split
-#' - Transformation to 3D arrays for Keras
+#'   - New columns "value_lagX", with X for #lags, specified by `lag_setting`
+#'   - Split in train, validation and test split
+#'   - Transformation to 3D arrays for Keras
 #'
 #' @param data balanced timeseries data
 #' @param lag_setting by how much is y lagged
@@ -12,9 +12,6 @@
 #'
 #' @return list of "X" and "Y" each containing "train", "val" and "test" arrays
 #' @export
-#'
-#' @examples
-#'
 ts_nn_preparation <- function(
   data,
   lag_setting = 1:4,

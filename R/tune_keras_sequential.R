@@ -96,8 +96,8 @@ tune_keras_sequential <- function(data, model_type, cv_setting, tuning_grid = NU
     )
 
     eval_mean <- eval_DT[, lapply(.SD, mean, na.rm=TRUE), by=type]
-    eval_std <- eval_DT[, lapply(.SD, sd, na.rm=TRUE), by=type]
-    eval_median <- eval_DT[, lapply(.SD, median, na.rm=TRUE), by=type]
+    eval_std <- eval_DT[, lapply(.SD, stats::sd, na.rm=TRUE), by=type]
+    eval_median <- eval_DT[, lapply(.SD, stats::median, na.rm=TRUE), by=type]
 
     return(list(
       evaluation = eval_DT,
