@@ -2,69 +2,74 @@
 
 # Initialization ---------------------------------------------------------------
 
-apple <- fcf::DT_apple
+data <- fcf::DT_unh
 
 tuning_grid <- list(
-  lags = list(one = 1, two = 1:2, four = 1:4),
+  lags = list(1, 1:2, 1:3, 1:4),
   optimizer = c("rmsprop", "adam"),
   n_epochs = 200,
-  dropout = c(0.1)
+  n_units = c(8, 16, 32, 64),
+  dropout = c(0, 0.1, 0.2, 0.3)
 )
 cv_setting <- list(
-  periods_train = 58,
-  periods_val = 12,
+  periods_train = 40,
+  periods_val = 6,
   periods_test = 6,
-  skip_span = 7
+  skip_span = 5
 )
 
 # Tuning -----------------------------------------------------------------------
 
 # library(zeallot)
-# c(results, min_params) %<-% tune_keras_sequential(apple, cv_setting, tuning_grid)
-# save(results, min_params, file = "inst/results/20200909_tuning_basicNN.rda")
+# c(results, min_params) %<-% tune_keras_sequential(
+#     data,
+#     model_type = "basic",
+#     cv_setting = cv_setting,
+#     tuning_grid = tuning_grid
+# )
+# save(results, min_params, file = "inst/results/20201116_tuning_basicNN.rda")
 
-load(file = "inst/results/20200909_tuning_basicNN.rda")
+load(file = "inst/results/20201116_tuning_basicNN.rda")
 
 # Plot tuning results
 library(ggplot2)
-eval_DT <- results[[min_params$index]]$evaluation[type == "test",]
+eval_DT <- results[[min_params$index]][type == "test",]
 
-eval_DT %>%
-  ggplot(aes(mse)) +
-  geom_histogram(aes(y = ..density..), fill = "grey", bins = 12) +
+ggplot(eval_DT, aes(mse)) +
+  geom_histogram(aes(y = ..density..), fill = "grey", col = "white", bins = 12) +
   geom_density(alpha = 0.5, color = "darkgrey", fill = "grey") +
   theme_bw() +
   ggtitle("Histogram of Mean Squared Error (MSE)")
 
 # Train cross validated data using best performing model -----------------------
 
-# n_initial <- cv_setting$periods_train + cv_setting$periods_val
-# rolling_origin_resamples <- rsample::rolling_origin(
-#   apple,
-#   initial = n_initial,
-#   assess = cv_setting$periods_test,
-#   cumulative = FALSE,
-#   skip       = cv_setting$skip_span
-# )
-# basic <- purrr::map(
-#   rolling_origin_resamples$splits,
-#   function(split) {
-#     DT_train <- rsample::analysis(split)[1:cv_setting$periods_train]
-#     DT_val <- rsample::analysis(split)[(cv_setting$periods_train+1):.N]
-#     DT_test <- rsample::assessment(split)
-#
-#     DT <- rbind(DT_train, DT_val, DT_test)
-#     predict_keras_sequential(
-#       DT,
-#       lag_setting = min_params$lags,
-#       length_val = cv_setting$periods_val,
-#       length_test = cv_setting$periods_test,
-#       optimizer_type = min_params$optimizer,
-#       save_model = FALSE
-#     )
-#   }
-# )
-# saveRDS(basic, file = "inst/results/20200909_eval_pred_basicNN.rds")
+n_initial <- cv_setting$periods_train + cv_setting$periods_val
+rolling_origin_resamples <- rsample::rolling_origin(
+  data,
+  initial = n_initial,
+  assess = cv_setting$periods_test,
+  cumulative = FALSE,
+  skip       = cv_setting$skip_span
+)
+basic <- purrr::map(
+  rolling_origin_resamples$splits,
+  function(split) {
+    DT_train <- rsample::analysis(split)[1:cv_setting$periods_train]
+    DT_val <- rsample::analysis(split)[(cv_setting$periods_train+1):.N]
+    DT_test <- rsample::assessment(split)
+
+    DT <- rbind(DT_train, DT_val, DT_test)
+    predict_keras_sequential(
+      DT,
+      lag_setting = min_params$lags,
+      length_val = cv_setting$periods_val,
+      length_test = cv_setting$periods_test,
+      optimizer_type = min_params$optimizer,
+      save_model = FALSE
+    )
+  }
+)
+saveRDS(basic, file = "inst/results/20200909_eval_pred_basicNN.rds")
 
 basic <- readRDS("inst/results/20200909_eval_pred_basicNN.rds")
 
