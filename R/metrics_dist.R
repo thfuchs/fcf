@@ -1,9 +1,14 @@
-#' Absolute coverage difference (ACD)
+# Absolute coverage difference (ACD)
+
+#' Prediction Interval (PI) Accuracy Measures
 #'
 #' @param actual actual values (only test set)
 #' @param lower lower bound of prediction interval
 #' @param upper upper bound of prediction interval
 #' @param level level used for prediction interval construction
+#'
+#' @section acd:
+#' Absolute coverage difference (ACD)
 #'
 #' @return vector of length 1
 #' @export
@@ -23,7 +28,8 @@ acd <- function(actual, lower, upper, level) {
   return(ACD)
 }
 
-#' Scaled Mean Interval Score, scaled according to M4 Forecasting competition
+# Scaled Mean Interval Score
+
 #'
 #' @param data actual values (containing both train and evaluation values)
 #' @param lower lower bound of prediction interval
@@ -32,12 +38,15 @@ acd <- function(actual, lower, upper, level) {
 #' @param m frequency, e.g. 12 for monthly and 4 for quarterly series
 #' @param level level used for prediction interval construction
 #'
-#' @return vector of length 1
+#' @section smis:
+#' Scaled Mean Interval Score, scaled according to M4 Forecasting competition
+#'
 #' @export
 #' @rdname metrics_dist
 #'
 #' @references \itemize{
-#'   \item \link[greybox]{sMIS}
+#'   \item 	Svetunkov, I., Sagaert, Y. R. (2020). greybox: Toolbox for Model
+#'   Building and Forecasting. \url{https://cran.r-project.org/package=greybox}
 #'   \item Gneiting, T., & Raftery, A. E. (2007). Strictly proper scoring rules,
 #'    prediction, and estimation. Journal of the American Statistical Association,
 #'    102(477), 359–378. \url{https://doi.org/10.1198/016214506000001437}

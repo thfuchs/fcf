@@ -4,8 +4,7 @@
 \alias{mase}
 \alias{mape}
 \alias{smape}
-\title{Mean Absolute Scaled Error (MASE), scaled according to M4 Forecasting
-competition}
+\title{Point Forecast Accuracy Measures}
 \usage{
 mase(data, forecast, m)
 
@@ -24,22 +23,30 @@ smape(actual, forecast)
 }
 \value{
 vector of length 1
-
-
-
-
 }
 \description{
+Point Forecast Accuracy Measures
+}
+\section{mase}{
+
 Mean Absolute Scaled Error (MASE), scaled according to M4 Forecasting
 competition
+}
+
+\section{mape}{
 
 Mean Absolute Percentage Error (MAPE)
+}
+
+\section{smape}{
 
 symmetric Mean Absolute Percentage Error (sMAPE)
 }
+
 \references{
 \itemize{
-\item \link[greybox]{sMIS}
+\item 	Svetunkov, I., Sagaert, Y. R. (2020). greybox: Toolbox for Model
+Building and Forecasting. \url{https://cran.r-project.org/package=greybox}
 \item Makridakis, S., Spiliotis, E., & Assimakopoulos, V. (2020). The M4
 Competition: 100,000 time series and 61 forecasting methods. International
 Journal of Forecasting, 36(1), 54–74. \url{https://doi.org/10.1016/j.ijforecast.2019.04.014}

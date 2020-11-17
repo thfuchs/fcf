@@ -3,7 +3,7 @@
 \name{acd}
 \alias{acd}
 \alias{smis}
-\title{Absolute coverage difference (ACD)}
+\title{Prediction Interval (PI) Accuracy Measures}
 \usage{
 acd(actual, lower, upper, level)
 
@@ -26,14 +26,20 @@ smis(data, lower, upper, h, m, level)
 }
 \value{
 vector of length 1
-
-vector of length 1
 }
 \description{
+Prediction Interval (PI) Accuracy Measures
+}
+\section{acd}{
+
 Absolute coverage difference (ACD)
+}
+
+\section{smis}{
 
 Scaled Mean Interval Score, scaled according to M4 Forecasting competition
 }
+
 \references{
 \itemize{
 \item Makridakis, S., Spiliotis, E., & Assimakopoulos, V. (2020). The M4
@@ -42,7 +48,8 @@ Journal of Forecasting, 36(1), 54–74. \url{https://doi.org/10.1016/j.ijforecas
 }
 
 \itemize{
-\item \link[greybox]{sMIS}
+\item 	Svetunkov, I., Sagaert, Y. R. (2020). greybox: Toolbox for Model
+Building and Forecasting. \url{https://cran.r-project.org/package=greybox}
 \item Gneiting, T., & Raftery, A. E. (2007). Strictly proper scoring rules,
 prediction, and estimation. Journal of the American Statistical Association,
 102(477), 359–378. \url{https://doi.org/10.1198/016214506000001437}
