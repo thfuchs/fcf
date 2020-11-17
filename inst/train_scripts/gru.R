@@ -2,7 +2,7 @@
 
 # Initialization ---------------------------------------------------------------
 
-apple <- fcf::DT_apple
+data <- fcf::DT_apple
 
 tuning_grid <- list(
   lags = list(1, 1:2, 1:3, 1:4),
@@ -14,7 +14,7 @@ tuning_grid <- list(
 cv_setting <- list(
   periods_train = 40,
   periods_val = 8,
-  periods_test = 4,
+  periods_test = 8,
   skip_span = 7
 )
 
@@ -44,38 +44,38 @@ eval_DT %>%
 
 # Train cross validated data using best performing model -----------------------
 
-# n_initial <- cv_setting$periods_train + cv_setting$periods_val
-# rolling_origin_resamples <- rsample::rolling_origin(
-#   apple,
-#   initial = n_initial,
-#   assess = cv_setting$periods_test,
-#   cumulative = FALSE,
-#   skip       = cv_setting$skip_span
-# )
-# basic <- purrr::map(
-#   rolling_origin_resamples$splits,
-#   function(split) {
-#     DT_train <- rsample::analysis(split)[1:cv_setting$periods_train]
-#     DT_val <- rsample::analysis(split)[(cv_setting$periods_train+1):.N]
-#     DT_test <- rsample::assessment(split)
-#
-#     DT <- rbind(DT_train, DT_val, DT_test)
-#     predict_keras_sequential(
-#       model_type = "gru",
-#       DT,
-#       lag_setting = min_params$lags,
-#       length_val = cv_setting$periods_val,
-#       length_test = cv_setting$periods_test,
-#       n_units = min_params$n_units,
-#       epochs = min_params$n_epochs,
-#       optimizer_type = min_params$optimizer,
-#       dropout = min_params$dropout,
-#       recurrent_dropout = min_params$dropout,
-#       save_model = FALSE
-#     )
-#   }
-# )
-# saveRDS(basic, file = "inst/results/20200915_eval_pred_gru.rds")
+n_initial <- cv_setting$periods_train + cv_setting$periods_val
+rolling_origin_resamples <- rsample::rolling_origin(
+  apple,
+  initial = n_initial,
+  assess = cv_setting$periods_test,
+  cumulative = FALSE,
+  skip       = cv_setting$skip_span
+)
+basic <- purrr::map(
+  rolling_origin_resamples$splits,
+  function(split) {
+    DT_train <- rsample::analysis(split)[1:cv_setting$periods_train]
+    DT_val <- rsample::analysis(split)[(cv_setting$periods_train+1):.N]
+    DT_test <- rsample::assessment(split)
+
+    DT <- rbind(DT_train, DT_val, DT_test)
+    predict_keras_sequential(
+      model_type = "gru",
+      DT,
+      lag_setting = min_params$lags,
+      length_val = cv_setting$periods_val,
+      length_test = cv_setting$periods_test,
+      n_units = min_params$n_units,
+      epochs = min_params$n_epochs,
+      optimizer_type = min_params$optimizer,
+      dropout = min_params$dropout,
+      recurrent_dropout = min_params$dropout,
+      save_model = FALSE
+    )
+  }
+)
+saveRDS(basic, file = "inst/results/20200915_eval_pred_gru.rds")
 
 basic <- readRDS("inst/results/20200915_eval_pred_gru.rds")
 
