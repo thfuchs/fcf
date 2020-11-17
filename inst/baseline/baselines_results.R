@@ -40,13 +40,24 @@ str_dist_acc <- c("smis", "acd")
 
 samples <- purrr::map_df(
   fc_baselines_ebit,
-  ~ purrr::map_df(.x, "accuracy")[
-    , lapply(.SD, mean), by = type, .SDcols = c(str_point_acc, str_dist_acc)],
-  .id = "id"
+  ~ purrr::map_df(.x, "accuracy", .id = "split"),
+  .id = "company"
 )
-point_acc <- samples[, lapply(.SD, mean), .SDcols = str_point_acc, by = "type"]; point_acc
-dist_acc <- samples[, lapply(.SD, mean), .SDcols = str_dist_acc, by = "type"]; dist_acc
+# Point Accuracy Measure
+data.table::dcast(
+  samples,
+  factor(type, levels = unique(type)) ~ factor(h, levels = unique(h)),
+  fun = mean,
+  value.var = str_point_acc
+)
 
+# Distribution Accuracy Measure
+data.table::dcast(
+  samples,
+  factor(type, levels = unique(type)) ~ factor(h, levels = unique(h)),
+  fun = mean,
+  value.var = str_dist_acc
+)
 
 ### EBITDA ---------------------------------------------------------------------
 

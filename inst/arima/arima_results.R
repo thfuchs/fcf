@@ -31,7 +31,7 @@ multiple_h <- list(short = 1, medium = 1:4, long = 5:6, total = 1:6)
 # save(fc_arima_ebit, file = "inst/arima/fc_arima_ebit.rda")
 load(file = "inst/arima/fc_arima_ebit.rda")
 
-# Accuracy Measures
+# Accuracy Measures (Overall average)
 str_point_acc <- c("smape", "mase")
 str_dist_acc <- c("smis", "acd")
 
@@ -43,6 +43,28 @@ samples <- purrr::map_df(
 )
 point_acc <- samples[, lapply(.SD, mean), .SDcols = str_point_acc, by = "type"]; point_acc
 dist_acc <- samples[, lapply(.SD, mean), .SDcols = str_dist_acc, by = "type"]; dist_acc
+
+# Accuracy Measures (per h)
+acc <- purrr::map_df(
+  fc_baselines_ebit,
+  ~ purrr::map_df(.x, "accuracy", .id = "split"),
+  .id = "company"
+)
+# Point Accuracy Measure
+data.table::dcast(
+  acc,
+  factor(type, levels = unique(type)) ~ factor(h, levels = unique(h)),
+  fun = mean,
+  value.var = str_point_acc
+)
+
+# Distribution Accuracy Measure
+data.table::dcast(
+  acc,
+  factor(type, levels = unique(type)) ~ factor(h, levels = unique(h)),
+  fun = mean,
+  value.var = str_dist_acc
+)
 
 # Chart for single ticker (e.g. AAPL)
 plot_prediction_samples(
