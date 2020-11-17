@@ -2,6 +2,7 @@
 
 export(acd)
 export(check_acf)
+export(evaluate_keras_sequential)
 export(forecast_baseline)
 export(keras_basic_sequential)
 export(keras_sequential)
