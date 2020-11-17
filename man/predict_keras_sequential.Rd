@@ -6,10 +6,11 @@
 \usage{
 predict_keras_sequential(
   DT,
-  model_type = "basic",
+  model_type = "simple",
+  multiple_h = NULL,
   epochs = 200,
   lag_setting = 1:4,
-  length_val = 16,
+  length_val = 8,
   length_test = 8,
   n_units = 32,
   optimizer_type = "rmsprop",
@@ -24,7 +25,10 @@ predict_keras_sequential(
 \item{DT}{univariate time series - data.table object with 2 variables:
 "index" (Posixct date-time) and "value". Usually single DT from \code{rsample}}
 
-\item{model_type}{One of "basic", "gru" and "lstm"}
+\item{model_type}{One of "simple", "gru" and "lstm"}
+
+\item{multiple_h}{NULL if forecast horizon equals cv_setting$n_test, else
+named list of forecast horizons for accuracy measures}
 
 \item{epochs}{number of epochs to train model (default to 300)}
 

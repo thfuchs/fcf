@@ -10,15 +10,15 @@ keras_sequential(
   Y,
   model_type,
   tsteps,
-  return_model = FALSE,
   n_epochs = 200,
   n_units = 32,
-  loss = "mae",
-  metrics = c("mse"),
+  loss = "mse",
+  metrics = NULL,
   optimizer_type = "rmsprop",
   dropout = 0,
   recurrent_dropout = 0,
-  patience = NULL
+  patience = NULL,
+  live_plot = FALSE
 )
 }
 \arguments{
@@ -29,8 +29,6 @@ keras_sequential(
 \item{model_type}{One of "basic", "gru" and "lstm"}
 
 \item{tsteps}{number of time steps for keras input shape}
-
-\item{return_model}{logical, return model?}
 
 \item{n_epochs}{default 200}
 

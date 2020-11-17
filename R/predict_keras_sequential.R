@@ -2,7 +2,9 @@
 #'
 #' @param DT univariate time series - data.table object with 2 variables:
 #'   "index" (Posixct date-time) and "value". Usually single DT from `rsample`
-#' @param model_type One of "basic", "gru" and "lstm"
+#' @param model_type One of "simple", "gru" and "lstm"
+#' @param multiple_h NULL if forecast horizon equals cv_setting$n_test, else
+#'   named list of forecast horizons for accuracy measures
 #' @param epochs number of epochs to train model (default to 300)
 #' @param lag_setting numeric vector specifying lags to train on
 #' @param length_val length of validation set
@@ -37,10 +39,11 @@
 #' }
 predict_keras_sequential <- function(
   DT,
-  model_type = "basic",
+  model_type = "simple",
+  multiple_h = NULL,
   epochs = 200,
   lag_setting = 1:4,
-  length_val = 16,
+  length_val = 8,
   length_test = 8,
   n_units = 32,
   optimizer_type = "rmsprop",
@@ -89,14 +92,15 @@ predict_keras_sequential <- function(
       paste(class(forecast_length), collapse = " / ")),
     class = "predict_keras_sequential_forecast_length_error"
   )
+  testr::check_class(multiple_h, "list", "predict_baselines", allowNULL = TRUE)
 
   # "DT" contains columns "index" and "value" only (univariate time series)
   if (all(names(DT)[order(names(DT))] != c("index", "value"))) rlang::abort(
     message = "`DT` must be a data.frame with 2 columns only: \"index\" and \"value\"",
     class = "predict_keras_sequential_DT_error"
   )
-  # "model_type" must be one of "basic" or "gru"
-  model_type <- rlang::arg_match(model_type, c("basic", "gru", "lstm"))
+  # "model_type" must be one of "simple", "gru" or "lstm"
+  model_type <- rlang::arg_match(model_type, c("simple", "gru", "lstm"))
 
   # Length 1 for "model_type", "epochs", "length_val", "length_test" and "save_model"
   if (length(epochs) != 1) rlang::abort(
@@ -157,85 +161,75 @@ predict_keras_sequential <- function(
     )
 
     ### Model
-    c(model, metrics$train, metrics$val, metrics$test) %<-%
-      if (model_type == "basic") {
-        keras_basic_sequential(
-          X, Y,
-          n_epochs = epochs,
-          optimizer_type = optimizer_type,
-          patience = 10,
-          return_model = TRUE
-        )
-      } else if (model_type == "gru" || model_type == "lstm") {
-        keras_sequential(
-          X, Y,
-          model_type = model_type,
-          tsteps = length(lag_setting),
-          n_epochs = epochs,
-          n_units = n_units,
-          optimizer_type = optimizer_type,
-          return_model = TRUE,
-          ...
-        )
-      }
+    model <- keras_sequential(
+      X, Y,
+      model_type     = model_type,
+      tsteps         = length(lag_setting),
+      n_epochs       = epochs,
+      n_units        = n_units,
+      optimizer_type = optimizer_type,
+      ...
+    )
 
     # Save Model
     if (save_model) save_model_hdf5(model, filepath, overwrite = FALSE)
 
-    ### Prediction
+    ### Forecast
     norm_std <- metrics$normalization$scale
     norm_mean <- metrics$normalization$center
 
-    pred_df <- if (forecast_future) {
-
-      # a. Future Forecast (beyond data)
-      n_lag <- length(lag_setting)
-      Y_pred <- NULL
-      X_pred <- data[.N:(.N-n_lag+1), value]
-      dim(X_pred) <- c(1, n_lag, 1)
-      # Y_new$test
-
-      for (i in 1:forecast_length) {
-        pred_new <- stats::predict(model, X_pred)[1]
-
-        Y_pred <- c(pred_new, Y_pred)
-        X_pred <- c(pred_new, X_pred[1:(n_lag-1)])
-        dim(X_pred) <- c(1, n_lag, 1)
-      }
-
-      index_new <- as.POSIXct(seq(
-        as.Date(utils::tail(DT$index, 1))+1,
-        length.out = length(Y_pred)+1, by = "quarter") - 1)[-1]
-
-      data.frame(
-        index   = index_new,
-        value   = Y_pred * norm_std + norm_mean
-      )
-
-    } else {
+    # pred_df <- if (forecast_future) {
+    #
+    #   # a. Future Forecast (beyond data)
+    #   n_lag <- length(lag_setting)
+    #   Y_pred <- NULL
+    #   X_pred <- data[.N:(.N-n_lag+1), value]
+    #   dim(X_pred) <- c(1, n_lag, 1)
+    #   # Y_new$test
+    #
+    #   for (i in 1:forecast_length) {
+    #     pred_new <- stats::predict(model, X_pred)[1]
+    #
+    #     Y_pred <- c(pred_new, Y_pred)
+    #     X_pred <- c(pred_new, X_pred[1:(n_lag-1)])
+    #     dim(X_pred) <- c(1, n_lag, 1)
+    #   }
+    #
+    #   index_new <- as.POSIXct(seq(
+    #     as.Date(utils::tail(DT$index, 1))+1,
+    #     length.out = length(Y_pred)+1, by = "quarter") - 1)[-1]
+    #
+    #   data.frame(
+    #     index   = index_new,
+    #     value   = Y_pred * norm_std + norm_mean
+    #   )
+    #
+    # } else {
 
       # b. Forecast on test set
-      pred_out <- stats::predict(model, X$test)[,1] #[,1,1] error for basic...
+    fc_sequential <- stats::predict(model, X$test)[,1]
 
-      data.frame(
-        index = utils::tail(DT$index, length(Y$test)),
-        value = pred_out * norm_std + norm_mean
-      )
-    }
+    fc <- data.table::data.table(
+      index = utils::tail(DT$index, length(Y$test)),
+      value = fc_sequential * norm_std + norm_mean,
+      lo95 = NULL,
+      hi95 = NULL
+    )
+    # }
 
     # Combine actual data with predictions
-    DT$key <- "actual"
-    pred_df$key <- "predict"
+    DT[, key := "actual"]
+    fc[, `:=` (key = "predict", type = model_type)]
 
-    ret <- rbind(DT, pred_df) %>%
-      dplyr::arrange(key, index) %>%
-      dplyr::mutate(key = forcats::as_factor(key))
+    fc <- rbind(DT, fc, fill = TRUE)
+    if (!is.null(fc[["ticker"]])) fc[, ticker := unique(DT$ticker)]
 
-    return(list(predictions = ret, metrics = metrics))
+    ### Output
+    return(fc)
   }
 
   safe_sequential <- purrr::possibly(
-    sequential_prediction, otherwise = NA, quiet = FALSE)
+    sequential_prediction, otherwise = NULL, quiet = FALSE)
 
   safe_sequential()
 }

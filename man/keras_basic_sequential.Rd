@@ -9,12 +9,14 @@ keras_basic_sequential(
   Y,
   return_model = FALSE,
   n_epochs = 200,
-  loss = "mae",
-  metrics = c("mse"),
+  loss = "mse",
+  metrics = NULL,
   optimizer_type = "rmsprop",
   dropout = 0.2,
+  recurrent_dropout = 0,
   n_units = 32,
-  patience = 10
+  patience = 10,
+  live_plot = FALSE
 )
 }
 \arguments{
@@ -33,6 +35,8 @@ keras_basic_sequential(
 \item{optimizer_type}{One of "rmsprop" (default) and "adam"}
 
 \item{dropout}{dropout rate}
+
+\item{recurrent_dropout}{Dropout rate applied to reccurent layer. Default 0}
 
 \item{n_units}{32 (currently fixed)}
 

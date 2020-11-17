@@ -2,14 +2,15 @@
 #'
 #' @param X list of "train", "val", and "test" with 3D (keras) arrays
 #' @param Y list of "train", "val", and "test" with 2D (keras) arrays
+#' @param return_model logical, return model?
 #' @param n_epochs default 200
 #' @param loss default "mae"
 #' @param metrics default "mse"
 #' @param optimizer_type One of "rmsprop" (default) and "adam"
 #' @param dropout dropout rate
+#' @param recurrent_dropout Dropout rate applied to reccurent layer. Default 0
 #' @param n_units 32 (currently fixed)
 #' @param patience when to stop early (default 10)
-#' @param return_model logical, return model?
 #'
 #' @import keras
 #'
@@ -19,12 +20,14 @@ keras_basic_sequential <- function(
   X, Y,
   return_model = FALSE,
   n_epochs = 200,
-  loss = "mae",
-  metrics = c("mse"),
+  loss = "mse",
+  metrics = NULL,
   optimizer_type = "rmsprop",
   dropout = 0.2,
+  recurrent_dropout = 0,
   n_units = 32,
-  patience = 10
+  patience = 10,
+  live_plot = FALSE
 ) {
 
   # Hyperparameter -------------------------------------------------------------
@@ -32,6 +35,7 @@ keras_basic_sequential <- function(
   if (is.null(n_epochs)) n_epochs <- 200
   if (is.null(optimizer_type)) optimizer_type <- "rmsprop"
   if (is.null(dropout)) dropout <- 0.2
+  if (is.null(recurrent_dropout)) recurrent_dropout <- 0
   if (is.null(patience)) patience <- 10
 
   optimizer <- switch(
@@ -63,10 +67,11 @@ keras_basic_sequential <- function(
     steps_per_epoch = 1,
     epochs          = n_epochs,
     batch_size      = NULL,
-    verbose         = 1,
+    verbose         = 0,
     shuffle         = FALSE,
     validation_data = list(X$val, Y$val),
-    callbacks       = callbacks
+    callbacks       = callbacks,
+    view_metrics    = live_plot
   )
 
   output <- list(

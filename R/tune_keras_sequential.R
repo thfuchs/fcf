@@ -65,8 +65,8 @@ tune_keras_sequential <- function(data, model_type, cv_setting, tuning_grid = NU
             X, Y,
             n_epochs = n_epochs,
             optimizer_type = optimizer,
-            patience = patience,
-            return_model = TRUE
+            return_model = TRUE,
+            ...
           )
         } else if (model_type == "gru" || model_type == "lstm") {
           keras_sequential(
@@ -95,16 +95,17 @@ tune_keras_sequential <- function(data, model_type, cv_setting, tuning_grid = NU
       eval_test[, type := "test"]
     )
 
-    eval_mean <- eval_DT[, lapply(.SD, mean, na.rm=TRUE), by=type]
-    eval_std <- eval_DT[, lapply(.SD, stats::sd, na.rm=TRUE), by=type]
-    eval_median <- eval_DT[, lapply(.SD, stats::median, na.rm=TRUE), by=type]
-
-    return(list(
-      evaluation = eval_DT,
-      mean = eval_mean,
-      std = eval_std,
-      median = eval_median
-    ))
+    # eval_mean <- eval_DT[, lapply(.SD, mean, na.rm=TRUE), by=type]
+    # eval_std <- eval_DT[, lapply(.SD, stats::sd, na.rm=TRUE), by=type]
+    # eval_median <- eval_DT[, lapply(.SD, stats::median, na.rm=TRUE), by=type]
+    #
+    # return(list(
+    #   evaluation = eval_DT,
+    #   mean = eval_mean,
+    #   std = eval_std,
+    #   median = eval_median
+    # ))
+    return(eval_DT)
   }
 
   safe_run <- purrr::possibly(run, otherwise = NA, quiet = FALSE)
@@ -125,10 +126,10 @@ tune_keras_sequential <- function(data, model_type, cv_setting, tuning_grid = NU
       )
     })
 
-  results_DT <- tune_results %>%
-    purrr::compact() %>%
-    purrr::map("mean") %>%
-    purrr::map_df(~ .x[.x$type == "test",])
+  results_DT <- purrr::map_df(
+    purrr::compact(tune_results),
+    ~ .x[type == "test", lapply(.SD, mean, na.rm=TRUE), by = type][, -1]
+  )
 
   min_index <- which.min(results_DT$loss)
   min_tune_params <- purrr::cross(tuning_grid)[[min_index]]
