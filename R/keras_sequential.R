@@ -6,13 +6,12 @@
 #' @param model_type One of "basic", "gru" and "lstm"
 #' @param tsteps number of time steps for keras input shape
 #' @param n_epochs default 200
-#' @param loss default "mae"
-#' @param metrics default "mse"
+#' @param loss default "mse"
+#' @param metrics default NULL
 #' @param optimizer_type One of "rmsprop" (default) and "adam"
 #' @param dropout dropout rate
 #' @param recurrent_dropout Dropout rate applied to reccurent layer. Default 0
 #' @param n_units 32 (currently fixed)
-#' @param patience when to stop early (default 10)
 #'
 #' @import keras
 #'
@@ -29,6 +28,7 @@ keras_sequential <- function(
   optimizer_type = "rmsprop",
   dropout = 0,
   recurrent_dropout = 0,
+  learning_rate = 0.001,
   patience = NULL,
   live_plot = FALSE
 ) {
@@ -44,12 +44,8 @@ keras_sequential <- function(
 
   optimizer <- switch(
     optimizer_type,
-    adam = optimizer_adam(),
-    rmsprop = optimizer_rmsprop()
-  )
-
-  callbacks <- list(
-    callback_early_stopping(patience = patience)
+    adam = optimizer_adam(lr = learning_rate),
+    rmsprop = optimizer_rmsprop(lr = learning_rate)
   )
 
   # Training and Evaluation ----------------------------------------------------
@@ -102,8 +98,7 @@ keras_sequential <- function(
     batch_size      = NULL,
     verbose         = 0,
     shuffle         = FALSE,
-    validation_data = list(X$val, Y$val),
-    callbacks       = callbacks,
+    validation_data = if (dim(X$val)[1] > 0) list(X$val, Y$val),
     view_metrics    = live_plot
   )
 
