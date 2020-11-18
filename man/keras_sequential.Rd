@@ -17,6 +17,7 @@ keras_sequential(
   optimizer_type = "rmsprop",
   dropout = 0,
   recurrent_dropout = 0,
+  learning_rate = 0.001,
   patience = NULL,
   live_plot = FALSE
 )
@@ -34,17 +35,15 @@ keras_sequential(
 
 \item{n_units}{32 (currently fixed)}
 
-\item{loss}{default "mae"}
+\item{loss}{default "mse"}
 
-\item{metrics}{default "mse"}
+\item{metrics}{default NULL}
 
 \item{optimizer_type}{One of "rmsprop" (default) and "adam"}
 
 \item{dropout}{dropout rate}
 
 \item{recurrent_dropout}{Dropout rate applied to reccurent layer. Default 0}
-
-\item{patience}{when to stop early (default 10)}
 }
 \value{
 evaluation scores for training, validation and test set
