@@ -2,15 +2,26 @@
 
 # Initialization ---------------------------------------------------------------
 
-data <- fcf::DT_unh
+unh <- fcf::DT_unh
 
-tuning_grid <- list(
-  lags = list(1, 1:2, 1:3, 1:4),
-  optimizer = c("rmsprop", "adam"),
-  n_epochs = 200,
-  n_units = c(16, 32, 64),
-  dropout = c(0.1, 0.2, 0.3)
+tuning_bounds <- list(
+  lag_1 = c(1L, 4L),
+  lag_2 = c(1L, 4L),
+  n_units = c(8L, 32L),
+  n_epochs = c(10L, 50L),
+  optimizer_type = c(1L, 2L), # 1 = "rmsprop", 2 = "adam"
+  dropout = c(0, 0.7),
+  recurrent_dropout = c(0, 0.7),
+  learning_rate = c(0.001, 0.01)
 )
+
+# tuning_grid <- list(
+#   lags = list(1, 1:2, 1:3, 1:4),
+#   optimizer = c("rmsprop", "adam"),
+#   n_epochs = 200,
+#   n_units = c(16, 32, 64),
+#   dropout = c(0.1, 0.2, 0.3)
+# )
 cv_setting <- list(
   periods_train = 40,
   periods_val = 6,
@@ -24,10 +35,10 @@ frequency <- 4
 
 # library(zeallot)
 # c(results, min_params) %<-% tune_keras_sequential(
-#   data = data,
+#   data = unh,
 #   model_type = "simple",
 #   cv_setting = cv_setting,
-#   tuning_grid = tuning_grid
+#   tuning_bounds = tuning_bounds
 # )
 # save(results, min_params, file = "inst/results/20200915_tuning_simple.rda")
 

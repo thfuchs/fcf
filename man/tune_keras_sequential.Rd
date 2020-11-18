@@ -2,10 +2,10 @@
 % Please edit documentation in R/tune_keras_sequential.R
 \name{tune_keras_sequential}
 \alias{tune_keras_sequential}
-\title{Run keras basic model over all tuning parameters and select best performing
+\title{Tune keras basic model with Bayes Optimization and select best performing
 model}
 \usage{
-tune_keras_sequential(data, model_type, cv_setting, tuning_grid = NULL)
+tune_keras_sequential(data, model_type, cv_setting, tuning_bounds)
 }
 \arguments{
 \item{data}{Univariate time series (data.frame) with columns index and value}
@@ -21,7 +21,7 @@ tune_keras_sequential(data, model_type, cv_setting, tuning_grid = NULL)
 list of "results" and "min_params"
 }
 \description{
-Run keras basic model over all tuning parameters and select best performing
+Tune keras basic model with Bayes Optimization and select best performing
 model
 }
 \section{Tuning Grid}{

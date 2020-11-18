@@ -1,4 +1,4 @@
-#' Run keras basic model over all tuning parameters and select best performing
+#' Tune keras basic model with Bayes Optimization and select best performing
 #' model
 #'
 #' @param data Univariate time series (data.frame) with columns index and value
@@ -19,7 +19,7 @@
 #'
 #' @return list of "results" and "min_params"
 #' @export
-tune_keras_sequential <- function(data, model_type, cv_setting, tuning_grid = NULL) {
+tune_keras_sequential <- function(data, model_type, cv_setting, tuning_bounds) {
 
   # Checks ---------------------------------------------------------------------
 
@@ -50,36 +50,48 @@ tune_keras_sequential <- function(data, model_type, cv_setting, tuning_grid = NU
         DT <- rbind(DT_train, DT_val, DT_test)
 
         # Normalization
-        data <- ts_normalization(DT, n_val, n_test, metrics = FALSE)
+        c(data_split, metrics_norm) %<-%
+          ts_normalization(DT, n_val, n_test, metrics = TRUE)
 
-        # Reshaping
-        c(X, Y) %<-% ts_nn_preparation(
-          data,
-          lag_setting = lag_setting,
-          length_val = n_val,
-          length_test = n_test
+        # Bayes Optimization
+        bayes <- rBayesianOptimization::BayesianOptimization(
+          FUN = internal_keras_fun,
+          bounds = tuning_bounds,
+          init_points = 5,
+          n_iter = 10,
+          acq = "ucb",
+          verbose = TRUE
         )
 
-        if (model_type == "basic") {
-          keras_basic_sequential(
-            X, Y,
-            n_epochs = n_epochs,
-            optimizer_type = optimizer,
-            return_model = TRUE,
-            ...
-          )
-        } else if (model_type == "gru" || model_type == "lstm") {
-          keras_sequential(
+        # Use optimized parameters to train model on entire data set (excluding
+        # test set) 10 times
+        c(X, Y) %<-% ts_nn_preparation(
+          data_split,
+          lag_setting = best_lag_setting,
+          length_val = 0,
+          length_test = n_test
+        )
+        best_lag_setting <- sort(bayes$Best_Par["lag_1"]:bayes$Best_Par["lag_2"])
+        best_optimizer_type <- switch(
+          bayes$Best_Par["optimizer_type"],
+          `1` = "rmsprop",
+          `2` = "adam"
+        )
+
+        lapply(1:10, function(i) {
+          model <- keras_sequential(
             X, Y,
             model_type = model_type,
-            tsteps = length(lag_setting),
-            n_epochs = n_epochs,
-            n_units = n_units,
-            optimizer_type = optimizer,
-            return_model = TRUE,
-            ...
+            tsteps = length(best_lag_setting),
+            n_epochs = bayes$Best_Par["n_epochs"],
+            n_units = bayes$Best_Par["n_units"],
+            optimizer_type = best_optimizer_type,
+            dropout = bayes$Best_Par["dropout"],
+            recurrent_dropout = bayes$Best_Par["recurrent_dropout"],
+            learning_rate = bayes$Best_Par["learning_rate"]
           )
-        }
+          predict(model, X$test) * metrics_norm
+        })
       }
     )
 
@@ -111,20 +123,22 @@ tune_keras_sequential <- function(data, model_type, cv_setting, tuning_grid = NU
   safe_run <- purrr::possibly(run, otherwise = NA, quiet = FALSE)
 
   # Tuning Process
-  tune_results <- tuning_grid %>%
-    purrr::cross() %>%
-    purrr::map(function(params) {
-      if (is.null(params$lags)) params$lags <- 1
-      safe_run(
-        lag_setting = params$lags,
-        n_epochs = params$n_epochs,
-        n_units = params$n_epochs,
-        optimizer = params$optimizer,
-        dropout = params$dropout,
-        recurrent_dropout = params$dropout,
-        patience = params$patience
-      )
-    })
+  tune_results <- safe_run()
+
+  # tune_results <- tuning_grid %>%
+  #   purrr::cross() %>%
+  #   purrr::map(function(params) {
+  #     if (is.null(params$lags)) params$lags <- 1
+  #     safe_run(
+  #       lag_setting = params$lags,
+  #       n_epochs = params$n_epochs,
+  #       n_units = params$n_epochs,
+  #       optimizer = params$optimizer,
+  #       dropout = params$dropout,
+  #       recurrent_dropout = params$dropout,
+  #       patience = params$patience
+  #     )
+  #   })
 
   results_DT <- purrr::map_df(
     purrr::compact(tune_results),
@@ -136,4 +150,75 @@ tune_keras_sequential <- function(data, model_type, cv_setting, tuning_grid = NU
   min_tune_params$index <- min_index
 
   return(list(results = tune_results, min_params = min_tune_params))
+}
+
+
+internal_keras_fun <- function(
+  n_units, n_epochs, lag_1, lag_2, dropout, recurrent_dropout, optimizer_type, learning_rate
+) {
+
+  lag_setting <- sort(lag_1:lag_2)
+  optimizer <- switch(
+    optimizer_type,
+    `1` = optimizer_rmsprop(lr = learning_rate),
+    `2` = optimizer_adam(lr = learning_rate)
+  )
+
+  # Reshaping
+  c(X, Y) %<-% ts_nn_preparation(
+    data_split,
+    lag_setting = lag_setting,
+    length_val = n_val,
+    length_test = n_test
+  )
+
+  model <- keras_model_sequential()
+
+  if (model_type == "simple") {
+    model %>%
+      layer_simple_rnn(
+        units             = n_units,
+        input_shape       = c(length(lag_setting), 1),
+        dropout           = dropout,
+        recurrent_dropout = recurrent_dropout
+      ) %>%
+      layer_dense(units = 1)
+
+  } else if (model_type == "gru") {
+    # a. GRU
+    model %>% layer_gru(
+      units             = n_units,
+      input_shape       = c(length(lag_setting), 1),
+      dropout           = dropout,
+      recurrent_dropout = recurrent_dropout
+    ) %>%
+      layer_dense(units = 1)
+
+  } else if (model_type == "lstm") {
+    # b. LSTM
+    model %>%
+      layer_lstm(
+        units             = n_units,
+        input_shape       = c(length(lag_setting), 1),
+        dropout           = dropout,
+        recurrent_dropout = recurrent_dropout
+      ) %>%
+      layer_dense(units = 1)
+  }
+
+  model %>% compile(optimizer = optimizer, loss = "mse")
+
+  history <- model %>% fit(
+    x               = X$train,
+    y               = Y$train,
+    steps_per_epoch = 1,
+    epochs          = n_epochs,
+    batch_size      = NULL,
+    verbose         = 0,
+    shuffle         = FALSE,
+    validation_data = list(X$val, Y$val),
+    view_metrics    = FALSE
+  )
+
+  return(list(Score = -history$metrics$val_loss[n_epochs], Pred = 0))
 }
