@@ -102,7 +102,7 @@ predict_keras_sequential <- function(
   # "model_type" must be one of "simple", "gru" or "lstm"
   model_type <- rlang::arg_match(model_type, c("simple", "gru", "lstm"))
 
-  # Length 1 for "model_type", "epochs", "length_val", "length_test" and "save_model"
+  # Length 1 for "epochs", "length_val", "length_test" and "save_model"
   if (length(epochs) != 1) rlang::abort(
     message = "`epochs` must be a numeric vector of length 1.",
     class = "predict_keras_sequential_epochs_error"
