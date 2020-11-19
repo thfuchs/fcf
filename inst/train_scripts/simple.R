@@ -38,7 +38,9 @@ frequency <- 4
 #   data = unh,
 #   model_type = "simple",
 #   cv_setting = cv_setting,
-#   tuning_bounds = tuning_bounds
+#   tuning_bounds = tuning_bounds,
+#   frequency = frequency,
+#   multiple_h = multiple_h
 # )
 # save(results, min_params, file = "inst/results/20200915_tuning_simple.rda")
 
