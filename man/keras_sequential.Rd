@@ -14,11 +14,11 @@ keras_sequential(
   n_units = 32,
   loss = "mse",
   metrics = NULL,
+  dropout_in_test = FALSE,
   optimizer_type = "rmsprop",
   dropout = 0,
   recurrent_dropout = 0,
   learning_rate = 0.001,
-  patience = NULL,
   live_plot = FALSE
 )
 }
@@ -39,11 +39,19 @@ keras_sequential(
 
 \item{metrics}{default NULL}
 
+\item{dropout_in_test}{apply dropout during training only (default) or during
+testing also? Required for dropout-based prediction intervals (bayesian RNN)}
+
 \item{optimizer_type}{One of "rmsprop" (default) and "adam"}
 
 \item{dropout}{dropout rate}
 
 \item{recurrent_dropout}{Dropout rate applied to reccurent layer. Default 0}
+
+\item{learning_rate}{hyperparameter for rmsprop / adam optimization}
+
+\item{live_plot}{plot loss and validation metric during training? False by
+default}
 }
 \value{
 evaluation scores for training, validation and test set

@@ -12,6 +12,11 @@
 #' @param dropout dropout rate
 #' @param recurrent_dropout Dropout rate applied to reccurent layer. Default 0
 #' @param n_units 32 (currently fixed)
+#' @param dropout_in_test apply dropout during training only (default) or during
+#' testing also? Required for dropout-based prediction intervals (bayesian RNN)
+#' @param learning_rate hyperparameter for rmsprop / adam optimization
+#' @param live_plot plot loss and validation metric during training? False by
+#' default
 #'
 #' @import keras
 #'
@@ -25,11 +30,11 @@ keras_sequential <- function(
   n_units = 32,
   loss = "mse",
   metrics = NULL,
+  dropout_in_test = FALSE,
   optimizer_type = "rmsprop",
   dropout = 0,
   recurrent_dropout = 0,
   learning_rate = 0.001,
-  patience = NULL,
   live_plot = FALSE
 ) {
 
@@ -40,7 +45,6 @@ keras_sequential <- function(
   if (is.null(optimizer_type)) optimizer_type <- "rmsprop"
   if (is.null(dropout)) dropout <- 0
   if (is.null(recurrent_dropout)) recurrent_dropout <- 0
-  if (is.null(patience)) patience <- 10
 
   optimizer <- switch(
     optimizer_type,
@@ -50,39 +54,39 @@ keras_sequential <- function(
 
   # Training and Evaluation ----------------------------------------------------
 
-  model <- keras_model_sequential()
+  input <- layer_input(shape = c(tsteps, 1))
 
-  if (model_type == "simple") {
-    model %>%
-      layer_simple_rnn(
-        units             = n_units,
-        input_shape       = c(tsteps, 1),
-        dropout           = dropout,
-        recurrent_dropout = recurrent_dropout
-      ) %>%
-      layer_dense(units = 1)
-
-  } else if (model_type == "gru") {
-    # a. GRU
-    model %>% layer_gru(
+  hidden_layer <- if (model_type == "simple") {
+    layer_simple_rnn(
       units             = n_units,
       input_shape       = c(tsteps, 1),
       dropout           = dropout,
       recurrent_dropout = recurrent_dropout
-    ) %>%
-      layer_dense(units = 1)
-
+    )
+  } else if (model_type == "gru") {
+    layer_gru(
+      units             = n_units,
+      input_shape       = c(tsteps, 1),
+      dropout           = dropout,
+      recurrent_dropout = recurrent_dropout
+    )
   } else if (model_type == "lstm") {
-    # b. LSTM
-    model %>%
-      layer_lstm(
-        units             = n_units,
-        input_shape       = c(tsteps, 1),
-        dropout           = dropout,
-        recurrent_dropout = recurrent_dropout
-      ) %>%
-      layer_dense(units = 1)
+    layer_lstm(
+      units             = n_units,
+      input_shape       = c(tsteps, 1),
+      dropout           = dropout,
+      recurrent_dropout = recurrent_dropout
+    )
   }
+
+  # Apply dropout only during training (Keras default) or during testing also?
+  output <- if (dropout_in_test) {
+    input %>% hidden_layer(training = TRUE) %>% layer_dense(units = 1)
+  } else {
+    input %>% hidden_layer %>% layer_dense(units = 1)
+  }
+
+  model <- keras_model(input, output)
 
   model %>% compile(
     optimizer = optimizer,
