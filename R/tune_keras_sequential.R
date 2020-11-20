@@ -20,7 +20,9 @@
 #' @return list of "results" and "min_params"
 #' @export
 tune_keras_sequential <- function(
-  data, model_type, cv_setting, tuning_bounds, frequency = 4, multiple_h = NULL
+  data, model_type, cv_setting, tuning_bounds,
+  frequency = 4, iterations = 2000, multiple_h = NULL,
+  test_dropout, test_recurrent_dropout
 ) {
 
   # Checks ---------------------------------------------------------------------
@@ -29,8 +31,11 @@ tune_keras_sequential <- function(
   testr::check_class(model_type, "character", "tune_keras_sequential")
   testr::check_class(cv_setting, "list", "tune_keras_sequential")
   testr::check_class(tuning_bounds, "list", "tune_keras_sequential")
-  testr::check_class(frequency, "numeric", "predict_baselines")
-  testr::check_class(multiple_h, "list", "predict_baselines", allowNULL = TRUE)
+  testr::check_class(frequency, "numeric", "tune_keras_sequential")
+  testr::check_class(iterations, "numeric", "tune_keras_sequential")
+  testr::check_class(multiple_h, "list", "tune_keras_sequential", allowNULL = TRUE)
+  testr::check_class(test_dropout, "numeric", "tune_keras_sequential")
+  testr::check_class(test_recurrent_dropout, "numeric", "tune_keras_sequential")
 
   # "data" contains columns "index" and "value" only (univariate time series)
   if (all(names(data)[order(names(data))] != c("index", "value"))) rlang::abort(
@@ -105,24 +110,29 @@ tune_keras_sequential <- function(
         `2` = "adam"
       )
 
-      fc_x10 <- vapply(1:10, function(i) {
-        model <- keras_sequential(
-          X, Y,
-          model_type = model_type,
-          tsteps = length(best_lag_setting),
-          n_epochs = bayes$Best_Par["n_epochs"],
-          n_units = bayes$Best_Par["n_units"],
-          optimizer_type = best_optimizer_type,
-          dropout = bayes$Best_Par["dropout"],
-          recurrent_dropout = bayes$Best_Par["recurrent_dropout"],
-          learning_rate = bayes$Best_Par["learning_rate"]
-        )
-        predict(model, X$test) * metrics_norm$scale + metrics_norm$center
+      best_model <- keras_sequential(
+        X, Y,
+        model_type = model_type,
+        tsteps = length(best_lag_setting),
+        n_epochs = bayes$Best_Par["n_epochs"],
+        n_units = bayes$Best_Par["n_units"],
+        dropout_in_test = TRUE,
+        optimizer_type = best_optimizer_type,
+        dropout = bayes$Best_Par["dropout"],
+        recurrent_dropout = bayes$Best_Par["recurrent_dropout"],
+        learning_rate = bayes$Best_Par["learning_rate"]
+      )
+
+      reticulate::source_python(file = system.file("create_dropout_model.py"))
+      dropout_model <- create_dropout_model(model, test_dropout, test_recurrent_dropout)
+
+      fc_iter <- vapply(1:iterations, function(i) {
+        predict(dropout_model, X$test) * metrics_norm$scale + metrics_norm$center
       }, FUN.VALUE = numeric(n_test))
 
-      fc_mean <- apply(fc_x10, 1, mean)
-      fc_lower <- apply(fc_x10, 1, quantile, 0.5 - level / 200, type = 8)
-      fc_upper <- apply(fc_x10, 1, quantile, 0.5 + level / 200, type = 8)
+      fc_mean <- apply(fc_iter, 1, mean)
+      fc_lower <- apply(fc_iter, 1, quantile, 0.5 - level / 200, type = 8)
+      fc_upper <- apply(fc_iter, 1, quantile, 0.5 + level / 200, type = 8)
 
       fc <- data.table::data.table(
         index = data_split[(.N-n_test+1):.N, index],

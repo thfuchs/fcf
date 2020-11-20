@@ -5,7 +5,14 @@
 \title{Tune keras basic model with Bayes Optimization and select best performing
 model}
 \usage{
-tune_keras_sequential(data, model_type, cv_setting, tuning_bounds)
+tune_keras_sequential(
+  data,
+  model_type,
+  cv_setting,
+  tuning_bounds,
+  frequency = 4,
+  multiple_h = NULL
+)
 }
 \arguments{
 \item{data}{Univariate time series (data.frame) with columns index and value}
@@ -24,7 +31,7 @@ list of "results" and "min_params"
 Tune keras basic model with Bayes Optimization and select best performing
 model
 }
-\section{Tuning Grid}{
+\section{Tuning Bounds}{
 
 The following parameters are (currently) available for tuning.
 \itemize{
