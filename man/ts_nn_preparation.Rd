@@ -4,12 +4,13 @@
 \alias{ts_nn_preparation}
 \title{Timeseries data preparation for neural network Keras models}
 \usage{
-ts_nn_preparation(data, lag_setting = 1:4, length_val = 16, length_test = 8)
+ts_nn_preparation(data, tsteps, length_val = 16L, length_test = 8L)
 }
 \arguments{
-\item{data}{balanced timeseries data}
+\item{data}{balanced univariate time series as data.table object. Lagged
+columns in the form \code{value_lagX} required, where X represents number of lag}
 
-\item{lag_setting}{by how much is y lagged}
+\item{tsteps}{number of lagged time steps}
 
 \item{length_val}{length of validation set}
 
@@ -21,8 +22,14 @@ list of "X" and "Y" each containing "train", "val" and "test" arrays
 \description{
 The following steps are proceeded:
 \itemize{
-\item New columns "value_lagX", with X for #lags, specified by \code{lag_setting}
 \item Split in train, validation and test split
 \item Transformation to 3D arrays for Keras
 }
+}
+\examples{
+data <- fcf::DT_unh
+add_shift(data, cols = "value", nlags = 1:2, type = "lag")
+data <- unh[!is.na(get(paste0("value_lag", lag_upper)))]
+
+ts_nn_preparation(data, length_val = 6, length_test = n_test)
 }
