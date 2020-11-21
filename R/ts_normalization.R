@@ -17,10 +17,10 @@ ts_normalization <- function(DT, length_val, length_test, metrics = FALSE) {
   mean <- mean(train$value)
   std <- stats::sd(train$value)
 
-  data <- data.table(
-    index = DT$index,
-    value = scale(DT$value, center = mean, scale = std)[,1]
-  )
+  data <- data.table::copy(DT)
+
+  cols <- names(data)[grepl("^value", names(data))]
+  data[, (cols) := lapply(.SD, function(x) scale(x, center = mean, scale = std)[,1]), .SDcols = cols]
 
   if (!metrics) return(data)
 
