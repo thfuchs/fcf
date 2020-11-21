@@ -1,4 +1,4 @@
-#' Add differences to time series data.table object for specified columns
+#' Add shifts to time series data.table object for specified columns
 #'
 #' @param DT  data.table object with indexed time variable
 #' @param cols columns to use for shifting (character)
