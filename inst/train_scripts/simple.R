@@ -26,16 +26,16 @@ frequency <- 4
 
 # Tuning -----------------------------------------------------------------------
 
-fc_unh_rnn <- tune_keras_sequential(
-  data = unh,
-  model_type = "simple",
-  cv_setting = cv_setting,
-  tuning_bounds = tuning_bounds,
-  frequency = frequency,
-  multiple_h = multiple_h,
-  test_dropout = 0.1
-)
-# save(fc_unh_rnn, file = "inst/results/20201121_fc_unh_rnn.rda")
+# fc_unh_rnn <- tune_keras_sequential(
+#   data = unh,
+#   model_type = "simple",
+#   cv_setting = cv_setting,
+#   tuning_bounds = tuning_bounds,
+#   frequency = frequency,
+#   multiple_h = multiple_h,
+#   test_dropout = 0.1
+# )
+# save(fc_unh_rnn, file = "inst/results/20201122_fc_unh_rnn.rda")
 
 load(file = "inst/results/20201116_tuning_basicNN.rda") #20201121_fc_unh_rnn.rda
 
