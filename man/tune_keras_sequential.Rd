@@ -11,7 +11,10 @@ tune_keras_sequential(
   cv_setting,
   tuning_bounds,
   frequency = 4,
-  multiple_h = NULL
+  iterations = 2000,
+  multiple_h = NULL,
+  level = 95,
+  test_dropout = 0.1
 )
 }
 \arguments{
@@ -20,9 +23,21 @@ tune_keras_sequential(
 \item{model_type}{One of "basic", "gru" or "lstm"}
 
 \item{cv_setting}{list of "periods_train", "periods_val", "periods_test" and
-"skip_span" for \code{rsample}}
+"skip_span" for \link[rsample]{rolling_origin}}
 
-\item{tuning_grid}{list of "lags" "optimizer", "dropout"}
+\item{tuning_bounds}{list of tuning parameters - see section "Tuning Bounds"}
+
+\item{frequency}{time series frequency, e.g. 4 for quarters and 12 for months}
+
+\item{iterations}{number of iterations for dropout-based prediction interval}
+
+\item{multiple_h}{NULL if forecast horizon equals cv_setting$n_test, else
+named list of forecast horizons for accuracy measures}
+
+\item{level}{level for prediction interval in percentage}
+
+\item{test_dropout}{specify dropout-rate during testing for prediction
+interval}
 }
 \value{
 list of "results" and "min_params"
@@ -35,10 +50,14 @@ model
 
 The following parameters are (currently) available for tuning.
 \itemize{
-\item \code{lags}: named list of numeric vectors with length of lags to use
-\item \code{optimizer}: character vector specifying optimizer to use. One of "adam"
-and "rmsprop"
-\item \code{dropout}: numeric vector specifying dropout rates
+\item lag_1 (integer(2)) lower bounds
+\item lag_2 (integer(2)) upper bounds
+\item n_units (integer(2)) lower and upper bound for rnn units (cells)
+\item n_epochs (integer(2)) lower and upper bound for epochs
+\item optimizer_type (integer) 1 = "rmsprop", 2 = "adam"
+\item dropout = (numeric(2)) lower and upper bound for dropout rate
+\item recurrent_dropout = (numeric(2)) lower and upper bound for recurrent dropout rate
+\item learning_rate = (numeric(2)) lower and upper bound for learning rate
 }
 }
 
