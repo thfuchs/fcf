@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{add_shift}
 \alias{add_shift}
-\title{Add differences to time series data.table object for specified columns}
+\title{Add shifts to time series data.table object for specified columns}
 \usage{
 add_shift(DT, cols, nlags, type = "lag")
 }
@@ -19,5 +19,5 @@ add_shift(DT, cols, nlags, type = "lag")
 nothing returned, DT edited by reference
 }
 \description{
-Add differences to time series data.table object for specified columns
+Add shifts to time series data.table object for specified columns
 }
