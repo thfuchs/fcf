@@ -13,16 +13,28 @@ companies <- unique(data$ticker)
 multiple_h <- list(short = 1, medium = 1:4, long = 5:6, total = 1:6)
 
 ### EBIT -----------------------------------------------------------------------
-
-# # seed for bootstrapped based PI
-# set.seed(123)
+# library(future)
+# plan(multisession)
 #
-# forecast <- purrr::map(
+# forecast <- furrr::future_map(
 #   companies,
 #   purrr::possibly(function(x) {
 #     d <- data[ticker == x]
 #     predict_arima(d, cv_setting, multiple_h = multiple_h)
-#   }, otherwise = NULL)
+#   }, otherwise = NULL),
+#   .options = furrr::furrr_options(seed = 123) # seed for bootstrapped based PI
+# )
+#
+# message <- "ARIMA estimation finished!"
+# content <- jsonlite::toJSON(list(list(
+#   type = "section",
+#   text = list(type = "mrkdwn", text = message)
+# )), auto_unbox = TRUE)
+#
+# bin <- httr::POST(
+#   url = 'https://slack.com/api/chat.postMessage',
+#   body = list(token = Sys.getenv("SLACK_BOT"),
+#               channel = Sys.getenv("SLACK_CHANNEL"), `blocks` = paste(content))
 # )
 #
 # fc_arima_ebit <- purrr::compact(forecast)
