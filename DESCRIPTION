@@ -1,6 +1,6 @@
 Package: fcf
 Title: Free Cash Flow Forecasting
-Version: 0.0.2
+Version: 0.0.3
 Authors@R: person("Thomas", "Fuchs", email = "thomasfuchs-re@web.de", role = c("aut", "cre"))
 Description: Free Cash Flow Forecasting using naive forecasting methods up tp
   neural networks.

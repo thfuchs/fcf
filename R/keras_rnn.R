@@ -3,7 +3,7 @@
 #'
 #' @param X list of "train", "val", and "test" with 3D (keras) arrays
 #' @param Y list of "train", "val", and "test" with 2D (keras) arrays
-#' @param model_type One of "basic", "gru" and "lstm"
+#' @param model_type One of "simple", "gru" and "lstm"
 #' @param tsteps number of time steps for keras input shape
 #' @param n_epochs default 200
 #' @param loss default "mse"
@@ -22,7 +22,7 @@
 #'
 #' @return evaluation scores for training, validation and test set
 #' @export
-keras_sequential <- function(
+keras_rnn <- function(
   X, Y,
   model_type,
   tsteps,
@@ -107,13 +107,4 @@ keras_sequential <- function(
   )
 
   return(model)
-
-  # output <- list(
-  #   model = if (return_model) model,
-  #   # train = evaluate(model, X$train, Y$train, verbose = 0),
-  #   val = if (dim(X$val)[1] > 0) evaluate(model, X$val, Y$val, verbose = 0),
-  #   test = if (dim(X$test)[1] > 0) evaluate(model, X$test, Y$test, verbose = 0)
-  # )
-  #
-  # return(output)
 }

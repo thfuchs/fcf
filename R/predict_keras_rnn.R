@@ -34,10 +34,10 @@
 #' data.table::setnames(apple, c("date", "fcf"), c("index", "value"))
 #'
 #' # Predict
-#' predict_keras_sequential(DT = apple)
+#' predict_keras_rnn(DT = apple)
 #'
 #' }
-predict_keras_sequential <- function(
+predict_keras_rnn <- function(
   DT,
   model_type = "simple",
   multiple_h = NULL,
@@ -57,47 +57,47 @@ predict_keras_sequential <- function(
   ### Checks -----------------------------------------------------------------
 
   # Variable type
-  testr::check_class(DT, "data.table", "predict_keras_sequential")
-  testr::check_class(model_type, "character", "predict_keras_sequential")
+  testr::check_class(DT, "data.table", "predict_keras_rnn")
+  testr::check_class(model_type, "character", "predict_keras_rnn")
 
   if (!rlang::inherits_any(epochs, c("numeric", "integer"))) rlang::abort(
     message = sprintf("`epochs` must be numeric, not of class \"%s\".",
                       paste(class(epochs), collapse = " / ")),
-    class = "predict_keras_sequential_epochs_error")
+    class = "predict_keras_rnn_epochs_error")
 
   if (!rlang::inherits_any(lag_setting, c("numeric", "integer"))) rlang::abort(
     message = sprintf("`lag_setting` must be numeric, not of class \"%s\".",
                       paste(class(lag_setting), collapse = " / ")),
-    class = "predict_keras_sequential_lag_setting_error")
+    class = "predict_keras_rnn_lag_setting_error")
 
   if (!rlang::inherits_any(length_val, c("numeric", "integer"))) rlang::abort(
     message = sprintf("`length_val` must be numeric, not of class \"%s\".",
                       paste(class(length_val), collapse = " / ")),
-    class = "predict_keras_sequential_length_val_error")
+    class = "predict_keras_rnn_length_val_error")
 
   if (!rlang::inherits_any(length_val, c("numeric", "integer"))) rlang::abort(
     message = sprintf("`length_test` must be numeric, not of class \"%s\".",
                       paste(class(length_val), collapse = " / ")),
-    class = "predict_keras_sequential_length_test_error")
+    class = "predict_keras_rnn_length_test_error")
 
-  testr::check_class(optimizer_type, "character", "predict_keras_sequential")
+  testr::check_class(optimizer_type, "character", "predict_keras_rnn")
 
-  testr::check_class(save_model, "logical", "predict_keras_sequential")
+  testr::check_class(save_model, "logical", "predict_keras_rnn")
   if (save_model)
-    testr::check_class(filepath, "character", "predict_keras_sequential")
-  testr::check_class(forecast_future, "logical", "predict_keras_sequential")
+    testr::check_class(filepath, "character", "predict_keras_rnn")
+  testr::check_class(forecast_future, "logical", "predict_keras_rnn")
   if (forecast_future && !rlang::inherits_any(forecast_length, c("numeric", "integer"))) rlang::abort(
     message = sprintf(
       "`forecast_length` must be numeric or integer, not of class \"%s\".",
       paste(class(forecast_length), collapse = " / ")),
-    class = "predict_keras_sequential_forecast_length_error"
+    class = "predict_keras_rnn_forecast_length_error"
   )
   testr::check_class(multiple_h, "list", "predict_baselines", allowNULL = TRUE)
 
   # "DT" contains columns "index" and "value" only (univariate time series)
   if (all(names(DT)[order(names(DT))] != c("index", "value"))) rlang::abort(
     message = "`DT` must be a data.frame with 2 columns only: \"index\" and \"value\"",
-    class = "predict_keras_sequential_DT_error"
+    class = "predict_keras_rnn_DT_error"
   )
   # "model_type" must be one of "simple", "gru" or "lstm"
   model_type <- rlang::arg_match(model_type, c("simple", "gru", "lstm"))
@@ -105,41 +105,41 @@ predict_keras_sequential <- function(
   # Length 1 for "epochs", "length_val", "length_test" and "save_model"
   if (length(epochs) != 1) rlang::abort(
     message = "`epochs` must be a numeric vector of length 1.",
-    class = "predict_keras_sequential_epochs_error"
+    class = "predict_keras_rnn_epochs_error"
   )
   if (length(length_val) != 1) rlang::abort(
     message = "`length_val` must be a numeric vector of length 1.",
-    class = "predict_keras_sequential_length_val_error"
+    class = "predict_keras_rnn_length_val_error"
   )
   if (length(length_test) != 1) rlang::abort(
     message = "`length_test` must be a numeric vector of length 1.",
-    class = "predict_keras_sequential_length_test_error"
+    class = "predict_keras_rnn_length_test_error"
   )
   if (length(optimizer_type) != 1) rlang::abort(
     message = "`optimizer_type` must be a character vector of length 1.",
-    class = "predict_keras_sequential_optimizer_type_error"
+    class = "predict_keras_rnn_optimizer_type_error"
   )
   if (length(save_model) != 1) rlang::abort(
     message = "`save_model` must be a logical vector of length 1.",
-    class = "predict_keras_sequential_save_model_error"
+    class = "predict_keras_rnn_save_model_error"
   )
   if (
     save_model && length(filepath) != 1 ||
     save_model && !grepl("\\.hdf5$", filepath)
   ) rlang::abort(
     message = "`filepath` must be a valid path with a valid hdf5 file name.",
-    class = "predict_keras_sequential_filepath_error"
+    class = "predict_keras_rnn_filepath_error"
   )
 
   # "forecast_future" only on entire data set (test set length 0)
   if (forecast_future && length_test != 0) rlang::abort(
     message = "`forecast_future` only for entire data. Set `length_test` to 0.",
-    class = "predict_keras_sequential_forecast_future_error"
+    class = "predict_keras_rnn_forecast_future_error"
   )
   # "forecast_length" not > 0
   if (forecast_future && forecast_length <= 0) rlang::abort(
     message = "`forecast_length` must be larger than 0.",
-    class = "predict_keras_sequential_forecast_length_error"
+    class = "predict_keras_rnn_forecast_length_error"
   )
 
   ### Function ---------------------------------------------------------------
@@ -161,7 +161,7 @@ predict_keras_sequential <- function(
     )
 
     ### Model
-    model <- keras_sequential(
+    model <- keras_rnn(
       X, Y,
       model_type     = model_type,
       tsteps         = length(lag_setting),

@@ -26,14 +26,15 @@ frequency <- 4
 
 # Tuning -----------------------------------------------------------------------
 
-# fc_unh_rnn <- tune_keras_sequential(
+# fc_unh_rnn <- tune_keras_rnn(
 #   data = unh,
 #   model_type = "simple",
 #   cv_setting = cv_setting,
 #   tuning_bounds = tuning_bounds,
 #   frequency = frequency,
 #   multiple_h = multiple_h,
-#   test_dropout = 0.1
+#   test_dropout = 0.1,
+#   save_model = "inst/models"
 # )
 # save(fc_unh_rnn, file = "inst/results/20201122_fc_unh_rnn.rda")
 
@@ -51,51 +52,42 @@ ggplot(eval_DT, aes(mse)) +
 
 # Train cross validated data using best performing model -----------------------
 
-n_initial <- cv_setting$periods_train + cv_setting$periods_val
-rolling_origin_resamples <- rsample::rolling_origin(
-  data,
-  initial = n_initial,
-  assess = cv_setting$periods_test,
-  cumulative = FALSE,
-  skip       = cv_setting$skip_span
-)
-basic <- purrr::map(
-  rolling_origin_resamples$splits,
-  function(split) {
-    DT_train <- rsample::analysis(split)[1:cv_setting$periods_train]
-    DT_val <- rsample::analysis(split)[(cv_setting$periods_train+1):.N]
-    DT_test <- rsample::assessment(split)
-
-    DT <- rbind(DT_train, DT_val, DT_test)
-
-    # Forecast
-    fc <- predict_keras_sequential(
-      model_type = "simple",
-      DT,
-      lag_setting = min_params$lags,
-      length_val = cv_setting$periods_val,
-      length_test = cv_setting$periods_test,
-      n_units = min_params$n_units,
-      epochs = min_params$n_epochs,
-      optimizer_type = min_params$optimizer,
-      dropout = min_params$dropout,
-      recurrent_dropout = min_params$dropout,
-      save_model = FALSE
-    )
-
-    # Accuracy Measures
-    acc <- evaluate_keras_sequential(
-      DT,
-      forecast = fc[key == "predict"],
-      n_train = cv_setting$periods_train,
-      n_val = cv_setting$periods_val,
-      n_test = cv_setting$periods_test
-    )
-
-    # Output
-    list(forecast = fc, accuracy = acc)
-  }
-)
+# n_initial <- cv_setting$periods_train + cv_setting$periods_val
+# rolling_origin_resamples <- rsample::rolling_origin(
+#   data,
+#   initial = n_initial,
+#   assess = cv_setting$periods_test,
+#   cumulative = FALSE,
+#   skip       = cv_setting$skip_span
+# )
+# basic <- purrr::map(
+#   rolling_origin_resamples$splits,
+#   function(split) {
+#     DT_train <- rsample::analysis(split)[1:cv_setting$periods_train]
+#     DT_val <- rsample::analysis(split)[(cv_setting$periods_train+1):.N]
+#     DT_test <- rsample::assessment(split)
+#
+#     DT <- rbind(DT_train, DT_val, DT_test)
+#
+#     # Forecast
+#     fc <- predict_keras_rnn(
+#       model_type = "simple",
+#       DT,
+#       lag_setting = min_params$lags,
+#       length_val = cv_setting$periods_val,
+#       length_test = cv_setting$periods_test,
+#       n_units = min_params$n_units,
+#       epochs = min_params$n_epochs,
+#       optimizer_type = min_params$optimizer,
+#       dropout = min_params$dropout,
+#       recurrent_dropout = min_params$dropout,
+#       save_model = FALSE
+#     )
+#
+#     # Output
+#     list(forecast = fc, accuracy = acc)
+#   }
+# )
 # saveRDS(basic, file = "inst/results/20201117_eval_pred_simple.rds")
 
 basic <- readRDS("inst/results/20201117_eval_pred_simple.rds")
@@ -119,7 +111,7 @@ plot_prediction_samples(
 
 # Train data using best performing model ---------------------------------------
 
-# c(predictions, best_model_metrics) %<-% predict_keras_sequential(
+# c(predictions, best_model_metrics) %<-% predict_keras_rnn(
 #     DT = data,
 #     model_type = "simple",
 #     n_units = min_params$n_units,
@@ -151,7 +143,7 @@ plot_prediction(
 
 # Train entire data for future forecast ----------------------------------------
 
-c(predictions_all, best_model_metrics_all) %<-% predict_keras_sequential(
+c(predictions_all, best_model_metrics_all) %<-% predict_keras_rnn(
   DT = data[index > "2010-01-01"],
   model_type = "simple",
   n_units = min_params$n_units,

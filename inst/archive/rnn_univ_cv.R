@@ -45,7 +45,7 @@ rolling_origin_resamples
 #     DT_test <- rsample::assessment(split)
 #
 #     DT <- rbind(DT_train, DT_val, DT_test)
-#     predict_keras_sequential(
+#     predict_keras_rnn(
 #       DT,
 #       lag_setting = 1:4,
 #       length_val = nrow(DT_val),

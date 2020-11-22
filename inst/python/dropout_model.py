@@ -1,7 +1,6 @@
 from keras.models import Model, Sequential
-from keras import backend as K
 
-def create_dropout_model(model, dropout):
+def dropout_model(model, dropout):
     """
     Create a keras function to predict with dropout (Credits to sfblake)
     model : keras model

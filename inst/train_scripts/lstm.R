@@ -21,7 +21,7 @@ cv_setting <- list(
 # Tuning -----------------------------------------------------------------------
 
 # library(zeallot)
-# c(results, min_params) %<-% tune_keras_sequential(
+# c(results, min_params) %<-% tune_keras_rnn(
 #   data = apple,
 #   model_type = "lstm",
 #   cv_setting = cv_setting,
@@ -60,7 +60,7 @@ eval_DT %>%
 #     DT_test <- rsample::assessment(split)
 #
 #     DT <- rbind(DT_train, DT_val, DT_test)
-#     predict_keras_sequential(
+#     predict_keras_rnn(
 #       DT,
 #       lag_setting = min_params$lags,
 #       length_val = cv_setting$periods_val,
@@ -99,7 +99,7 @@ plot_prediction_samples(
 
 # Train data using best performing model ---------------------------------------
 
-# c(predictions, best_model_metrics) %<-% predict_keras_sequential(
+# c(predictions, best_model_metrics) %<-% predict_keras_rnn(
 #   DT = apple,
 #   model_type = "lstm",
 #   n_units = min_params$n_units,
@@ -131,7 +131,7 @@ plot_prediction(
 
 # Train entire data for future forecast ----------------------------------------
 
-# c(predictions_all, best_model_metrics_all) %<-% predict_keras_sequential(
+# c(predictions_all, best_model_metrics_all) %<-% predict_keras_rnn(
 #   DT = apple,
 #   model_type = "lstm",
 #   n_units = min_params$n_units,

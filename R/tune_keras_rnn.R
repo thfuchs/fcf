@@ -1,5 +1,5 @@
-#' Tune keras basic model with Bayes Optimization and select best performing
-#' model
+#' Tune recurrent neural network with Keras functional API and Bayes
+#' Optimization and select best performing model
 #'
 #' @param data Univariate time series (data.frame) with columns index and value
 #' @param cv_setting list of "periods_train", "periods_val", "periods_test" and
@@ -13,6 +13,8 @@
 #' @param level level for prediction interval in percentage
 #' @param test_dropout specify dropout-rate during testing for prediction
 #'   interval
+#' @param save_model Automatically save tuned models? Specify NULL for No or
+#' character vector with path to directory for yes
 #'
 #' @section Tuning Bounds:
 #' The following parameters are (currently) available for tuning.
@@ -31,7 +33,7 @@
 #'
 #' @return list of "results" and "min_params"
 #' @export
-tune_keras_sequential <- function(
+tune_keras_rnn <- function(
   data,
   model_type,
   cv_setting,
@@ -40,24 +42,26 @@ tune_keras_sequential <- function(
   iterations = 2000,
   multiple_h = NULL,
   level = 95,
-  test_dropout = 0.1
+  test_dropout = 0.1,
+  save_model = NULL
 ) {
 
   # Checks ---------------------------------------------------------------------
 
-  testr::check_class(data, "data.frame", "tune_keras_sequential")
-  testr::check_class(model_type, "character", "tune_keras_sequential")
-  testr::check_class(cv_setting, "list", "tune_keras_sequential")
-  testr::check_class(tuning_bounds, "list", "tune_keras_sequential")
-  testr::check_class(frequency, "numeric", "tune_keras_sequential")
-  testr::check_class(iterations, "numeric", "tune_keras_sequential")
-  testr::check_class(multiple_h, "list", "tune_keras_sequential", allowNULL = TRUE)
-  testr::check_class(test_dropout, "numeric", "tune_keras_sequential")
+  testr::check_class(data, "data.frame", "tune_keras_rnn")
+  testr::check_class(model_type, "character", "tune_keras_rnn")
+  testr::check_class(cv_setting, "list", "tune_keras_rnn")
+  testr::check_class(tuning_bounds, "list", "tune_keras_rnn")
+  testr::check_class(frequency, "numeric", "tune_keras_rnn")
+  testr::check_class(iterations, "numeric", "tune_keras_rnn")
+  testr::check_class(multiple_h, "list", "tune_keras_rnn", allowNULL = TRUE)
+  testr::check_class(test_dropout, "numeric", "tune_keras_rnn")
+  testr::check_class(save_model, "character", "tune_keras_rnn", allowNULL = TRUE)
 
   # "data" contains columns "index" and "value" only (univariate time series)
   if (all(names(data)[order(names(data))] != c("index", "value"))) rlang::abort(
     message = "`data` must be a data.frame with 2 columns only: \"index\" and \"value\"",
-    class = "tune_keras_sequential_data_error"
+    class = "tune_keras_rnn_data_error"
   )
   # "model_type" must be one of "simple", "gru" or "lstm"
   model_type <- rlang::arg_match(model_type, c("simple", "gru", "lstm"))
@@ -67,9 +71,14 @@ tune_keras_sequential <- function(
           c("periods_test", "periods_train", "periods_val", "skip_span"))) {
     rlang::abort(
       message = "`data` must be a data.frame with 2 columns only: \"index\" and \"value\"",
-      class = "tune_keras_sequential_data_error"
+      class = "tune_keras_rnn_data_error"
     )
   }
+  # Check whether directory exists
+  if (!dir.exists(save_model)) rlang::abort(
+    message = "Directory specified in `save_model` does not exist",
+    class = "tune_keras_rnn_save_model_error"
+  )
 
   # Function -------------------------------------------------------------------
 
@@ -97,73 +106,6 @@ tune_keras_sequential <- function(
     rolling_origin_resamples$splits,
     purrr::possibly(function(split) {
 
-      # Internal Function
-      internal_keras_fun <- function(
-        n_units, n_epochs, lag_1, lag_2, dropout, recurrent_dropout,
-        optimizer_type, learning_rate
-      ) {
-
-        lag_setting <- sort(lag_1:lag_2)
-        optimizer <- switch(
-          optimizer_type,
-          `1` = optimizer_rmsprop(lr = learning_rate),
-          `2` = optimizer_adam(lr = learning_rate)
-        )
-
-        # Reshaping
-        c(X, Y) %<-% ts_nn_preparation(
-          data_split,
-          tsteps = length(lag_setting),
-          length_val = as.integer(n_val),
-          length_test = as.integer(n_test)
-        )
-
-        input <- layer_input(shape = c(length(lag_setting), 1))
-
-        hidden_layer <- if (model_type == "simple") {
-          layer_simple_rnn(
-            units             = n_units,
-            input_shape       = c(length(lag_setting), 1),
-            dropout           = dropout,
-            recurrent_dropout = recurrent_dropout
-          )
-        } else if (model_type == "gru") {
-          layer_gru(
-            units             = n_units,
-            input_shape       = c(length(lag_setting), 1),
-            dropout           = dropout,
-            recurrent_dropout = recurrent_dropout
-          )
-        } else if (model_type == "lstm") {
-          layer_lstm(
-            units             = n_units,
-            input_shape       = c(length(lag_setting), 1),
-            dropout           = dropout,
-            recurrent_dropout = recurrent_dropout
-          )
-        }
-
-        output <- input %>% hidden_layer %>% layer_dense(units = 1)
-
-        model <- keras_model(input, output)
-
-        model %>% compile(optimizer = optimizer, loss = "mse")
-
-        history <- model %>% fit(
-          x               = X$train,
-          y               = Y$train,
-          steps_per_epoch = 1,
-          epochs          = n_epochs,
-          batch_size      = NULL,
-          verbose         = 0,
-          shuffle         = FALSE,
-          validation_data = list(X$val, Y$val),
-          view_metrics    = FALSE
-        )
-
-        return(list(Score = -history$metrics$val_loss[n_epochs], Pred = 0))
-      }
-
       # Train-Test Split
       DT_train <- rsample::analysis(split)[1:n_train]
       DT_val <- rsample::analysis(split)[(n_train+1):.N]
@@ -175,8 +117,9 @@ tune_keras_sequential <- function(
       # Normalization
       c(data_split, metrics_norm) %<-%
         ts_normalization(DT, n_val, n_test, metrics = TRUE)
-      data_split
 
+      # Set environment of help function to current environment
+      environment(internal_keras_fun) <- environment()
       # Bayes Optimization
       bayes <- rBayesianOptimization::BayesianOptimization(
         FUN = internal_keras_fun,
@@ -188,7 +131,7 @@ tune_keras_sequential <- function(
       )
 
       # Use optimized parameters to train model on entire data set (excluding
-      # test set) 10 times
+      # test set)
       best_lag_setting <- sort(bayes$Best_Par["lag_1"]:bayes$Best_Par["lag_2"])
       c(X, Y) %<-% ts_nn_preparation(
         data_split,
@@ -202,7 +145,7 @@ tune_keras_sequential <- function(
         `2` = "adam"
       )
 
-      best_model <- keras_sequential(
+      best_model <- keras_rnn(
         X, Y,
         model_type = model_type,
         tsteps = length(best_lag_setting),
@@ -215,11 +158,21 @@ tune_keras_sequential <- function(
         learning_rate = bayes$Best_Par["learning_rate"]
       )
 
-      reticulate::source_python(
-        system.file("create_dropout_model.py", package = "fcf"))
+      # Save model if valid directoy specified
+      if (!is.null(save_model)) {
+        keras::save_model_hdf5(
+          best_model,
+          filepath = file.path(save_model, paste0(
+            format(Sys.time(), "%Y%m%d_%H%M%S_"),
+            model_type, "_", unique(data_split$ticker), split$id$id, ".hdf5")
+          )
+        )
+      }
 
-      mean_model <- create_dropout_model(best_model, 0)
-      dropout_model <- create_dropout_model(best_model, test_dropout)
+      # Change recurrent dropout to 0 for test phase and dropout to 0 for
+      # mean predictions and to `test_dropout` for prediction intervals
+      mean_model <- py_dropout_model(best_model, 0)
+      dropout_model <- py_dropout_model(best_model, test_dropout)
 
       fc_mean <-
         predict(mean_model, X$test) * metrics_norm$scale + metrics_norm$center
@@ -296,3 +249,69 @@ tune_keras_sequential <- function(
 }
 
 
+# Internal Function
+internal_keras_fun <- function(
+  n_units, n_epochs, lag_1, lag_2, dropout, recurrent_dropout,
+  optimizer_type, learning_rate
+) {
+
+  lag_setting <- sort(lag_1:lag_2)
+  optimizer <- switch(
+    optimizer_type,
+    `1` = optimizer_rmsprop(lr = learning_rate),
+    `2` = optimizer_adam(lr = learning_rate)
+  )
+
+  # Reshaping
+  c(X, Y) %<-% ts_nn_preparation(
+    data_split,
+    tsteps = length(lag_setting),
+    length_val = as.integer(n_val),
+    length_test = as.integer(n_test)
+  )
+
+  input <- layer_input(shape = c(length(lag_setting), 1))
+
+  hidden_layer <- if (model_type == "simple") {
+    layer_simple_rnn(
+      units             = n_units,
+      input_shape       = c(length(lag_setting), 1),
+      dropout           = dropout,
+      recurrent_dropout = recurrent_dropout
+    )
+  } else if (model_type == "gru") {
+    layer_gru(
+      units             = n_units,
+      input_shape       = c(length(lag_setting), 1),
+      dropout           = dropout,
+      recurrent_dropout = recurrent_dropout
+    )
+  } else if (model_type == "lstm") {
+    layer_lstm(
+      units             = n_units,
+      input_shape       = c(length(lag_setting), 1),
+      dropout           = dropout,
+      recurrent_dropout = recurrent_dropout
+    )
+  }
+
+  output <- input %>% hidden_layer %>% layer_dense(units = 1)
+
+  model <- keras_model(input, output)
+
+  model %>% compile(optimizer = optimizer, loss = "mse")
+
+  history <- model %>% fit(
+    x               = X$train,
+    y               = Y$train,
+    steps_per_epoch = 1,
+    epochs          = n_epochs,
+    batch_size      = NULL,
+    verbose         = 0,
+    shuffle         = FALSE,
+    validation_data = list(X$val, Y$val),
+    view_metrics    = FALSE
+  )
+
+  return(list(Score = -history$metrics$val_loss[n_epochs], Pred = 0))
+}
