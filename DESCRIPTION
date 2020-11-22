@@ -17,7 +17,8 @@ Imports:
     cowplot,
     forecast,
     rsample,
-    testr
+    testr,
+    rBayesianOptimization
 Remotes:
     thfuchs/testr
 Roxygen: list(markdown = TRUE)
