@@ -38,7 +38,12 @@ frequency <- 4
 # )
 # save(fc_unh_rnn, file = "inst/results/20201122_fc_unh_rnn.rda")
 
-load(file = "inst/results/20201116_tuning_basicNN.rda") #20201121_fc_unh_rnn.rda
+load(file = "inst/results/20201122_fc_unh_rnn.rda")
+
+str_point_acc <- c("smape", "mase")
+str_dist_acc <- c("smis", "acd")
+
+samples <- purrr::map_df(fc_unh_rnn, "accuracy")[, lapply(.SD, mean), by = h, .SDcols = c(str_point_acc, str_dist_acc)]
 
 # Plot tuning results
 library(ggplot2)
@@ -49,6 +54,15 @@ ggplot(eval_DT, aes(mse)) +
   geom_density(alpha = 0.5, color = "darkgrey", fill = "grey") +
   theme_bw() +
   ggtitle("Histogram of Mean Squared Error (MSE)")
+
+# Chart for single ticker (e.g. AAPL)
+plot_prediction_samples(
+  splits = purrr::map(fc_unh_rnn, "forecast"),
+  title = "RNN Forecast including Prediction Interval for UNH",
+  ncol = 3,
+  scale = as.Date(c(min(unh$index), max(unh$index))),
+  PI = TRUE
+)
 
 # Train cross validated data using best performing model -----------------------
 
