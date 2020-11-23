@@ -13,7 +13,6 @@
 #'   named list of forecast horizons for accuracy measures
 #'
 #' @import data.table
-#' @import forecast
 #'
 #' @return list with accuracy and forecasts (point forecast and PI)
 #' @export
