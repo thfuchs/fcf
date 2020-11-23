@@ -18,7 +18,7 @@
 #' add_shift(data, cols = "value", nlags = 1:2, type = "lag")
 #' data <- unh[!is.na(get(paste0("value_lag", lag_upper)))]
 #'
-#' ts_nn_preparation(data, length_val = 6, length_test = n_test)
+#' ts_nn_preparation(data, length_val = 6, length_test = 6)
 ts_nn_preparation <- function(data, tsteps, length_val = 16L, length_test = 8L) {
 
   ### Checks -------------------------------------------------------------------

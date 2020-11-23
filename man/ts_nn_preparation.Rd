@@ -31,5 +31,5 @@ data <- fcf::DT_unh
 add_shift(data, cols = "value", nlags = 1:2, type = "lag")
 data <- unh[!is.na(get(paste0("value_lag", lag_upper)))]
 
-ts_nn_preparation(data, length_val = 6, length_test = n_test)
+ts_nn_preparation(data, length_val = 6, length_test = 6)
 }

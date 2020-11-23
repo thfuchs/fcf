@@ -13,8 +13,7 @@ ts_normalization(DT, length_val, length_test, metrics = FALSE)
 
 \item{length_test}{length for test set}
 
-\item{metrics}{return data only or list of data and metrics?
-\code{metrics$normalizaiton}}
+\item{metrics}{return data only or list of data and metrics?}
 }
 \value{
 Depending on \code{metrics}, processed DT object or list of "data" and

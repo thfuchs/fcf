@@ -77,8 +77,7 @@ plot_baselines(
     "Actual" = "black",
     "Naive" = "red",
     "Snaive" = "blue",
-    "Mean" = "orange",
-    "SES" = "purple",
+    "Drift" = "orange",
     "Holt" = "green"
   )
 )
@@ -90,8 +89,7 @@ plot_baselines_samples(
     "Actual" = "black",
     "Naive" = "red",
     "Snaive" = "blue",
-    "Mean" = "orange",
-    "SES" = "purple",
+    "Drift" = "orange",
     "Holt" = "green"
   ),
   ncol = 3,

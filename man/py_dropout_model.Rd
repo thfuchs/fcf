@@ -21,14 +21,15 @@ effect)
 }
 \examples{
 # Load Model with permanently activated dropout and generate test data
-model <- keras::load_model_hdf5("inst/tinytest_data/simple_dropout_rnn.hdf5")
+model <- keras::load_model_hdf5(
+  system.file("tinytest_data/simple_dropout_rnn.hdf5", package = "fcf"))
 test <- array(runif(18, 0.1, 3), dim = c(6L, 3L, 1L))
 
 # 1. Deactivate dropout for testing
-model_01 <- py_dropout_model(best_model, 0)
+model_01 <- py_dropout_model(model, 0)
 predict(model_01, test)
 
 # 2. Change dropout level
-model_02 <- py_dropout_model(best_model, 0.8)
+model_02 <- py_dropout_model(model, 0.8)
 predict(model_02, test)
 }

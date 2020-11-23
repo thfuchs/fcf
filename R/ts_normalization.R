@@ -4,7 +4,8 @@
 #' @param length_val length for validation set
 #' @param length_test length for test set
 #' @param metrics return data only or list of data and metrics?
-#'   `metrics$normalizaiton`
+#'
+#' @import data.table
 #'
 #' @return Depending on `metrics`, processed DT object or list of "data" and
 #'   "metrics" (center and scale)

@@ -27,9 +27,9 @@
 #' - recurrent_dropout = (numeric(2)) lower and upper bound for recurrent dropout rate
 #' - learning_rate = (numeric(2)) lower and upper bound for learning rate
 #'
+#' @import data.table
 #' @importFrom magrittr %>%
 #' @importFrom zeallot %<-%
-#' @import data.table
 #'
 #' @return list of "results" and "min_params"
 #' @export
