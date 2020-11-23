@@ -28,8 +28,10 @@ The following steps are proceeded:
 }
 \examples{
 data <- fcf::DT_unh
-add_shift(data, cols = "value", nlags = 1:2, type = "lag")
-data <- unh[!is.na(get(paste0("value_lag", lag_upper)))]
 
-ts_nn_preparation(data, length_val = 6, length_test = 6)
+data[, value_lag1 := data.table::shift(value, type = "lag", n = 1)]
+data[, value_lag2 := data.table::shift(value, type = "lag", n = 2)]
+data <- data[!is.na(get(paste0("value_lag2")))]
+
+ts_nn_preparation(data, tsteps = 2L, length_val = 6L, length_test = 6L)
 }
