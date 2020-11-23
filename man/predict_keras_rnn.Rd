@@ -63,7 +63,7 @@ Title
 
 # Prepare data
 apple <- fcf::dow30[
-ticker == "AAPL" & date > as.POSIXct("1995-01-01"),
+  ticker == "AAPL" & date > as.POSIXct("1995-01-01"),
   .SD, .SDcols = c("date", "fcf")
 ]
 data.table::setnames(apple, c("date", "fcf"), c("index", "value"))
