@@ -8,10 +8,10 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports: 
-    data.table,
-    reticulate,
-    keras,
-    forecast,
+    data.table (>= 1.13.0),
+    reticulate (>= 1.18),
+    keras (>= 2.3.0),
+    forecast (>= 8.13),
     magrittr,
     zeallot,
     purrr,
