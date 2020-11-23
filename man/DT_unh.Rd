@@ -3,8 +3,7 @@
 \docType{data}
 \name{DT_unh}
 \alias{DT_unh}
-\title{Quarterly reported EBIT from UNH as data.table object from 1995
-to 2020.}
+\title{Quarterly reported EBIT from UNH as data.table object from 1995 to 2020.}
 \format{
 A quarterly data.table object from 1995 to 2020
 }
@@ -12,7 +11,6 @@ A quarterly data.table object from 1995 to 2020
 data(DT_unh)
 }
 \description{
-Quarterly reported EBIT from UNH as data.table object from 1995
-to 2020.
+Quarterly reported EBIT from UNH as data.table object from 1995 to 2020.
 }
 \keyword{datasets}
