@@ -156,7 +156,7 @@ predict_keras_rnn <- function(
     # Train-Validation-Test Split
     c(X, Y) %<-% ts_nn_preparation(
       data,
-      lag_setting = lag_setting,
+      tsteps = length(lag_setting),
       length_val = length_val,
       length_test = length_test
     )
