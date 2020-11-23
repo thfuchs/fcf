@@ -6,17 +6,26 @@
 \usage{
 plot_baselines(
   data,
-  title,
+  col_date = "index",
+  col_value = "value",
+  col_group = "type",
+  title = NULL,
   size = 0.6,
   alpha = 0.8,
-  colors,
+  colors = NULL,
   legend = "bottom",
   scale = NULL
 )
 }
 \arguments{
-\item{data}{data.frame containing "index" (Date), "value" (numeric) and type
-(character - "Actual" and forecast type)}
+\item{data}{data.frame containing "Date", "value" and "group"}
+
+\item{col_date}{Date column in data.frame, default to "index"}
+
+\item{col_value}{Value column in data.frame, default to "value"}
+
+\item{col_group}{Group column in data.frame, default to "type" (e.g.
+"Actual", "Naive", ...) - see example}
 
 \item{title}{diagram title}
 
@@ -35,4 +44,10 @@ ggplot2 object
 }
 \description{
 Plot Forecasts by baseline methods
+}
+\examples{
+plot_baselines(
+  data = fcf::fc_baseline,
+  colors = c("Actual" = "black", "Snaive" = "blue", "Holt" = "green")
+)
 }

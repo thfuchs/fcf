@@ -6,21 +6,31 @@
 \usage{
 plot_baselines_samples(
   splits,
-  title,
-  colors,
+  col_date = "index",
+  col_value = "value",
+  col_group = "type",
+  title = NULL,
+  colors = NULL,
   date_type = "datetime",
-  ncol = 2,
-  scale
+  ncol = 3L,
+  scale = NULL
 )
 }
 \arguments{
 \item{splits}{list of prediction data.frames}
 
+\item{col_date}{Date column in data.frame, default to "index"}
+
+\item{col_value}{Value column in data.frame, default to "value"}
+
+\item{col_group}{Group column in data.frame, default to "type" (e.g.
+"Actual", "Naive", ...) - see example}
+
 \item{title}{diagram title}
 
 \item{colors}{named character vector to fit color to type}
 
-\item{date_type}{string vector - one of "datetime", "date" or "character"}
+\item{date_type}{string vector - one of "datetime", "Date" or "character"}
 
 \item{ncol}{Number of columns}
 
@@ -31,4 +41,12 @@ ggplot2 object
 }
 \description{
 Plot cross validated samples of forecasts by baseline methods
+}
+\examples{
+data <- fcf::fc_baseline
+plot_baselines_samples(
+  splits = list(data, data)
+  colors = c("Actual" = "black", "Snaive" = "blue", "Holt" = "green"),
+  ncol = 2L
+)
 }
