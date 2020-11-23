@@ -66,16 +66,14 @@ plot_baselines_samples <- function(
     }
   )
 
-  legend <- cowplot::get_legend(
-    plot_list[[1]] + theme(
-      legend.position = "bottom",
-      legend.justification = "center"
-    )
-  )
-  p_body <- cowplot::plot_grid(plotlist = plot_list, ncol = ncol)
-  p_title <- cowplot::ggdraw() +
-    cowplot::draw_label(title, size = 14, fontface = "bold")
+  combined <- patchwork::wrap_plots(plot_list, ncol = ncol, guides = "collect") &
+    theme(legend.position = "bottom")
 
-  cowplot::plot_grid(
-    p_title, p_body, legend, ncol = 1, rel_heights = c(0.05, 1, 0.1))
+  if (is.null(title)) return(combined)
+
+  combined + patchwork::plot_annotation(
+    title = title,
+    theme = ggplot2::theme(
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5))
+  )
 }

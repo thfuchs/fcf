@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_prediction.R
 \name{plot_prediction}
 \alias{plot_prediction}
-\title{Title}
+\title{Plot timeseries and forecast for single split and company}
 \usage{
 plot_prediction(
   data,
@@ -34,5 +34,5 @@ plot_prediction(
 ggplot2 object
 }
 \description{
-Title
+Plot timeseries and forecast for single split and company
 }
