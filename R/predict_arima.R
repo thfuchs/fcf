@@ -30,14 +30,14 @@
 #' )
 #'
 #' fc_01 <- predict_arima(
-#'   data = fcf::DT_unh,
+#'   data = tsRNN::DT_unh,
 #'   cv_setting = cv_setting
 #' )
 #' fc_01
 #'
 #' # Multiple forecast horizons
 #' fc_02 <- predict_arima(
-#'   data = fcf::DT_unh,
+#'   data = tsRNN::DT_unh,
 #'   cv_setting = cv_setting,
 #'   multiple_h = list(short = 1:2, long = 3:4)
 #' )

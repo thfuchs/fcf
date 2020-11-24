@@ -14,7 +14,7 @@ library(keras)
 ## Data Preparation
 
 ```{r data_preparation, echo=FALSE, cache=TRUE}
-apple <- fcf::dow30[
+apple <- tsRNN::dow30[
   ticker == "AAPL" & date > as.POSIXct("1995-01-01"),
   .SD, .SDcols = -c("company", "ticker", "date")]
 apple[is.na(cff), cff := 0]

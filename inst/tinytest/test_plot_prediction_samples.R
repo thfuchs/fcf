@@ -1,4 +1,4 @@
-test_splits <- list(fcf::fc_arima, fcf::fc_arima, fcf::fc_arima)
+test_splits <- list(tsRNN::fc_arima, tsRNN::fc_arima, tsRNN::fc_arima)
 
 ### Check ----------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ expect_true(rlang::inherits_all(
 ### Error ----------------------------------------------------------------------
 
 expect_error(
-  plot_prediction_samples(splits = fcf::fc_baseline),
+  plot_prediction_samples(splits = tsRNN::fc_baseline),
   class = "plot_prediction_samples_splits_error",
   pattern = "`splits` must be list, not of class \"data.table / data.frame\"\\.$"
 )

@@ -49,7 +49,7 @@ ggplot2 object
 Plot multiple splits from list with forecast results
 }
 \examples{
-data <- fcf::fc_arima
+data <- tsRNN::fc_arima
 plot_prediction_samples(
    splits = list(data, data),
    ncol = 2L

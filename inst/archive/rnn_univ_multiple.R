@@ -16,7 +16,7 @@ set.seed(123)
 
 ### Data Preparation -----------------------------------------------------------
 
-apple <- fcf::dow30[
+apple <- tsRNN::dow30[
   ticker == "AAPL" & date > as.POSIXct("1990-01-01"),
   .SD, .SDcols = c("date", "ebit")
 ]

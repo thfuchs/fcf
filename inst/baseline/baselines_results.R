@@ -2,7 +2,7 @@
 
 ### Settings -------------------------------------------------------------------
 
-data <- fcf::dow30_clean
+data <- tsRNN::dow30_clean
 
 cv_setting <- list(
   periods_train = 40,

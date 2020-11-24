@@ -1,7 +1,7 @@
 library(forecast)
 # library(ggplot2)
 
-unh <- fcf::ts_unh
+unh <- tsRNN::ts_unh
 train <- subset(unh, end = length(unh) - 8)
 
 # 1. auto.arima

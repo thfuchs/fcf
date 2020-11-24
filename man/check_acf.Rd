@@ -22,7 +22,7 @@ tests passes and FALSE otherwise
 Ljung-Box tests for 8, 12 and 16 lags
 }
 \examples{
-apple <- fcf::ts_apple
+apple <- tsRNN::ts_apple
 
 # With all default
 check_acf(apple)

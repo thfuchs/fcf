@@ -2,7 +2,7 @@
 
 # Initialization ---------------------------------------------------------------
 
-apple <- fcf::DT_apple
+apple <- tsRNN::DT_apple
 
 tuning_grid <- list(
   lags = list(1, 1:2, 1:3, 1:4),

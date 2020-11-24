@@ -12,7 +12,7 @@
 #' @export
 #'
 #' @examples
-#' apple <- fcf::ts_apple
+#' apple <- tsRNN::ts_apple
 #'
 #' # With all default
 #' check_acf(apple)

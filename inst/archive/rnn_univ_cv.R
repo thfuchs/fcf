@@ -17,7 +17,7 @@
 
 ### Data Preparation -----------------------------------------------------------
 
-apple <- fcf::DT_apple
+apple <- tsRNN::DT_apple
 
 # Cross Validation
 periods_train <- 70
@@ -51,7 +51,7 @@ rolling_origin_resamples
 #       length_val = nrow(DT_val),
 #       length_test = nrow(DT_test),
 #       filepath = paste0(
-#         system.file("models", package = "fcf"), "/basic_", split$id, ".hdf5")
+#         system.file("models", package = "tsRNN"), "/basic_", split$id, ".hdf5")
 #     )
 #   }
 # )

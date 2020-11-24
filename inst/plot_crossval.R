@@ -2,7 +2,7 @@
 # Source: https://www.tidymodels.org/learn/models/time-series/ and
 # https://www.business-science.io/timeseries-analysis/2018/07/01/keras-lstm-sunspots-part2.html
 
-apple <- fcf::dow30[
+apple <- tsRNN::dow30[
   ticker == "AAPL" & date > as.POSIXct("1995-01-01"),
   .SD, .SDcols = c("date", "fcf")
 ]

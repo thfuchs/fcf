@@ -47,7 +47,7 @@ Plot Forecasts by baseline methods
 }
 \examples{
 plot_baselines(
-  data = fcf::fc_baseline,
+  data = tsRNN::fc_baseline,
   colors = c("Actual" = "black", "Snaive" = "blue", "Holt" = "green")
 )
 }

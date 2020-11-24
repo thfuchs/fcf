@@ -2,7 +2,7 @@
 # time series leaps are removed
 
 ### Overview -------------------------------------------------------------------
-data <- fcf::dow30
+data <- tsRNN::dow30
 
 # summarytools::descr(
 #   data,

@@ -2,7 +2,7 @@
 
 ### Settings -------------------------------------------------------------------
 
-data <- fcf::DT_unh
+data <- tsRNN::DT_unh
 
 cv_setting <- list(
   periods_train = 40,

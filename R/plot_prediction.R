@@ -22,13 +22,13 @@
 #'
 #' @examples
 #' plot_prediction(
-#'   data = fcf::fc_arima,
+#'   data = tsRNN::fc_arima,
 #'   title = "ARIMA Forecast versus actual data"
 #' )
 #'
 #' # With Prediction Interval
 #' plot_prediction(
-#'   data = fcf::fc_arima,
+#'   data = tsRNN::fc_arima,
 #'   title = "ARIMA Forecast with prediction interval",
 #'   PI = TRUE
 #' )
@@ -138,7 +138,7 @@ plot_prediction <- function(
 #' @export
 #'
 #' @examples
-#' data <- fcf::fc_arima
+#' data <- tsRNN::fc_arima
 #' plot_prediction_samples(
 #'    splits = list(data, data),
 #'    ncol = 2L

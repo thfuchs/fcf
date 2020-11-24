@@ -14,7 +14,7 @@
 #' @export
 #'
 #' @examples
-#' data <- fcf::DT_unh
+#' data <- tsRNN::DT_unh
 #'
 #' data[, value_lag1 := data.table::shift(value, type = "lag", n = 1)]
 #' data[, value_lag2 := data.table::shift(value, type = "lag", n = 2)]

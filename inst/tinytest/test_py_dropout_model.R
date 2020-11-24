@@ -1,4 +1,4 @@
-model <- keras::load_model_hdf5(system.file("tinytest_data/simple_dropout_rnn.hdf5", package = "fcf"))
+model <- keras::load_model_hdf5(system.file("tinytest_data/simple_dropout_rnn.hdf5", package = "tsRNN"))
 test <- array(runif(18, 0.1, 3), dim = c(6L, 3L, 1L))
 
 # Deactivate dropout for testing

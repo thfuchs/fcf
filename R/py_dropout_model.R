@@ -13,7 +13,7 @@
 #' @examples
 #' # Load Model with permanently activated dropout and generate test data
 #' model <- keras::load_model_hdf5(
-#'   system.file("tinytest_data/simple_dropout_rnn.hdf5", package = "fcf"))
+#'   system.file("tinytest_data/simple_dropout_rnn.hdf5", package = "tsRNN"))
 #' test <- array(runif(18, 0.1, 3), dim = c(6L, 3L, 1L))
 #'
 #' # 1. Deactivate dropout for testing
@@ -29,7 +29,7 @@ py_dropout_model <- function(model, dropout = 0.1) {
   dropout_model <- NULL
 
   # read Python file
-  python_path <- system.file("python", "dropout_model.py", package = "fcf")
+  python_path <- system.file("python", "dropout_model.py", package = "tsRNN")
   reticulate::source_python(python_path)
 
   # Output

@@ -54,13 +54,13 @@ Plot timeseries and forecast for single split and company
 }
 \examples{
 plot_prediction(
-  data = fcf::fc_arima,
+  data = tsRNN::fc_arima,
   title = "ARIMA Forecast versus actual data"
 )
 
 # With Prediction Interval
 plot_prediction(
-  data = fcf::fc_arima,
+  data = tsRNN::fc_arima,
   title = "ARIMA Forecast with prediction interval",
   PI = TRUE
 )

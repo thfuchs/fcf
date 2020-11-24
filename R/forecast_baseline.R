@@ -19,7 +19,7 @@
 #'
 #' @examples
 #' # Calculate MAE and RMSE of simple forecasting models for Apple FCF
-#' apple <- fcf::ts_apple
+#' apple <- tsRNN::ts_apple
 #' forecast_baseline(apple, acc_measure = c("MAE", "RMSE"))
 #'
 #' # Change forecast horizom to 4 years

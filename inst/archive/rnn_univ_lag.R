@@ -19,7 +19,7 @@
 
 ### Data Preparation -----------------------------------------------------------
 
-apple <- fcf::dow30[
+apple <- tsRNN::dow30[
   ticker == "AAPL" & date > as.POSIXct("1995-01-01"),
   .SD, .SDcols = c("date", "fcf")
 ]
