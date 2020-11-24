@@ -5,7 +5,12 @@
 \alias{fc_baseline}
 \title{Baseline Forecast (data.table object) with SNAIVE and Holt's Trend}
 \format{
-A quarterly data.table object from 2000 to 2004
+A data.table with 34 rows and 3 variables:
+\describe{
+\item{index}{Publishing date of (quarterly) report}
+\item{value}{Earnings before interest and taxes}
+\item{type}{Actual or Forecast group}
+}
 }
 \usage{
 data(fc_baseline)

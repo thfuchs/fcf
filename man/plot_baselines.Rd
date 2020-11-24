@@ -20,11 +20,11 @@ plot_baselines(
 \arguments{
 \item{data}{data.frame containing "Date", "value" and "group"}
 
-\item{col_date}{Date column in data.frame, default to "index"}
+\item{col_date}{Date column in \code{data}, default to "index"}
 
-\item{col_value}{Value column in data.frame, default to "value"}
+\item{col_value}{Value column in \code{data}, default to "value"}
 
-\item{col_group}{Group column in data.frame, default to "type" (e.g.
+\item{col_group}{Group column in \code{data}, default to "type" (e.g.
 "Actual", "Naive", ...) - see example}
 
 \item{title}{diagram title}

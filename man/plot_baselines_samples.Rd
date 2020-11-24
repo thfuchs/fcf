@@ -45,7 +45,7 @@ Plot cross validated samples of forecasts by baseline methods
 \examples{
 data <- fcf::fc_baseline
 plot_baselines_samples(
-  splits = list(data, data)
+  splits = list(data, data),
   colors = c("Actual" = "black", "Snaive" = "blue", "Holt" = "green"),
   ncol = 2L
 )

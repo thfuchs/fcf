@@ -1,9 +1,9 @@
 #' Plot Forecasts by baseline methods
 #'
 #' @param data data.frame containing "Date", "value" and "group"
-#' @param col_date Date column in data.frame, default to "index"
-#' @param col_value Value column in data.frame, default to "value"
-#' @param col_group Group column in data.frame, default to "type" (e.g.
+#' @param col_date Date column in `data`, default to "index"
+#' @param col_value Value column in `data`, default to "value"
+#' @param col_group Group column in `data`, default to "type" (e.g.
 #'   "Actual", "Naive", ...) - see example
 #' @param title diagram title
 #' @param size line size
@@ -79,7 +79,7 @@ plot_baselines <- function(
     panel.background = element_rect(fill = NA, colour = "black"),
     panel.grid.major = element_line(colour = "lightgrey"),
     legend.position = legend,
-    legend.title = NULL,
+    legend.title = element_blank(),
     legend.key = element_blank()
   ) +
     scale_x_date(limits = scale)
@@ -106,7 +106,7 @@ plot_baselines <- function(
 #' @examples
 #' data <- fcf::fc_baseline
 #' plot_baselines_samples(
-#'   splits = list(data, data)
+#'   splits = list(data, data),
 #'   colors = c("Actual" = "black", "Snaive" = "blue", "Holt" = "green"),
 #'   ncol = 2L
 #' )
@@ -132,11 +132,12 @@ plot_baselines_samples <- function(
   testr::check_class(scale, "Date", "plot_baselines_samples", allowNULL = TRUE)
 
   ### Function -----------------------------------------------------------------
+
   plot_list <- purrr::imap(
     splits,
     function(split, position) {
       if (date_type == "datetime" || date_type == "character") {
-        split[, index := as.Date(index)]
+        split[, paste(col_date) := as.Date(get(col_date))]
       }
 
       plot_baselines(
