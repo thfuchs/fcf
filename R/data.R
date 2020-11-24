@@ -78,5 +78,27 @@
 #' @usage data(fc_baseline)
 #' @keywords datasets
 #'
-#' @format A quarterly data.table object from 2000 to 2004
+#' @format A data.table with 34 rows and 3 variables:
+#' \describe{
+#'   \item{index}{Publishing date of (quarterly) report}
+#'   \item{value}{Earnings before interest and taxes}
+#'   \item{type}{Actual or Forecast group}
+#' }
 "fc_baseline"
+
+#' Univaritate time series with actual datapoints and ARIMA forecast (data.table
+#' object)
+#'
+#' @docType data
+#' @usage data(fc_arima)
+#' @keywords datasets
+#'
+#' @format A data.table with 58 rows and 5 variables:
+#' \describe{
+#'   \item{index}{Publishing date of (quarterly) report}
+#'   \item{value}{Earnings before interest and taxes}
+#'   \item{key}{"actual" and "predict"}
+#'   \item{lo95}{95% confidence interval lower barrier}
+#'   \item{hi95}{95% confidence interval upper barrier}
+#' }
+"fc_arima"

@@ -6,11 +6,16 @@
 \usage{
 plot_prediction_samples(
   splits,
-  title,
+  col_date = "index",
+  col_value = "value",
+  col_group = "key",
+  title = NULL,
   date_type = "datetime",
-  ncol = 2,
-  scale,
-  PI = FALSE
+  ncol = 3L,
+  scale = NULL,
+  PI = FALSE,
+  col_pi_high = "hi95",
+  col_pi_low = "lo95"
 )
 }
 \arguments{
@@ -31,4 +36,18 @@ ggplot2 object
 }
 \description{
 Plot multiple splits from same \code{rsample} split
+}
+\examples{
+data <- fcf::fc_arima
+plot_prediction_samples(
+   splits = list(data, data),
+   ncol = 2L
+)
+
+# with Prediction Interval
+plot_prediction_samples(
+  splits = list(data, data),
+  ncol = 2L,
+  PI = TRUE
+)
 }

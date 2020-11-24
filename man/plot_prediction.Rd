@@ -6,17 +6,29 @@
 \usage{
 plot_prediction(
   data,
-  title,
+  col_date = "index",
+  col_value = "value",
+  col_group = "key",
+  title = NULL,
   size = 0.6,
   alpha = 0.8,
   legend = "bottom",
   scale = NULL,
-  PI = FALSE
+  PI = FALSE,
+  col_pi_high = "hi95",
+  col_pi_low = "lo95"
 )
 }
 \arguments{
 \item{data}{data.frame containing "index" (Date), "value" (numeric) and key
 (character - "actual" and "predict")}
+
+\item{col_date}{Date column in \code{data}, default to "index"}
+
+\item{col_value}{Value column in \code{data}, default to "value"}
+
+\item{col_group}{Group column in \code{data}, default to "key" ("actual" and
+"predict") - see example}
 
 \item{title}{plot title}
 
@@ -29,10 +41,27 @@ plot_prediction(
 \item{scale}{NULL or two Date values to scale x-axis}
 
 \item{PI}{add prediction interval?}
+
+\item{col_pi_high}{Upper confidence bound in \code{data}}
+
+\item{col_pi_low}{Lower confidence bound in \code{data}}
 }
 \value{
 ggplot2 object
 }
 \description{
 Plot timeseries and forecast for single split and company
+}
+\examples{
+plot_prediction(
+  data = fcf::fc_arima,
+  title = "ARIMA Forecast versus actual data"
+)
+
+# With Prediction Interval
+plot_prediction(
+  data = fcf::fc_arima,
+  title = "ARIMA Forecast with prediction interval",
+  PI = TRUE
+)
 }
