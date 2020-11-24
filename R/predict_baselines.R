@@ -7,6 +7,9 @@
 #'   \item periods_test
 #'   \item skip_span
 #' }
+#' @param col_id Optional ID column in `data`, default to "ticker"
+#' @param col_date Date column in `data`, default to "index"
+#' @param col_value Value column in `data`, default to "value"
 #' @param transform One of NULL, "normalize" and "box" for Box-Cox transformation
 #' @param frequency time series frequency, e.g. 4 for quarters and 12 for months
 #' @param multiple_h NULL if forecast horizon equals cv_setting$n_test, else
@@ -17,20 +20,47 @@
 #' @return list with accuracy and forecasts (point forecast and PI)
 #' @export
 predict_baselines <- function(
-  data, cv_setting, transform = NULL, frequency = 4, multiple_h = NULL
+  data,
+  cv_setting,
+  col_id = "ticker",
+  col_date = "index",
+  col_value = "value",
+  transform = NULL,
+  frequency = 4,
+  multiple_h = NULL
 ) {
 
   ### Checks -------------------------------------------------------------------
   testr::check_class(data, "data.frame", "predict_baselines")
-  data.table::setDT(data)
-  if (any(!c("index", "value") %in% names(data))) rlang::abort(
-    message = "`data` requires variables `index` and `value`",
-    class = "predict_baselines_data_error"
-  )
   testr::check_class(cv_setting, "list", "predict_baselines")
+  testr::check_class(col_id, "character", "predict_baselines")
+  testr::check_class(col_date, "character", "predict_baselines")
+  testr::check_class(col_value, "character", "predict_baselines")
   testr::check_class(transform, "character", "predict_baselines", allowNULL = TRUE)
   testr::check_class(frequency, "numeric", "predict_baselines")
   testr::check_class(multiple_h, "list", "predict_baselines", allowNULL = TRUE)
+
+  # Check column's fit in "data"
+  data.table::setDT(data)
+  if (
+    !is.null(col_id) && is.null(data[[col_id]]) ||
+    !is.null(col_id) && !inherits(data[[col_id]], "numeric")
+  ) rlang::abort(
+    message = "Variable specified by `col_id` must be class \"character\".",
+    class = "predict_baselines_col_id_error"
+  )
+  if (
+    is.null(data[[col_date]]) ||
+    !rlang::inherits_any(data[[col_date]], c("Date", "POSIXct"))
+  ) rlang::abort(
+    message = "Variable specified by `col_date` must be class \"Date\" or \"POSIXct\".",
+    class = "predict_baselines_col_date_error"
+  )
+  if (is.null(data[[col_value]]) || !inherits(data[[col_value]], "numeric"))
+    rlang::abort(
+      message = "Variable specified by `col_value` must be class \"numeric\".",
+      class = "predict_baselines_col_value_error"
+    )
 
   ### Settings -----------------------------------------------------------------
   n_train <- cv_setting$periods_train
@@ -63,10 +93,10 @@ predict_baselines <- function(
       data[, key := "actual"]
 
       # Reshaping to ts object
-      min_date <- data[, c(year(min(index)), quarter(min(index)))]
-      max_date <- data[, c(year(max(index)), quarter(max(index)))]
+      min_date <- data[, c(year(min(get(col_date))), quarter(min(get(col_date))))]
+      max_date <- data[, c(year(max(get(col_date))), quarter(max(get(col_date))))]
 
-      ts_data <- stats::ts(data$value, frequency = frequency, start = min_date, end = max_date)
+      ts_data <- stats::ts(data[[col_value]], frequency = frequency, start = min_date, end = max_date)
       ts_train <- subset(ts_data, end = n_initial)
 
       old_names_acc <- c("Training set", "Test set")
@@ -83,7 +113,7 @@ predict_baselines <- function(
       )
 
       fc_naive <- data.table::data.table(
-        index = data[(.N-n_test+1):.N, index],
+        index = data[(.N-n_test+1):.N, get(col_date)],
         value = as.numeric(fc_naive$mean),
         lo95 = as.numeric(fc_naive$lower),
         hi95 = as.numeric(fc_naive$upper)
@@ -101,7 +131,7 @@ predict_baselines <- function(
       )
 
       fc_snaive <- data.table::data.table(
-        index = data[(.N-n_test+1):.N, index],
+        index = data[(.N-n_test+1):.N, get(col_date)],
         value = as.numeric(fc_snaive$mean),
         lo95 = as.numeric(fc_snaive$lower),
         hi95 = as.numeric(fc_snaive$upper)
@@ -120,7 +150,7 @@ predict_baselines <- function(
       )
 
       fc_drift <- data.table::data.table(
-        index = data[(.N-n_test+1):.N, index],
+        index = data[(.N-n_test+1):.N, get(col_date)],
         value = as.numeric(fc_drift$mean),
         lo95 = as.numeric(fc_drift$lower),
         hi95 = as.numeric(fc_drift$upper)
@@ -138,7 +168,7 @@ predict_baselines <- function(
       )
 
       fc_holt <- data.table::data.table(
-        index = data[(.N-n_test+1):.N, index],
+        index = data[(.N-n_test+1):.N, get(col_date)],
         value = as.numeric(fc_holt$mean),
         lo95 = as.numeric(fc_holt$lower),
         hi95 = as.numeric(fc_holt$upper)
@@ -146,9 +176,11 @@ predict_baselines <- function(
       fc_holt[, `:=` (key = "predict", type = "Holt")]
 
       fc <- rbind(data, fc_naive, fc_snaive, fc_drift, fc_holt, fill = TRUE)
-      if (!is.null(fc[["ticker"]])) fc[, ticker := unique(DT$ticker)]
+      if (!is.null(col_id)) fc[, paste(col_id) := unique(DT[[col_id]])]
 
       ### Accuracy Measures
+      index <- value <- lo95 <- hi95 <- NULL
+
       acc <- data.table::setDT(purrr::map_df(
         list(fc_naive, fc_snaive, fc_drift, fc_holt),
         function(x) {
@@ -156,20 +188,20 @@ predict_baselines <- function(
           # Point Forecast Measures
           acc_MAPE <- sapply(
             multiple_h,
-            function(h) mape(actual = DT_test[h,value], forecast = x[h,value]))
+            function(h) mape(actual = DT_test[h, get(col_value)], forecast = x[h,value]))
           acc_sMAPE <- sapply(
             multiple_h,
-            function(h) smape(actual = DT_test[h,value], forecast = x[h,value]))
+            function(h) smape(actual = DT_test[h, get(col_value)], forecast = x[h,value]))
           acc_MASE <- sapply(
             multiple_h, function(h) mase(
-              data = DT[1:(n_initial+max(h)),value],
+              data = DT[1:(n_initial+max(h)), get(col_value)],
               forecast = x[h,value], m = frequency)
           )
 
           # Prediction Interval Measures
           acc_SMIS <- sapply(
             multiple_h, function(h) smis(
-              data = DT[1:(n_initial+max(h)),value],
+              data = DT[1:(n_initial+max(h)), get(col_value)],
               lower = x[h,lo95],
               upper = x[h,hi95],
               h = max(h), m = frequency, level = 0.95)
@@ -177,7 +209,7 @@ predict_baselines <- function(
 
           acc_ACD <- sapply(
             multiple_h, function(h) acd(
-              actual = DT_test[h,value], lower = x[h,lo95], upper = x[h,hi95],
+              actual = DT_test[h, get(col_value)], lower = x[h,lo95], upper = x[h,hi95],
               level = 0.95)
           )
 

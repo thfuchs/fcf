@@ -10,6 +10,9 @@ tune_keras_rnn(
   model_type,
   cv_setting,
   tuning_bounds,
+  col_id = "ticker",
+  col_date = "index",
+  col_value = "value",
   frequency = 4,
   iterations = 2000,
   multiple_h = NULL,
@@ -19,7 +22,8 @@ tune_keras_rnn(
 )
 }
 \arguments{
-\item{data}{Univariate time series (data.frame) with columns index and value}
+\item{data}{Univariate time series (data.frame) with date and value column,
+specified in \code{col_date} and \code{col_value}}
 
 \item{model_type}{One of "basic", "gru" or "lstm"}
 
@@ -27,6 +31,12 @@ tune_keras_rnn(
 "skip_span" for \link[rsample]{rolling_origin}}
 
 \item{tuning_bounds}{list of tuning parameters - see section "Tuning Bounds"}
+
+\item{col_id}{Optional ID column in \code{data}, default to "ticker"}
+
+\item{col_date}{Date column in \code{data}, default to "index"}
+
+\item{col_value}{Value column in \code{data}, default to "value"}
 
 \item{frequency}{time series frequency, e.g. 4 for quarters and 12 for months}
 

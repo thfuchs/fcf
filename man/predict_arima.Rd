@@ -7,6 +7,9 @@
 predict_arima(
   data,
   cv_setting,
+  col_id = "ticker",
+  col_date = "index",
+  col_value = "value",
   transform = NULL,
   frequency = 4,
   multiple_h = NULL
@@ -22,6 +25,12 @@ predict_arima(
 \item skip_span
 }}
 
+\item{col_id}{Optional ID column in \code{data}, default to "ticker"}
+
+\item{col_date}{Date column in \code{data}, default to "index"}
+
+\item{col_value}{Value column in \code{data}, default to "value"}
+
 \item{transform}{One of NULL (default) and "normalize"}
 
 \item{frequency}{time series frequency, e.g. 4 for quarters and 12 for months}
@@ -34,4 +43,28 @@ list with accuracy and forecasts (point forecast and PI)
 }
 \description{
 Forecast the next n steps by ARIMA for each split
+}
+\examples{
+\dontrun{
+cv_setting <- list(
+  periods_train = 90,
+  periods_val = 10,
+  periods_test = 10,
+  skip_span = 5
+)
+
+fc_01 <- predict_arima(
+  data = fcf::DT_unh,
+  cv_setting = cv_setting
+)
+fc_01
+
+# Multiple forecast horizons
+fc_02 <- predict_arima(
+  data = fcf::DT_unh,
+  cv_setting = cv_setting,
+  multiple_h = list(short = 1:2, long = 3:4)
+)
+fc_02
+}
 }

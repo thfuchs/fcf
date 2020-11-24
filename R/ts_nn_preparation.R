@@ -53,6 +53,8 @@ ts_nn_preparation <- function(data, tsteps, length_val = 16L, length_test = 8L) 
   n_test <- (n - length_test + 1):n
 
   # 2D And 3D Train/Test Arrays
+  patterns <- function(...) NULL # to address data.table R CMD check Note
+
   train_DT <- data[n_train]
   x_train_mat <- as.matrix(train_DT[, .SD, .SDcols = patterns("^value_lag")])
   x_train_dim <- c(nrow(x_train_mat), tsteps, 1)

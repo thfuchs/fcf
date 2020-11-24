@@ -2,16 +2,16 @@
 #'
 #' @param data data.frame containing "index" (Date), "value" (numeric) and key
 #'   (character - "actual" and "predict")
+#' @param col_date Date column in `data`, default to "index"
+#' @param col_value Value column in `data`, default to "value"
+#' @param col_group Group column in `data`, default to "key" ("actual" and
+#'   "predict") - see example
 #' @param title plot title
 #' @param size line size
 #' @param alpha line alpha value
 #' @param legend legend position
 #' @param scale NULL or two Date values to scale x-axis
 #' @param PI add prediction interval?
-#' @param col_date Date column in `data`, default to "index"
-#' @param col_value Value column in `data`, default to "value"
-#' @param col_group Group column in `data`, default to "key" ("actual" and
-#'   "predict") - see example
 #' @param col_pi_high Upper confidence bound in `data`
 #' @param col_pi_low Lower confidence bound in `data`
 #'
@@ -119,14 +119,20 @@ plot_prediction <- function(
   return(g)
 }
 
-#' Plot multiple splits from same `rsample` split
+#' Plot multiple splits from list with forecast results
 #'
 #' @param splits list of prediction data.frames
+#' @param col_date Date column, default to "index"
+#' @param col_value Value column, default to "value"
+#' @param col_group Group column , default to "key" ("actual" and
+#'   "predict") - see example
 #' @param scale NULL or two Date values to scale x-axis
 #' @param title diagram title
 #' @param date_type string vector - one of "datetime", "date" or "character"
 #' @param ncol Number of columns
 #' @param PI add prediction interval?
+#' @param col_pi_high Upper confidence bound
+#' @param col_pi_low Lower confidence bound
 #'
 #' @return ggplot2 object
 #' @export

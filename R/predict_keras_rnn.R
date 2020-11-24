@@ -147,6 +147,7 @@ predict_keras_rnn <- function(
   sequential_prediction <- function() {
 
     # Input Parameters
+    data <- NULL
     metrics <- NULL
 
     # Pre-Processing: Normalizing the data

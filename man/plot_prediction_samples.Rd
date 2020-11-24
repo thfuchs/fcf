@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_prediction.R
 \name{plot_prediction_samples}
 \alias{plot_prediction_samples}
-\title{Plot multiple splits from same \code{rsample} split}
+\title{Plot multiple splits from list with forecast results}
 \usage{
 plot_prediction_samples(
   splits,
@@ -21,6 +21,13 @@ plot_prediction_samples(
 \arguments{
 \item{splits}{list of prediction data.frames}
 
+\item{col_date}{Date column, default to "index"}
+
+\item{col_value}{Value column, default to "value"}
+
+\item{col_group}{Group column , default to "key" ("actual" and
+"predict") - see example}
+
 \item{title}{diagram title}
 
 \item{date_type}{string vector - one of "datetime", "date" or "character"}
@@ -30,12 +37,16 @@ plot_prediction_samples(
 \item{scale}{NULL or two Date values to scale x-axis}
 
 \item{PI}{add prediction interval?}
+
+\item{col_pi_high}{Upper confidence bound}
+
+\item{col_pi_low}{Lower confidence bound}
 }
 \value{
 ggplot2 object
 }
 \description{
-Plot multiple splits from same \code{rsample} split
+Plot multiple splits from list with forecast results
 }
 \examples{
 data <- fcf::fc_arima

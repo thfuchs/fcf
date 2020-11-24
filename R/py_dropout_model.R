@@ -18,15 +18,20 @@
 #'
 #' # 1. Deactivate dropout for testing
 #' model_01 <- py_dropout_model(model, 0)
-#' predict(model_01, test)
+#' stats::predict(model_01, test)
 #'
 #' # 2. Change dropout level
 #' model_02 <- py_dropout_model(model, 0.8)
-#' predict(model_02, test)
+#' stats::predict(model_02, test)
 py_dropout_model <- function(model, dropout = 0.1) {
 
+  # for R binding
+  dropout_model <- NULL
+
+  # read Python file
   python_path <- system.file("python", "dropout_model.py", package = "fcf")
   reticulate::source_python(python_path)
 
+  # Output
   dropout_model(model, dropout)
 }

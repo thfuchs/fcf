@@ -5,8 +5,8 @@ test <- array(runif(18, 0.1, 3), dim = c(6L, 3L, 1L))
 model_01 <- py_dropout_model(model, 0)
 
 expect_identical(
-  predict(model_01, test),
-  predict(model_01, test)
+  stats::predict(model_01, test),
+  stats::predict(model_01, test)
 )
 
 # Change dropout level out of range 0-1

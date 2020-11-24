@@ -7,6 +7,9 @@
 predict_baselines(
   data,
   cv_setting,
+  col_id = "ticker",
+  col_date = "index",
+  col_value = "value",
   transform = NULL,
   frequency = 4,
   multiple_h = NULL
@@ -21,6 +24,12 @@ predict_baselines(
 \item periods_test
 \item skip_span
 }}
+
+\item{col_id}{Optional ID column in \code{data}, default to "ticker"}
+
+\item{col_date}{Date column in \code{data}, default to "index"}
+
+\item{col_value}{Value column in \code{data}, default to "value"}
 
 \item{transform}{One of NULL, "normalize" and "box" for Box-Cox transformation}
 

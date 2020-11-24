@@ -1,11 +1,15 @@
 #' Tune recurrent neural network with Keras functional API and Bayes
 #' Optimization and select best performing model
 #'
-#' @param data Univariate time series (data.frame) with columns index and value
+#' @param data Univariate time series (data.frame) with date and value column,
+#'   specified in `col_date` and `col_value`
 #' @param cv_setting list of "periods_train", "periods_val", "periods_test" and
 #'   "skip_span" for \link[rsample]{rolling_origin}
 #' @param model_type One of "basic", "gru" or "lstm"
 #' @param tuning_bounds list of tuning parameters - see section "Tuning Bounds"
+#' @param col_id Optional ID column in `data`, default to "ticker"
+#' @param col_date Date column in `data`, default to "index"
+#' @param col_value Value column in `data`, default to "value"
 #' @param frequency time series frequency, e.g. 4 for quarters and 12 for months
 #' @param multiple_h NULL if forecast horizon equals cv_setting$n_test, else
 #'   named list of forecast horizons for accuracy measures
@@ -38,6 +42,9 @@ tune_keras_rnn <- function(
   model_type,
   cv_setting,
   tuning_bounds,
+  col_id = "ticker",
+  col_date = "index",
+  col_value = "value",
   frequency = 4,
   iterations = 2000,
   multiple_h = NULL,
@@ -51,6 +58,9 @@ tune_keras_rnn <- function(
   testr::check_class(data, "data.frame", "tune_keras_rnn")
   testr::check_class(model_type, "character", "tune_keras_rnn")
   testr::check_class(cv_setting, "list", "tune_keras_rnn")
+  testr::check_class(col_id, "character", "tune_keras_rnn")
+  testr::check_class(col_date, "character", "tune_keras_rnn")
+  testr::check_class(col_value, "character", "tune_keras_rnn")
   testr::check_class(tuning_bounds, "list", "tune_keras_rnn")
   testr::check_class(frequency, "numeric", "tune_keras_rnn")
   testr::check_class(iterations, "numeric", "tune_keras_rnn")
@@ -58,13 +68,32 @@ tune_keras_rnn <- function(
   testr::check_class(test_dropout, "numeric", "tune_keras_rnn")
   testr::check_class(save_model, "character", "tune_keras_rnn", allowNULL = TRUE)
 
-  # "data" contains columns "index" and "value" only (univariate time series)
-  if (all(names(data)[order(names(data))] != c("index", "value"))) rlang::abort(
-    message = "`data` must be a data.frame with 2 columns only: \"index\" and \"value\"",
-    class = "tune_keras_rnn_data_error"
+  # "data" contains columns "index" and "value" (and optionally "id")
+  # (univariate time series)
+  data.table::setDT(data)
+  if (
+    !is.null(col_id) && is.null(data[[col_id]]) ||
+    !is.null(col_id) && !inherits(data[[col_id]], "numeric")
+  ) rlang::abort(
+    message = "Variable specified by `col_id` must be class \"character\".",
+    class = "tune_keras_rnn_col_id_error"
   )
+  if (
+    is.null(data[[col_date]]) ||
+    !rlang::inherits_any(data[[col_date]], c("Date", "POSIXct"))
+  ) rlang::abort(
+    message = "Variable specified by `col_date` must be class \"Date\" or \"POSIXct\".",
+    class = "tune_keras_rnn_col_date_error"
+  )
+  if (is.null(data[[col_value]]) || !inherits(data[[col_value]], "numeric"))
+    rlang::abort(
+      message = "Variable specified by `col_value` must be class \"numeric\".",
+      class = "tune_keras_rnn_col_value_error"
+    )
+
   # "model_type" must be one of "simple", "gru" or "lstm"
   model_type <- rlang::arg_match(model_type, c("simple", "gru", "lstm"))
+
   # "cv_setting" contains "periods_train", "periods_val", "periods_test" and
   # "skip_span"
   if (all(names(cv_setting)[order(names(cv_setting))] !=
@@ -74,6 +103,7 @@ tune_keras_rnn <- function(
       class = "tune_keras_rnn_data_error"
     )
   }
+
   # Check whether directory exists
   if (!dir.exists(save_model)) rlang::abort(
     message = "Directory specified in `save_model` does not exist",
@@ -81,6 +111,8 @@ tune_keras_rnn <- function(
   )
 
   # Function -------------------------------------------------------------------
+
+  patterns <- function(...) NULL # to address data.table R CMD check Note
 
   n_train <- cv_setting$periods_train
   n_val <- cv_setting$periods_val
@@ -91,7 +123,7 @@ tune_keras_rnn <- function(
 
   # Add lagged values to data
   data_lag <- data.table::copy(data)
-  add_shift(data_lag, cols = "value", nlags = c(lag_lower:lag_upper), type = "lag")
+  add_shift(data_lag, cols = col_value, nlags = c(lag_lower:lag_upper), type = "lag")
   data_lag <- data_lag[!is.na(get(paste0("value_lag", lag_upper)))]
 
   rolling_origin_resamples <- rsample::rolling_origin(
@@ -115,6 +147,7 @@ tune_keras_rnn <- function(
       DT[, key := "actual"]
 
       # Normalization
+      data_split <- metrics_norm <- NULL
       c(data_split, metrics_norm) %<-%
         ts_normalization(DT, n_val, n_test, metrics = TRUE)
 
@@ -133,6 +166,8 @@ tune_keras_rnn <- function(
       # Use optimized parameters to train model on entire data set (excluding
       # test set)
       best_lag_setting <- sort(bayes$Best_Par["lag_1"]:bayes$Best_Par["lag_2"])
+      X <- Y <- NULL
+
       c(X, Y) %<-% ts_nn_preparation(
         data_split,
         tsteps = length(best_lag_setting),
@@ -164,7 +199,7 @@ tune_keras_rnn <- function(
           best_model,
           filepath = file.path(save_model, paste0(
             format(Sys.time(), "%Y%m%d_%H%M%S_"),
-            model_type, "_", unique(data_split$ticker), split$id$id, ".hdf5")
+            model_type, "_", unique(data_split[[col_id]]), split$id$id, ".hdf5")
           )
         )
       }
@@ -175,17 +210,17 @@ tune_keras_rnn <- function(
       dropout_model <- py_dropout_model(best_model, test_dropout)
 
       fc_mean <-
-        predict(mean_model, X$test) * metrics_norm$scale + metrics_norm$center
+        stats::predict(mean_model, X$test) * metrics_norm$scale + metrics_norm$center
 
       fc_iter <- vapply(1:iterations, function(i) {
-        predict(dropout_model, X$test) * metrics_norm$scale + metrics_norm$center
+        stats::predict(dropout_model, X$test) * metrics_norm$scale + metrics_norm$center
       }, FUN.VALUE = numeric(n_test))
 
-      fc_lower <- apply(fc_iter, 1, quantile, 0.5 - level / 200, type = 8)
-      fc_upper <- apply(fc_iter, 1, quantile, 0.5 + level / 200, type = 8)
+      fc_lower <- apply(fc_iter, 1, stats::quantile, 0.5 - level / 200, type = 8)
+      fc_upper <- apply(fc_iter, 1, stats::quantile, 0.5 + level / 200, type = 8)
 
       fc <- data.table::data.table(
-        index = data_split[(.N-n_test+1):.N, index],
+        index = data_split[(.N-n_test+1):.N, get(col_date)],
         value = as.numeric(fc_mean),
         lo95 = as.numeric(fc_lower),
         hi95 = as.numeric(fc_upper)
@@ -196,34 +231,35 @@ tune_keras_rnn <- function(
         fc,
         fill = TRUE
       )
-      if (!is.null(fc[["ticker"]])) fc[, ticker := unique(DT$ticker)]
+      if (!is.null(col_id)) fc[, paste(col_id) := unique(DT[[col_id]])]
 
       ### Accuracy Measures
       fc_values <- fc[key == "predict"]
+      value <- lo95 <- hi95 <- NULL
 
       # Point Forecast Measures
       acc_MAPE <- sapply(
         multiple_h,
-        function(h) mape(actual = DT_test[h,value], forecast = fc_values[h,value]))
+        function(h) mape(actual = DT_test[h, get(col_value)], forecast = fc_values[h,value]))
       acc_sMAPE <- sapply(
         multiple_h,
-        function(h) smape(actual = DT_test[h,value], forecast = fc_values[h,value]))
+        function(h) smape(actual = DT_test[h, get(col_value)], forecast = fc_values[h,value]))
       acc_MASE <- sapply(
         multiple_h, function(h) mase(
-          data = DT[1:(n_initial+max(h)),value],
-          forecast = fc_values[h,value], m = frequency)
+          data = DT[1:(n_initial+max(h)), get(col_value)],
+          forecast = fc_values[h, get(col_value)], m = frequency)
       )
 
       # Prediction Interval Measures
       acc_SMIS <- sapply(
         multiple_h, function(h) smis(
-          data = DT[1:(n_initial+max(h)),value],
+          data = DT[1:(n_initial+max(h)), get(col_value)],
           lower = fc_values[h,lo95],
           upper = fc_values[h,hi95],
           h = max(h), m = frequency, level = level/100)
       )
       acc_ACD <- sapply(multiple_h, function(h) acd(
-        actual = DT_test[h,value],
+        actual = DT_test[h, get(col_value)],
         lower = fc_values[h,lo95],
         upper = fc_values[h,hi95],
         level = level/100)
@@ -263,6 +299,7 @@ internal_keras_fun <- function(
   )
 
   # Reshaping
+  X <- Y <- NULL
   c(X, Y) %<-% ts_nn_preparation(
     data_split,
     tsteps = length(lag_setting),
