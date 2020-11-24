@@ -65,7 +65,8 @@ forecast_baseline <- function(data, test_size = NULL, acc_measure) {
 
   ### Function -----------------------------------------------------------------
 
-  train <- subset(data, end = length(data) - test_size)
+  train_end <- stats::time(data)[length(data)-test_size]
+  train <- stats::window(data, end = train_end)
 
   fc_list <- list(
     fc_naive = forecast::naive(train, h = test_size),
