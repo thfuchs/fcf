@@ -7,7 +7,7 @@
 predict_arima(
   data,
   cv_setting,
-  col_id = "ticker",
+  col_id = NULL,
   col_date = "index",
   col_value = "value",
   transform = NULL,

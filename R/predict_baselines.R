@@ -22,7 +22,7 @@
 predict_baselines <- function(
   data,
   cv_setting,
-  col_id = "ticker",
+  col_id = NULL,
   col_date = "index",
   col_value = "value",
   transform = NULL,
@@ -33,7 +33,7 @@ predict_baselines <- function(
   ### Checks -------------------------------------------------------------------
   testr::check_class(data, "data.frame", "predict_baselines")
   testr::check_class(cv_setting, "list", "predict_baselines")
-  testr::check_class(col_id, "character", "predict_baselines")
+  testr::check_class(col_id, "character", "predict_baselines", allowNULL = TRUE)
   testr::check_class(col_date, "character", "predict_baselines")
   testr::check_class(col_value, "character", "predict_baselines")
   testr::check_class(transform, "character", "predict_baselines", allowNULL = TRUE)
