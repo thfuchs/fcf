@@ -13,7 +13,6 @@
 #' @param frequency time series frequency, e.g. 4 for quarters and 12 for months
 #' @param multiple_h NULL if forecast horizon equals cv_setting$n_test, else
 #'   named list of forecast horizons for accuracy measures
-#' @param iterations number of iterations for dropout-based prediction interval
 #' @param level level for prediction interval in percentage
 #' @param test_dropout specify dropout-rate during testing for prediction
 #'   interval
@@ -42,11 +41,10 @@ tune_keras_rnn <- function(
   model_type,
   cv_setting,
   tuning_bounds,
-  col_id = "ticker",
+  col_id = NULL,
   col_date = "index",
   col_value = "value",
   frequency = 4,
-  iterations = 2000,
   multiple_h = NULL,
   level = 95,
   test_dropout = 0.1,
@@ -58,12 +56,11 @@ tune_keras_rnn <- function(
   testr::check_class(data, "data.frame", "tune_keras_rnn")
   testr::check_class(model_type, "character", "tune_keras_rnn")
   testr::check_class(cv_setting, "list", "tune_keras_rnn")
-  testr::check_class(col_id, "character", "tune_keras_rnn")
+  testr::check_class(col_id, "character", "tune_keras_rnn", allowNULL = TRUE)
   testr::check_class(col_date, "character", "tune_keras_rnn")
   testr::check_class(col_value, "character", "tune_keras_rnn")
   testr::check_class(tuning_bounds, "list", "tune_keras_rnn")
   testr::check_class(frequency, "numeric", "tune_keras_rnn")
-  testr::check_class(iterations, "numeric", "tune_keras_rnn")
   testr::check_class(multiple_h, "list", "tune_keras_rnn", allowNULL = TRUE)
   testr::check_class(test_dropout, "numeric", "tune_keras_rnn")
   testr::check_class(save_model, "character", "tune_keras_rnn", allowNULL = TRUE)
@@ -105,7 +102,7 @@ tune_keras_rnn <- function(
   }
 
   # Check whether directory exists
-  if (!dir.exists(save_model)) rlang::abort(
+  if (!is.null(save_model) && !dir.exists(save_model)) rlang::abort(
     message = "Directory specified in `save_model` does not exist",
     class = "tune_keras_rnn_save_model_error"
   )
@@ -158,9 +155,9 @@ tune_keras_rnn <- function(
         FUN = internal_keras_fun,
         bounds = tuning_bounds,
         init_points = 5,
-        n_iter = 10,
-        acq = "ucb",
-        verbose = TRUE
+        n_iter = 50,
+        acq = "ei",
+        verbose = FALSE
       )
 
       # Use optimized parameters to train model on entire data set (excluding
@@ -180,48 +177,62 @@ tune_keras_rnn <- function(
         `2` = "adam"
       )
 
-      best_model <- keras_rnn(
-        X, Y,
-        model_type = model_type,
-        tsteps = length(best_lag_setting),
-        n_epochs = bayes$Best_Par["n_epochs"],
-        n_units = bayes$Best_Par["n_units"],
-        dropout_in_test = TRUE,
-        optimizer_type = best_optimizer_type,
-        dropout = bayes$Best_Par["dropout"],
-        recurrent_dropout = bayes$Best_Par["recurrent_dropout"],
-        learning_rate = bayes$Best_Par["learning_rate"]
-      )
-
-      # Save model if valid directoy specified
-      if (!is.null(save_model)) {
-        keras::save_model_hdf5(
-          best_model,
-          filepath = file.path(save_model, paste0(
-            format(Sys.time(), "%Y%m%d_%H%M%S_"),
-            model_type, "_", unique(data_split[[col_id]]), split$id$id, ".hdf5")
-          )
+      ### Train model with tuned hyperparameters 10 times
+      best_models <- lapply(1:10, function(i) {
+        model <- keras_rnn(
+          X, Y,
+          model_type = model_type,
+          tsteps = length(best_lag_setting),
+          n_epochs = bayes$Best_Par["n_epochs"],
+          n_units = bayes$Best_Par["n_units"],
+          dropout_in_test = TRUE,
+          optimizer_type = best_optimizer_type,
+          dropout = bayes$Best_Par["dropout"],
+          recurrent_dropout = bayes$Best_Par["recurrent_dropout"],
+          learning_rate = bayes$Best_Par["learning_rate"]
         )
-      }
+
+        # Save model if valid directoy specified
+        if (!is.null(save_model)) {
+          keras::save_model_hdf5(
+            model,
+            filepath = file.path(save_model, paste0(
+              format(Sys.time(), "%Y%m%d_%H%M%S_"),
+              model_type, "_",
+              if (!is.null(col_id)) unique(data_split[[col_id]]),
+              split$id$id, "_", sprintf("%02d", i), ".hdf5"
+            ))
+          )
+        }
+
+        model
+      })
 
       # Change recurrent dropout to 0 for test phase and dropout to 0 for
-      # mean predictions and to `test_dropout` for prediction intervals
-      mean_model <- py_dropout_model(best_model, 0)
-      dropout_model <- py_dropout_model(best_model, test_dropout)
-
-      fc_mean <-
-        stats::predict(mean_model, X$test) * metrics_norm$scale + metrics_norm$center
-
-      fc_iter <- vapply(1:iterations, function(i) {
-        stats::predict(dropout_model, X$test) * metrics_norm$scale + metrics_norm$center
+      # predictions and apply median
+      median_fc <- vapply(best_models, function(model) {
+        model_mean <- py_dropout_model(model, 0)
+        stats::predict(model_mean, X$test) * metrics_norm$scale + metrics_norm$center
       }, FUN.VALUE = numeric(n_test))
 
-      fc_lower <- apply(fc_iter, 1, stats::quantile, 0.5 - level / 200, type = 8)
-      fc_upper <- apply(fc_iter, 1, stats::quantile, 0.5 + level / 200, type = 8)
+      fc_median <- apply(median_fc, 1, median)
+
+      # Change dropout to `test_dropout` for prediction intervals and apply
+      # quantiles
+      all_fc_dropout <- purrr::map_df(best_models, function(model) {
+        model_dropout <- py_dropout_model(model, test_dropout)
+        fc_dropout <- vapply(1:500, function(i) {
+          stats::predict(model_dropout, X$test)[,1] * metrics_norm$scale + metrics_norm$center
+        }, FUN.VALUE = numeric(n_test))
+        data.table::as.data.table(t(fc_dropout))
+      })
+
+      fc_lower <- apply(all_fc_dropout, 2, stats::quantile, 0.5 - level / 200, type = 8)
+      fc_upper <- apply(all_fc_dropout, 2, stats::quantile, 0.5 + level / 200, type = 8)
 
       fc <- data.table::data.table(
         index = data_split[(.N-n_test+1):.N, get(col_date)],
-        value = as.numeric(fc_mean),
+        value = as.numeric(fc_median),
         lo95 = as.numeric(fc_lower),
         hi95 = as.numeric(fc_upper)
       )

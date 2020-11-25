@@ -10,11 +10,10 @@ tune_keras_rnn(
   model_type,
   cv_setting,
   tuning_bounds,
-  col_id = "ticker",
+  col_id = NULL,
   col_date = "index",
   col_value = "value",
   frequency = 4,
-  iterations = 2000,
   multiple_h = NULL,
   level = 95,
   test_dropout = 0.1,
@@ -39,8 +38,6 @@ specified in \code{col_date} and \code{col_value}}
 \item{col_value}{Value column in \code{data}, default to "value"}
 
 \item{frequency}{time series frequency, e.g. 4 for quarters and 12 for months}
-
-\item{iterations}{number of iterations for dropout-based prediction interval}
 
 \item{multiple_h}{NULL if forecast horizon equals cv_setting$n_test, else
 named list of forecast horizons for accuracy measures}
