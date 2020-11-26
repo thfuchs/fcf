@@ -320,30 +320,32 @@ internal_keras_fun <- function(
 
   input <- layer_input(shape = c(length(lag_setting), 1))
 
-  hidden_layer <- if (model_type == "simple") {
+  recurrent_layer <- if (model_type == "simple") {
     layer_simple_rnn(
       units             = n_units,
       input_shape       = c(length(lag_setting), 1),
-      dropout           = dropout,
+      # dropout           = dropout,
       recurrent_dropout = recurrent_dropout
     )
   } else if (model_type == "gru") {
     layer_gru(
       units             = n_units,
       input_shape       = c(length(lag_setting), 1),
-      dropout           = dropout,
+      # dropout           = dropout,
       recurrent_dropout = recurrent_dropout
     )
   } else if (model_type == "lstm") {
     layer_lstm(
       units             = n_units,
       input_shape       = c(length(lag_setting), 1),
-      dropout           = dropout,
+      # dropout           = dropout,
       recurrent_dropout = recurrent_dropout
     )
   }
 
-  output <- input %>% hidden_layer %>% layer_dense(units = 1)
+  dropout_layer <- layer_dropout(rate = dropout)
+
+  output <- input %>% recurrent_layer %>% dropout_layer %>% layer_dense(units = 1)
 
   model <- keras_model(input, output)
 

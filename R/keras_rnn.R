@@ -56,43 +56,41 @@ keras_rnn <- function(
 
   input <- layer_input(shape = c(tsteps, 1))
 
-  hidden_layer <- if (model_type == "simple") {
+  recurrent_layer <- if (model_type == "simple") {
     layer_simple_rnn(
       units             = n_units,
       input_shape       = c(tsteps, 1),
-      dropout           = dropout,
+      # dropout           = dropout,
       recurrent_dropout = recurrent_dropout
     )
   } else if (model_type == "gru") {
     layer_gru(
       units             = n_units,
       input_shape       = c(tsteps, 1),
-      dropout           = dropout,
+      # dropout           = dropout,
       recurrent_dropout = recurrent_dropout
     )
   } else if (model_type == "lstm") {
     layer_lstm(
       units             = n_units,
       input_shape       = c(tsteps, 1),
-      dropout           = dropout,
+      # dropout           = dropout,
       recurrent_dropout = recurrent_dropout
     )
   }
 
+  dropout_layer <- layer_dropout(rate = dropout)
+
   # Apply dropout only during training (Keras default) or during testing also?
   output <- if (dropout_in_test) {
-    input %>% hidden_layer(training = TRUE) %>% layer_dense(units = 1)
+    input %>% recurrent_layer %>% dropout_layer(training = TRUE) %>% layer_dense(units = 1)
   } else {
-    input %>% hidden_layer %>% layer_dense(units = 1)
+    input %>% recurrent_layer %>% dropout_layer %>% layer_dense(units = 1)
   }
 
   model <- keras_model(input, output)
 
-  model %>% compile(
-    optimizer = optimizer,
-    loss = loss,
-    metrics = metrics
-  )
+  model %>% compile(optimizer = optimizer, loss = loss, metrics = metrics)
 
   model %>% fit(
     x               = X$train,
