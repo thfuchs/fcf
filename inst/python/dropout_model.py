@@ -1,8 +1,13 @@
-from keras.models import Model, Sequential
+from keras.models import Model, Sequential, clone_model
+from keras.layers import Dropout
 
 def dropout_model(model, dropout):
     """
-    Create a keras function to predict with dropout (Credits to sfblake)
+    Create a keras function to predict with dropout
+    Credits to https://github.com/keras-team/keras/issues/8826 and to 
+    sfblake: https://medium.com/hal24k-techblog/how-to-generate-neural-network-
+    confidence-intervals-with-keras-e4c0b78ebbdf
+    
     model : keras model
     dropout : fraction dropout to apply to all layers
     
@@ -10,26 +15,18 @@ def dropout_model(model, dropout):
     predict_with_dropout : keras function for predicting with dropout
     """
     
-    # Load the config of the original model
-    conf = model.get_config()
-    # Add the specified dropout to all layers
-    for layer in conf['layers']:
-        # Dropout layers
-        if layer["class_name"]=="Dropout":
-            layer["config"]["rate"] = dropout
-        # Recurrent layers with dropout (and without recurrent dropout)
-        elif "dropout" in layer["config"].keys():
-            layer["config"]["dropout"] = dropout
-            layer["config"]["recurrent_dropout"] = 0
-            
-    # Create a new model with specified dropout
-    if type(model)==Sequential:
-        # Sequential
-        model_dropout = Sequential.from_config(conf)
-    else:
-        # Functional
-        model_dropout = Model.from_config(conf)
+    # 1. Use keras.models.clone_model
+    model_new = clone_model(model)
     
-    model_dropout.set_weights(model.get_weights())
+    # 2. change dropout rate
+    for layer in model_new.layers:
+        if isinstance(layer, Dropout):
+            layer.rate = dropout
     
-    return model_dropout
+    # 3. Compile the model
+    # model_new.compile(optimizer="Adam", loss="mse")
+    
+    # 4. set_weights of cloned model with get_weights
+    model_new.set_weights(model.get_weights())
+    
+    return model_new
