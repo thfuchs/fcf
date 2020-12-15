@@ -2,6 +2,7 @@
 # tsRNN
 
 <!-- badges: start -->
+[![DOI](https://zenodo.org/badge/290276771.svg)](https://zenodo.org/badge/latestdoi/290276771)
 <!-- badges: end -->
 
 Time Series Forecasting using Recurrent Neural Networks by Keras
