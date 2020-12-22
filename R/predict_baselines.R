@@ -94,10 +94,11 @@ predict_baselines <- function(
 
       # Reshaping to ts object
       min_date <- data[, c(year(min(get(col_date))), quarter(min(get(col_date))))]
+      train_date <- data[n_initial, c(year(get(col_date)), quarter(get(col_date)))]
       max_date <- data[, c(year(max(get(col_date))), quarter(max(get(col_date))))]
 
       ts_data <- stats::ts(data[[col_value]], frequency = frequency, start = min_date, end = max_date)
-      ts_train <- subset(ts_data, end = n_initial)
+      ts_train <- stats::window(ts_data, end = train_date)
 
       old_names_acc <- c("Training set", "Test set")
       new_names_acc <- c("train", "test")
