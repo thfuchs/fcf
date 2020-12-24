@@ -8,13 +8,12 @@
 #' @param n_epochs default 200
 #' @param loss default "mse"
 #' @param metrics default NULL
-#' @param optimizer_type One of "rmsprop" (default) and "adam"
+#' @param optimizer from keras, e.g. `optimizer_rmsprop()`
 #' @param dropout dropout rate
 #' @param recurrent_dropout Dropout rate applied to reccurent layer. Default 0
 #' @param n_units 32 (currently fixed)
 #' @param dropout_in_test apply dropout during training only (default) or during
 #' testing also? Required for dropout-based prediction intervals (bayesian RNN)
-#' @param learning_rate hyperparameter for rmsprop / adam optimization
 #' @param live_plot plot loss and validation metric during training? False by
 #' default
 #'
@@ -31,10 +30,9 @@ keras_rnn <- function(
   loss = "mse",
   metrics = NULL,
   dropout_in_test = FALSE,
-  optimizer_type = "rmsprop",
+  optimizer = optimizer_rmsprop(),
   dropout = 0,
   recurrent_dropout = 0,
-  learning_rate = 0.001,
   live_plot = FALSE
 ) {
 
@@ -42,15 +40,9 @@ keras_rnn <- function(
 
   if (is.null(n_epochs)) n_epochs <- 200
   if (is.null(n_units)) n_units <- 32
-  if (is.null(optimizer_type)) optimizer_type <- "rmsprop"
+  if (is.null(optimizer)) optimizer <- optimizer_rmsprop()
   if (is.null(dropout)) dropout <- 0
   if (is.null(recurrent_dropout)) recurrent_dropout <- 0
-
-  optimizer <- switch(
-    optimizer_type,
-    adam = optimizer_adam(lr = learning_rate),
-    rmsprop = optimizer_rmsprop(lr = learning_rate)
-  )
 
   # Training and Evaluation ----------------------------------------------------
 
