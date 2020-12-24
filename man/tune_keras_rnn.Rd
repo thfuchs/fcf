@@ -17,14 +17,15 @@ tune_keras_rnn(
   multiple_h = NULL,
   level = 95,
   test_dropout = 0.1,
-  save_model = NULL
+  save_model = NULL,
+  save_model_id = NULL
 )
 }
 \arguments{
 \item{data}{Univariate time series (data.frame) with date and value column,
 specified in \code{col_date} and \code{col_value}}
 
-\item{model_type}{One of "basic", "gru" or "lstm"}
+\item{model_type}{One of "simple", "gru" or "lstm"}
 
 \item{cv_setting}{list of "periods_train", "periods_val", "periods_test" and
 "skip_span" for \link[rsample]{rolling_origin}}
@@ -49,6 +50,8 @@ interval}
 
 \item{save_model}{Automatically save tuned models? Specify NULL for No or
 character vector with path to directory for yes}
+
+\item{save_model_id}{optional id for model filename}
 }
 \value{
 list of "results" and "min_params"
@@ -65,7 +68,8 @@ The following parameters are (currently) available for tuning.
 \item lag_2 (integer(2)) upper bounds
 \item n_units (integer(2)) lower and upper bound for rnn units (cells)
 \item n_epochs (integer(2)) lower and upper bound for epochs
-\item optimizer_type (integer) 1 = "rmsprop", 2 = "adam"
+\item optimizer_type (integer(2)) lower and upper bound for optimizer:
+1 = "rmsprop", 2 = "adam", 3 = "adagrad"
 \item dropout = (numeric(2)) lower and upper bound for dropout rate
 \item recurrent_dropout = (numeric(2)) lower and upper bound for recurrent dropout rate
 \item learning_rate = (numeric(2)) lower and upper bound for learning rate

@@ -5,7 +5,7 @@
 #'   specified in `col_date` and `col_value`
 #' @param cv_setting list of "periods_train", "periods_val", "periods_test" and
 #'   "skip_span" for \link[rsample]{rolling_origin}
-#' @param model_type One of "basic", "gru" or "lstm"
+#' @param model_type One of "simple", "gru" or "lstm"
 #' @param tuning_bounds list of tuning parameters - see section "Tuning Bounds"
 #' @param col_id Optional ID column in `data`, default to "ticker"
 #' @param col_date Date column in `data`, default to "index"
@@ -18,6 +18,7 @@
 #'   interval
 #' @param save_model Automatically save tuned models? Specify NULL for No or
 #' character vector with path to directory for yes
+#' @param save_model_id optional id for model filename
 #'
 #' @section Tuning Bounds:
 #' The following parameters are (currently) available for tuning.
@@ -25,7 +26,8 @@
 #' - lag_2 (integer(2)) upper bounds
 #' - n_units (integer(2)) lower and upper bound for rnn units (cells)
 #' - n_epochs (integer(2)) lower and upper bound for epochs
-#' - optimizer_type (integer) 1 = "rmsprop", 2 = "adam"
+#' - optimizer_type (integer(2)) lower and upper bound for optimizer:
+#'   1 = "rmsprop", 2 = "adam", 3 = "adagrad"
 #' - dropout = (numeric(2)) lower and upper bound for dropout rate
 #' - recurrent_dropout = (numeric(2)) lower and upper bound for recurrent dropout rate
 #' - learning_rate = (numeric(2)) lower and upper bound for learning rate
@@ -48,7 +50,8 @@ tune_keras_rnn <- function(
   multiple_h = NULL,
   level = 95,
   test_dropout = 0.1,
-  save_model = NULL
+  save_model = NULL,
+  save_model_id = NULL
 ) {
 
   # Checks ---------------------------------------------------------------------
@@ -64,6 +67,7 @@ tune_keras_rnn <- function(
   testr::check_class(multiple_h, "list", "tune_keras_rnn", allowNULL = TRUE)
   testr::check_class(test_dropout, "numeric", "tune_keras_rnn")
   testr::check_class(save_model, "character", "tune_keras_rnn", allowNULL = TRUE)
+  testr::check_class(save_model_id, "character", "tune_keras_rnn", allowNULL = TRUE)
 
   # "data" contains columns "index" and "value" (and optionally "id")
   # (univariate time series)
@@ -118,13 +122,8 @@ tune_keras_rnn <- function(
   lag_lower <- min(tuning_bounds$lag_1, tuning_bounds$lag_2)
   lag_upper <- max(tuning_bounds$lag_1, tuning_bounds$lag_2)
 
-  # Add lagged values to data
-  data_lag <- data.table::copy(data)
-  add_shift(data_lag, cols = col_value, nlags = c(lag_lower:lag_upper), type = "lag")
-  data_lag <- data_lag[!is.na(get(paste0("value_lag", lag_upper)))]
-
   rolling_origin_resamples <- rsample::rolling_origin(
-    data_lag,
+    data,
     initial    = n_initial,
     assess     = n_test,
     cumulative = FALSE,
@@ -135,12 +134,16 @@ tune_keras_rnn <- function(
     rolling_origin_resamples$splits,
     purrr::possibly(function(split) {
 
-      # Train-Test Split
-      DT_train <- rsample::analysis(split)[1:n_train]
-      DT_val <- rsample::analysis(split)[(n_train+1):.N]
-      DT_test <- rsample::assessment(split)
+      # Add lagged values to data
+      DT <- setDT(rbind(rsample::analysis(split), rsample::assessment(split)))
+      add_shift(DT, cols = col_value, nlags = c(lag_lower:lag_upper), type = "lag")
+      DT <- DT[!is.na(get(paste0("value_lag", lag_upper)))]
 
-      DT <- rbind(DT_train, DT_val, DT_test)
+      # Train-Test Split
+      DT_train <- DT[1:(n_train-lag_upper)]
+      DT_val <- DT[(n_train-lag_upper+1):(.N-n_val)]
+      DT_test <- DT[(.N-n_test+1):.N]
+
       DT[, key := "actual"]
 
       # Normalization
@@ -171,10 +174,11 @@ tune_keras_rnn <- function(
         length_val = 0L,
         length_test = as.integer(n_test)
       )
-      best_optimizer_type <- switch(
+      best_optimizer <- switch(
         bayes$Best_Par["optimizer_type"],
-        `1` = "rmsprop",
-        `2` = "adam"
+        `1` = optimizer_rmsprop(lr = bayes$Best_Par["learning_rate"]),
+        `2` = optimizer_adam(lr = bayes$Best_Par["learning_rate"]),
+        `3` = optimizer_adagrad(lr = 0.01)
       )
 
       ### Train model with tuned hyperparameters 10 times
@@ -185,11 +189,11 @@ tune_keras_rnn <- function(
           tsteps = length(best_lag_setting),
           n_epochs = bayes$Best_Par["n_epochs"],
           n_units = bayes$Best_Par["n_units"],
+          loss = "mse",
           dropout_in_test = TRUE,
-          optimizer_type = best_optimizer_type,
+          optimizer = best_optimizer,
           dropout = bayes$Best_Par["dropout"],
-          recurrent_dropout = bayes$Best_Par["recurrent_dropout"],
-          learning_rate = bayes$Best_Par["learning_rate"]
+          recurrent_dropout = bayes$Best_Par["recurrent_dropout"]
         )
 
         # Save model if valid directoy specified
@@ -198,8 +202,9 @@ tune_keras_rnn <- function(
             model,
             filepath = file.path(save_model, paste0(
               format(Sys.time(), "%Y%m%d_%H%M%S_"),
+              if (!is.null(save_model_id)) paste0(save_model_id, "_"),
               model_type, "_",
-              if (!is.null(col_id)) unique(data_split[[col_id]]),
+              if (!is.null(col_id)) paste0(unique(data_split[[col_id]]), "_"),
               split$id$id, "_", sprintf("%02d", i), ".hdf5"
             ))
           )
@@ -208,31 +213,79 @@ tune_keras_rnn <- function(
         model
       })
 
+      ##########################################################################
+      ### Start: Development                                                 ###
+      ### https://medium.com/hal24k-techblog/how-to-generate-neural-network- ###
+      ### confidence-intervals-with-keras-e4c0b78ebbdf                       ###
+      ##########################################################################
+
       # Change recurrent dropout to 0 for test phase and dropout to 0 for
       # predictions and apply median
-      median_fc <- vapply(best_models, function(model) {
-        model_mean <- py_dropout_model(model, 0)
-        stats::predict(model_mean, X$test) * metrics_norm$scale + metrics_norm$center
-      }, FUN.VALUE = numeric(n_test))
+      n_train_internal <- n_train + n_val - lag_upper
 
-      fc_median <- apply(median_fc, 1, median)
+      fc_dist <- vapply(best_models, function(model) {
+        model_mean <- py_dropout_model(model, 0)
+        stats::predict(model_mean, X$train) - Y$train
+      }, FUN.VALUE = numeric(n_train_internal))
+
+      # predict = stats::predict(model_mean, X$test) * metrics_norm$scale + metrics_norm$center
+
+      fc_predict <- matrix(
+        unlist(purrr::map(fc_monte, "predict")),
+        nrow = n_test, byrow = FALSE)
+      fc_resid <- matrix(
+        unlist(purrr::map(fc_monte, "residual")),
+        nrow = n_train_internal, byrow = FALSE)
+
+      median_fc_predict <- apply(fc_predict, 1, median)
+      # median_fc_resid <- apply(fc_resid, 1, median)
 
       # Change dropout to `test_dropout` for prediction intervals and apply
       # quantiles
-      all_fc_dropout <- purrr::map_df(best_models, function(model) {
+      # fc_dropout_monte <- purrr::map_df(best_models, function(model) {
+      #   model_dropout <- py_dropout_model(model, test_dropout)
+      #   fc_dropout <- vapply(1:500, function(i) {
+      #     stats::predict(model_dropout, X$test)[,1] * metrics_norm$scale + metrics_norm$center
+      #   }, FUN.VALUE = numeric(n_test))
+      #   data.table::as.data.table(t(fc_dropout))
+      # })
+
+      fc_dropout_dist <- lapply(best_models, function(model) {
         model_dropout <- py_dropout_model(model, test_dropout)
-        fc_dropout <- vapply(1:500, function(i) {
-          stats::predict(model_dropout, X$test)[,1] * metrics_norm$scale + metrics_norm$center
-        }, FUN.VALUE = numeric(n_test))
-        data.table::as.data.table(t(fc_dropout))
+        # predict = vapply(1:100, function(i) {
+        #   stats::predict(model_dropout, X$test)[,1] * metrics_norm$scale + metrics_norm$center
+        # }, FUN.VALUE = numeric(n_test)),
+        predict <- vapply(1:100, function(i) {
+          stats::predict(model_dropout, X$train)[,1]
+        }, FUN.VALUE = numeric(n_train_internal))
+        predict_median <- apply(predict, 1, median)
+
+        predict - predict_median
       })
 
-      fc_lower <- apply(all_fc_dropout, 2, stats::quantile, 0.5 - level / 200, type = 8)
-      fc_upper <- apply(all_fc_dropout, 2, stats::quantile, 0.5 + level / 200, type = 8)
+      hist(fc_dropout_dist[[1]])
+
+      fc_dropout_predict <- matrix(unlist(purrr::map(fc_dropout_monte, "predict")[[1]]), nrow = n_test, byrow = FALSE)
+      fc_dropout_resid <- matrix(unlist(purrr::map(fc_dropout_monte, "residual")[[1]]), nrow = n_train_internal, byrow = FALSE)
+
+      # fc_dropout_resid <-
+
+
+      hist(fc_dropout_monte$V1)
+
+      # ks.test(fc_resid, as.matrix(fc_dropout_monte))
+      # ks.test(fc_resid, fc_dropout_monte$V2)
+
+      ##########################################################################
+      ### End: Development                                                   ###
+      ##########################################################################
+
+      fc_lower <- apply(fc_dropout_monte, 2, stats::quantile, 0.5 - level / 200, type = 8)
+      fc_upper <- apply(fc_dropout_monte, 2, stats::quantile, 0.5 + level / 200, type = 8)
 
       fc <- data.table::data.table(
         index = data_split[(.N-n_test+1):.N, get(col_date)],
-        value = as.numeric(fc_median),
+        value = as.numeric(median_fc_predict),
         lo95 = as.numeric(fc_lower),
         hi95 = as.numeric(fc_upper)
       )
@@ -306,7 +359,8 @@ internal_keras_fun <- function(
   optimizer <- switch(
     optimizer_type,
     `1` = optimizer_rmsprop(lr = learning_rate),
-    `2` = optimizer_adam(lr = learning_rate)
+    `2` = optimizer_adam(lr = learning_rate),
+    `3` = optimizer_adagrad(lr = 0.01)
   )
 
   # Reshaping
