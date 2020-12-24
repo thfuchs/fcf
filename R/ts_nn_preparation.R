@@ -49,8 +49,8 @@ ts_nn_preparation <- function(data, tsteps, length_val = 16L, length_test = 8L) 
   ### Function -----------------------------------------------------------------
   n <- nrow(data)
   n_train <- 1:(n - length_val - length_test)
-  n_val <- (n - length_val - length_test + 1):(n - length_test)
-  n_test <- (n - length_test + 1):n
+  n_val <- if (length_val > 0) (n - length_val - length_test + 1):(n - length_test) else 0
+  n_test <- if (length_test > 0) (n - length_test + 1):n else 0
 
   # 2D And 3D Train/Test Arrays
   patterns <- function(...) NULL # to address data.table R CMD check Note
