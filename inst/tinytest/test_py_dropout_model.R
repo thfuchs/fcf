@@ -8,9 +8,3 @@ expect_identical(
   stats::predict(model_01, test),
   stats::predict(model_01, test)
 )
-
-# Change dropout level out of range 0-1
-expect_error(
-  py_dropout_model(model, 1),
-  pattern = "rate must be a scalar tensor or a float in the range \\[0, 1\\)"
-)
