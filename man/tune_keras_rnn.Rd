@@ -16,7 +16,6 @@ tune_keras_rnn(
   frequency = 4,
   multiple_h = NULL,
   level = 95,
-  test_dropout = 0.1,
   save_model = NULL,
   save_model_id = NULL
 )
@@ -44,9 +43,6 @@ specified in \code{col_date} and \code{col_value}}
 named list of forecast horizons for accuracy measures}
 
 \item{level}{level for prediction interval in percentage}
-
-\item{test_dropout}{specify dropout-rate during testing for prediction
-interval}
 
 \item{save_model}{Automatically save tuned models? Specify NULL for No or
 character vector with path to directory for yes}

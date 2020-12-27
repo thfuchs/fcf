@@ -14,8 +14,6 @@
 #' @param multiple_h NULL if forecast horizon equals cv_setting$n_test, else
 #'   named list of forecast horizons for accuracy measures
 #' @param level level for prediction interval in percentage
-#' @param test_dropout specify dropout-rate during testing for prediction
-#'   interval
 #' @param save_model Automatically save tuned models? Specify NULL for No or
 #' character vector with path to directory for yes
 #' @param save_model_id optional id for model filename
@@ -49,7 +47,6 @@ tune_keras_rnn <- function(
   frequency = 4,
   multiple_h = NULL,
   level = 95,
-  test_dropout = 0.1,
   save_model = NULL,
   save_model_id = NULL
 ) {
@@ -65,7 +62,6 @@ tune_keras_rnn <- function(
   testr::check_class(tuning_bounds, "list", "tune_keras_rnn")
   testr::check_class(frequency, "numeric", "tune_keras_rnn")
   testr::check_class(multiple_h, "list", "tune_keras_rnn", allowNULL = TRUE)
-  testr::check_class(test_dropout, "numeric", "tune_keras_rnn")
   testr::check_class(save_model, "character", "tune_keras_rnn", allowNULL = TRUE)
   testr::check_class(save_model_id, "character", "tune_keras_rnn", allowNULL = TRUE)
 
@@ -213,76 +209,74 @@ tune_keras_rnn <- function(
         model
       })
 
-      ##########################################################################
-      ### Start: Development                                                 ###
-      ### https://medium.com/hal24k-techblog/how-to-generate-neural-network- ###
-      ### confidence-intervals-with-keras-e4c0b78ebbdf                       ###
-      ##########################################################################
-
-      # Change recurrent dropout to 0 for test phase and dropout to 0 for
-      # predictions and apply median
+      # Change recurrent dropout and dropout to 0 for test phase and predict
+      # using the 10 trained models
       n_train_internal <- n_train + n_val - lag_upper
 
-      fc_dist <- vapply(best_models, function(model) {
+      fc_mc <- lapply(best_models, function(model) {
         model_mean <- py_dropout_model(model, 0)
-        stats::predict(model_mean, X$train) - Y$train
-      }, FUN.VALUE = numeric(n_train_internal))
+        prediction_test <- stats::predict(model_mean, X$test)
+        prediction_train <- stats::predict(model_mean, X$train)
 
-      # predict = stats::predict(model_mean, X$test) * metrics_norm$scale + metrics_norm$center
-
-      fc_predict <- matrix(
-        unlist(purrr::map(fc_monte, "predict")),
-        nrow = n_test, byrow = FALSE)
-      fc_resid <- matrix(
-        unlist(purrr::map(fc_monte, "residual")),
-        nrow = n_train_internal, byrow = FALSE)
-
-      median_fc_predict <- apply(fc_predict, 1, median)
-      # median_fc_resid <- apply(fc_resid, 1, median)
-
-      # Change dropout to `test_dropout` for prediction intervals and apply
-      # quantiles
-      # fc_dropout_monte <- purrr::map_df(best_models, function(model) {
-      #   model_dropout <- py_dropout_model(model, test_dropout)
-      #   fc_dropout <- vapply(1:500, function(i) {
-      #     stats::predict(model_dropout, X$test)[,1] * metrics_norm$scale + metrics_norm$center
-      #   }, FUN.VALUE = numeric(n_test))
-      #   data.table::as.data.table(t(fc_dropout))
-      # })
-
-      fc_dropout_dist <- lapply(best_models, function(model) {
-        model_dropout <- py_dropout_model(model, test_dropout)
-        # predict = vapply(1:100, function(i) {
-        #   stats::predict(model_dropout, X$test)[,1] * metrics_norm$scale + metrics_norm$center
-        # }, FUN.VALUE = numeric(n_test)),
-        predict <- vapply(1:100, function(i) {
-          stats::predict(model_dropout, X$train)[,1]
-        }, FUN.VALUE = numeric(n_train_internal))
-        predict_median <- apply(predict, 1, median)
-
-        predict - predict_median
+        list(
+          predict = prediction_test,
+          resid = prediction_train - Y$train
+        )
       })
 
-      hist(fc_dropout_dist[[1]])
+      fc_predict <- matrix(
+        unlist(purrr::map(fc_mc, "predict")), nrow = n_test, byrow = FALSE)
+      fc_resid <- matrix(
+        unlist(purrr::map(fc_mc, "resid")), nrow = n_train_internal, byrow = FALSE)
 
-      fc_dropout_predict <- matrix(unlist(purrr::map(fc_dropout_monte, "predict")[[1]]), nrow = n_test, byrow = FALSE)
-      fc_dropout_resid <- matrix(unlist(purrr::map(fc_dropout_monte, "residual")[[1]]), nrow = n_train_internal, byrow = FALSE)
+      median_fc_predict <-
+        apply(fc_predict, 1, stats::median) * metrics_norm$scale + metrics_norm$center
 
-      # fc_dropout_resid <-
+      ### Monte Carlo Dropout - Source:
+      # https://medium.com/hal24k-techblog/how-to-generate-neural-network-confidence-intervals-with-keras-e4c0b78ebbdf
 
+      # 1. Apply dropout vector from 0.1 to 0.6 (steps 0.05) to find dropout
+      #    distribution best matching residual distribution
+      dropout_dist <- seq(0.1, 0.6, 0.05)
 
-      hist(fc_dropout_monte$V1)
+      dropout_dist_result <- vapply(dropout_dist, function(dropout_rate) {
+        fc_dropout_dist <- lapply(best_models, function(model) {
+          model_dropout <- py_dropout_model(model, dropout_rate)
+          predict <- vapply(1:100, function(i) {
+            stats::predict(model_dropout, X$train)[,1]
+          }, FUN.VALUE = numeric(n_train_internal))
+          predict_median <- apply(predict, 1, stats::median)
 
-      # ks.test(fc_resid, as.matrix(fc_dropout_monte))
-      # ks.test(fc_resid, fc_dropout_monte$V2)
+          return(predict - predict_median)
+        })
 
-      ##########################################################################
-      ### End: Development                                                   ###
-      ##########################################################################
+        fc_dropout_resid <- matrix(unlist(fc_dropout_dist), nrow = n_train_internal, byrow = FALSE)
+        ks_result <- suppressWarnings(stats::ks.test(fc_resid, fc_dropout_resid))
+        return(ks_result$statistic)
+      }, FUN.VALUE = numeric(1))
 
-      fc_lower <- apply(fc_dropout_monte, 2, stats::quantile, 0.5 - level / 200, type = 8)
-      fc_upper <- apply(fc_dropout_monte, 2, stats::quantile, 0.5 + level / 200, type = 8)
+      test_dropout <- dropout_dist[which.min(dropout_dist_result)]
 
+      # 2. Apply best fitting dropout rate (`test_dropout`) to test set
+      #    (1000 iterations). Source:
+      fc_dropout_mc <- lapply(best_models, function(model) {
+        model_dropout <- py_dropout_model(model, test_dropout)
+        vapply(1:1000, function(i) {
+          stats::predict(model_dropout, X$test)[,1]
+        }, FUN.VALUE = numeric(n_test))
+      })
+
+      fc_dropout_predict <- matrix(unlist(fc_dropout_mc), nrow = n_test, byrow = FALSE)
+
+      # Use dropout rate to predict lower and upper prediction bound
+      fc_lower <- apply(
+        fc_dropout_predict, 1, stats::quantile, 0.5 - level / 200, type = 8) *
+        metrics_norm$scale + metrics_norm$center
+      fc_upper <- apply(
+        fc_dropout_predict, 1, stats::quantile, 0.5 + level / 200, type = 8) *
+        metrics_norm$scale + metrics_norm$center
+
+      # Forecast results
       fc <- data.table::data.table(
         index = data_split[(.N-n_test+1):.N, get(col_date)],
         value = as.numeric(median_fc_predict),
@@ -310,14 +304,14 @@ tune_keras_rnn <- function(
         function(h) smape(actual = DT_test[h, get(col_value)], forecast = fc_values[h,value]))
       acc_MASE <- sapply(
         multiple_h, function(h) mase(
-          data = DT[1:(n_initial+max(h)), get(col_value)],
+          data = DT[1:(n_train_internal+max(h)), get(col_value)],
           forecast = fc_values[h, get(col_value)], m = frequency)
       )
 
       # Prediction Interval Measures
       acc_SMIS <- sapply(
         multiple_h, function(h) smis(
-          data = DT[1:(n_initial+max(h)), get(col_value)],
+          data = DT[1:(n_train_internal+max(h)), get(col_value)],
           lower = fc_values[h,lo95],
           upper = fc_values[h,hi95],
           h = max(h), m = frequency, level = level/100)
@@ -349,7 +343,7 @@ tune_keras_rnn <- function(
 }
 
 
-# Internal Function
+# Internal Function ------------------------------------------------------------
 internal_keras_fun <- function(
   n_units, n_epochs, lag_1, lag_2, dropout, recurrent_dropout,
   optimizer_type, learning_rate
@@ -378,21 +372,18 @@ internal_keras_fun <- function(
     layer_simple_rnn(
       units             = n_units,
       input_shape       = c(length(lag_setting), 1),
-      # dropout           = dropout,
       recurrent_dropout = recurrent_dropout
     )
   } else if (model_type == "gru") {
     layer_gru(
       units             = n_units,
       input_shape       = c(length(lag_setting), 1),
-      # dropout           = dropout,
       recurrent_dropout = recurrent_dropout
     )
   } else if (model_type == "lstm") {
     layer_lstm(
       units             = n_units,
       input_shape       = c(length(lag_setting), 1),
-      # dropout           = dropout,
       recurrent_dropout = recurrent_dropout
     )
   }
