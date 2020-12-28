@@ -1,57 +1,55 @@
-#' Tune recurrent neural network with Keras functional API and Bayes
-#' Optimization and select best performing model
+#' Use tuned recurrent neural network parameters with Keras functional API and
+#' to train best performing model(s) and forecast
 #'
 #' @param data Univariate time series (data.frame) with date and value column,
 #'   specified in `col_date` and `col_value`
+#' @param model_type One of "simple", "gru" or "lstm"
 #' @param cv_setting list of "periods_train", "periods_val", "periods_test" and
 #'   "skip_span" for \link[rsample]{rolling_origin}
-#' @param model_type One of "simple", "gru" or "lstm"
-#' @param tuning_bounds list of tuning parameters - see section "Tuning Bounds"
+#' @param bayes_best_par tuned hyperparameters, from `tune_keras_rnn_bayesoptim()`
 #' @param col_id Optional ID column in `data`, default to "ticker"
 #' @param col_date Date column in `data`, default to "index"
 #' @param col_value Value column in `data`, default to "value"
-#' @param frequency time series frequency, e.g. 4 for quarters and 12 for months
-#' @param multiple_h NULL if forecast horizon equals cv_setting$n_test, else
-#'   named list of forecast horizons for accuracy measures
+#' @param iter number of neural networks to train per split with same
+#'   hyperparameters
+#' @param iter_dropout number of iterations for prediction intervals calculated
+#'   by monte carlo dropout
 #' @param level level for prediction interval in percentage
 #' @param save_model Automatically save tuned models? Specify NULL for No or
 #' character vector with path to directory for yes
 #' @param save_model_id optional id for model filename
 #'
 #' @import data.table
-#' @importFrom magrittr %>%
+#' @import keras
+#' @import reticulate
 #' @importFrom zeallot %<-%
 #'
-#' @return list of "results" and "min_params"
+#' @return list of forecasts per split
 #' @export
-tune_keras_rnn <- function(
+tune_keras_rnn_predict <- function(
   data,
   model_type,
   cv_setting,
-  tuning_bounds,
+  bayes_best_par,
   col_id = NULL,
   col_date = "index",
   col_value = "value",
-  frequency = 4,
-  multiple_h = NULL,
   level = 95,
+  iter = 10,
+  iter_dropout = 1000,
   save_model = NULL,
   save_model_id = NULL
 ) {
 
   # Checks ---------------------------------------------------------------------
-
-  testr::check_class(data, "data.frame", "tune_keras_rnn")
-  testr::check_class(model_type, "character", "tune_keras_rnn")
-  testr::check_class(cv_setting, "list", "tune_keras_rnn")
-  testr::check_class(col_id, "character", "tune_keras_rnn", allowNULL = TRUE)
-  testr::check_class(col_date, "character", "tune_keras_rnn")
-  testr::check_class(col_value, "character", "tune_keras_rnn")
-  testr::check_class(tuning_bounds, "list", "tune_keras_rnn")
-  testr::check_class(frequency, "numeric", "tune_keras_rnn")
-  testr::check_class(multiple_h, "list", "tune_keras_rnn", allowNULL = TRUE)
-  testr::check_class(save_model, "character", "tune_keras_rnn", allowNULL = TRUE)
-  testr::check_class(save_model_id, "character", "tune_keras_rnn", allowNULL = TRUE)
+  testr::check_class(data, "data.frame", "tune_keras_rnn_predict")
+  testr::check_class(model_type, "character", "tune_keras_rnn_predict")
+  testr::check_class(cv_setting, "list", "tune_keras_rnn_predict")
+  testr::check_class(col_id, "character", "tune_keras_rnn_predict", allowNULL = TRUE)
+  testr::check_class(col_date, "character", "tune_keras_rnn_predict")
+  testr::check_class(col_value, "character", "tune_keras_rnn_predict")
+  testr::check_class(bayes_best_par, "list", "tune_keras_rnn_predict")
+  testr::check_class(level, "numeric", "tune_keras_rnn_predict")
 
   # "data" contains columns "index" and "value" (and optionally "id")
   # (univariate time series)
@@ -61,19 +59,19 @@ tune_keras_rnn <- function(
     !is.null(col_id) && !inherits(data[[col_id]], "numeric")
   ) rlang::abort(
     message = "Variable specified by `col_id` must be class \"character\".",
-    class = "tune_keras_rnn_col_id_error"
+    class = "tune_keras_rnn_predict_col_id_error"
   )
   if (
     is.null(data[[col_date]]) ||
     !rlang::inherits_any(data[[col_date]], c("Date", "POSIXct"))
   ) rlang::abort(
     message = "Variable specified by `col_date` must be class \"Date\" or \"POSIXct\".",
-    class = "tune_keras_rnn_col_date_error"
+    class = "tune_keras_rnn_predict_col_date_error"
   )
   if (is.null(data[[col_value]]) || !inherits(data[[col_value]], "numeric"))
     rlang::abort(
       message = "Variable specified by `col_value` must be class \"numeric\".",
-      class = "tune_keras_rnn_col_value_error"
+      class = "tune_keras_rnn_predict_col_value_error"
     )
 
   # "model_type" must be one of "simple", "gru" or "lstm"
@@ -85,26 +83,29 @@ tune_keras_rnn <- function(
           c("periods_test", "periods_train", "periods_val", "skip_span"))) {
     rlang::abort(
       message = "`data` must be a data.frame with 2 columns only: \"index\" and \"value\"",
-      class = "tune_keras_rnn_data_error"
+      class = "tune_keras_rnn_predict_data_error"
     )
   }
+
+  # `bayes_best_par` must be split-named list
+  if (names(bayes_best_par)[1] != "Slice1") rlang::abort(
+    message = "`bayes_best_par` must be a list named by each `rsample` split",
+    class = "tune_keras_rnn_predict_bayes_best_par_error"
+  )
 
   # Check whether directory exists
   if (!is.null(save_model) && !dir.exists(save_model)) rlang::abort(
     message = "Directory specified in `save_model` does not exist",
-    class = "tune_keras_rnn_save_model_error"
+    class = "tune_keras_rnn_predict_save_model_error"
   )
 
   # Function -------------------------------------------------------------------
-
   patterns <- function(...) NULL # to address data.table R CMD check Note
 
   n_train <- cv_setting$periods_train
   n_val <- cv_setting$periods_val
   n_initial <- n_train + n_val
   n_test <- cv_setting$periods_test
-  lag_lower <- min(tuning_bounds$lag_1, tuning_bounds$lag_2)
-  lag_upper <- max(tuning_bounds$lag_1, tuning_bounds$lag_2)
 
   rolling_origin_resamples <- rsample::rolling_origin(
     data,
@@ -118,16 +119,15 @@ tune_keras_rnn <- function(
     rolling_origin_resamples$splits,
     purrr::possibly(function(split) {
 
+      bayes <- as.list(bayes_best_par[[split$id$id]])
+
       # Add lagged values to data
+      best_lag_setting <- sort(bayes$lag_1:bayes$lag_2)
+      lag_upper <- max(best_lag_setting)
+
       DT <- setDT(rbind(rsample::analysis(split), rsample::assessment(split)))
-      add_shift(DT, cols = col_value, nlags = c(lag_lower:lag_upper), type = "lag")
+      add_shift(DT, cols = col_value, nlags = best_lag_setting, type = "lag")
       DT <- DT[!is.na(get(paste0("value_lag", lag_upper)))]
-
-      # Train-Test Split
-      DT_train <- DT[1:(n_train-lag_upper)]
-      DT_val <- DT[(n_train-lag_upper+1):(.N-n_val)]
-      DT_test <- DT[(.N-n_test+1):.N]
-
       DT[, key := "actual"]
 
       # Normalization
@@ -135,31 +135,8 @@ tune_keras_rnn <- function(
       c(data_split, metrics_norm) %<-%
         ts_normalization(DT, n_val, n_test, metrics = TRUE)
 
-      # Set environment of help function to current environment
-      environment(internal_keras_fun) <- environment()
-      # Bayes Optimization
-      bayes <- rBayesianOptimization::BayesianOptimization(
-        FUN = internal_keras_fun,
-        bounds = tuning_bounds,
-        init_points = 5,
-        n_iter = 50,
-        acq = "ucb",
-        verbose = FALSE
-      )
-      if (!is.null(save_model)) {
-        save(bayes, file = file.path(save_model, paste0(
-          "bayes_",
-          format(Sys.time(), "%Y%m%d_%H%M%S_"),
-          if (!is.null(save_model_id)) paste0(save_model_id, "_"),
-          model_type, "_",
-          if (!is.null(col_id)) paste0(unique(data_split[[col_id]]), "_"),
-          split$id$id, ".rda"
-        )))
-      }
-
       # Use optimized parameters to train model on entire data set (excluding
       # test set)
-      best_lag_setting <- sort(bayes$Best_Par["lag_1"]:bayes$Best_Par["lag_2"])
       X <- Y <- NULL
 
       c(X, Y) %<-% ts_nn_preparation(
@@ -169,25 +146,25 @@ tune_keras_rnn <- function(
         length_test = as.integer(n_test)
       )
       best_optimizer <- switch(
-        bayes$Best_Par["optimizer_type"],
-        `1` = optimizer_rmsprop(lr = bayes$Best_Par["learning_rate"]),
-        `2` = optimizer_adam(lr = bayes$Best_Par["learning_rate"]),
+        bayes$optimizer_type,
+        `1` = optimizer_rmsprop(lr = bayes$learning_rate),
+        `2` = optimizer_adam(lr = bayes$learning_rate),
         `3` = optimizer_adagrad(lr = 0.01)
       )
 
       ### Train model with tuned hyperparameters 10 times
-      best_models <- lapply(1:10, function(i) {
+      best_models <- lapply(1:iter, function(i) {
         model <- keras_rnn(
           X, Y,
           model_type = model_type,
           tsteps = length(best_lag_setting),
-          n_epochs = bayes$Best_Par["n_epochs"],
-          n_units = bayes$Best_Par["n_units"],
+          n_epochs = bayes$n_epochs,
+          n_units = bayes$n_units,
           loss = "mse",
           dropout_in_test = TRUE,
           optimizer = best_optimizer,
-          dropout = bayes$Best_Par["dropout"],
-          recurrent_dropout = bayes$Best_Par["recurrent_dropout"]
+          dropout = bayes$dropout,
+          recurrent_dropout = bayes$recurrent_dropout
         )
 
         # Save model if valid directoy specified
@@ -209,7 +186,7 @@ tune_keras_rnn <- function(
 
       # Change recurrent dropout and dropout to 0 for test phase and predict
       # using the 10 trained models
-      n_train_internal <- n_train + n_val - lag_upper
+      n_train_internal <- n_train - lag_upper
 
       fc_mc <- lapply(best_models, function(model) {
         model_mean <- py_dropout_model(model, 0)
@@ -256,10 +233,10 @@ tune_keras_rnn <- function(
       test_dropout <- dropout_dist[which.min(dropout_dist_result)]
 
       # 2. Apply best fitting dropout rate (`test_dropout`) to test set
-      #    (1000 iterations). Source:
+      #    (`iter_dropout` iterations). Source:
       fc_dropout_mc <- lapply(best_models, function(model) {
         model_dropout <- py_dropout_model(model, test_dropout)
-        vapply(1:1000, function(i) {
+        vapply(1:iter_dropout, function(i) {
           stats::predict(model_dropout, X$test)[,1]
         }, FUN.VALUE = numeric(n_test))
       })
@@ -289,53 +266,12 @@ tune_keras_rnn <- function(
       )
       if (!is.null(col_id)) fc[, paste(col_id) := unique(DT[[col_id]])]
 
-      ### Accuracy Measures
-      fc_values <- fc[key == "predict"]
-      value <- lo95 <- hi95 <- NULL
+      # Output
+      return(fc)
 
-      # Point Forecast Measures
-      acc_MAPE <- sapply(
-        multiple_h,
-        function(h) mape(actual = DT_test[h, get(col_value)], forecast = fc_values[h,value]))
-      acc_sMAPE <- sapply(
-        multiple_h,
-        function(h) smape(actual = DT_test[h, get(col_value)], forecast = fc_values[h,value]))
-      acc_MASE <- sapply(
-        multiple_h, function(h) mase(
-          data = DT[1:(n_train_internal+max(h)), get(col_value)],
-          forecast = fc_values[h, get(col_value)], m = frequency)
-      )
-
-      # Prediction Interval Measures
-      acc_SMIS <- sapply(
-        multiple_h, function(h) smis(
-          data = DT[1:(n_train_internal+max(h)), get(col_value)],
-          lower = fc_values[h,lo95],
-          upper = fc_values[h,hi95],
-          h = max(h), m = frequency, level = level/100)
-      )
-      acc_ACD <- sapply(multiple_h, function(h) acd(
-        actual = DT_test[h, get(col_value)],
-        lower = fc_values[h,lo95],
-        upper = fc_values[h,hi95],
-        level = level/100)
-      )
-
-      # Accuracy result
-      acc <- data.table::data.table(
-        type = model_type, h = names(multiple_h),
-        mape = acc_MAPE, smape = acc_sMAPE, mase = acc_MASE,
-        smis = acc_SMIS, acd = acc_ACD
-      )
-
-      ### Output
-      list(
-        forecast = fc,
-        accuracy = acc,
-        tuning_params = as.list(bayes$Best_Par)
-      )
     }, otherwise = NULL, quiet = FALSE)
   )
 
+  purrr::set_names(resample, rolling_origin_resamples$id)
   return(resample)
 }
