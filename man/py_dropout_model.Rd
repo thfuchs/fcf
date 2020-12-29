@@ -19,6 +19,10 @@ Wrapper for python function. Model requires fixed training mode (else dropout
 turned off automatically during testing and changing dropout rate has no
 effect)
 }
+\details{
+Currently requires python warnings wrapper to suppress tensorflow
+warning
+}
 \examples{
 # Load Model with permanently activated dropout and generate test data
 model <- keras::load_model_hdf5(

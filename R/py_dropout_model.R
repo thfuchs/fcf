@@ -4,6 +4,9 @@
 #' turned off automatically during testing and changing dropout rate has no
 #' effect)
 #'
+#' @details Currently requires python warnings wrapper to suppress tensorflow
+#'   warning
+#'
 #' @param model Keras model, required
 #' @param dropout new dropout rate
 #'
@@ -33,5 +36,5 @@ py_dropout_model <- function(model, dropout = 0.1) {
   reticulate::source_python(python_path)
 
   # Output
-  dropout_model(model, dropout)
+  reticulate::py_suppress_warnings(dropout_model(model, dropout))
 }
