@@ -272,6 +272,6 @@ tune_keras_rnn_predict <- function(
     }, otherwise = NULL, quiet = FALSE)
   )
 
-  purrr::set_names(resample, rolling_origin_resamples$id)
+  resample <- purrr::set_names(resample, rolling_origin_resamples$id)
   return(resample)
 }

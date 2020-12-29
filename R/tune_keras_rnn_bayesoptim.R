@@ -134,7 +134,7 @@ tune_keras_rnn_bayesoptim <- function(
         FUN = internal_keras_fun,
         bounds = tuning_bounds,
         init_points = 5,
-        n_iter = 50,
+        n_iter = 30,
         acq = "ucb", #ei,
         verbose = FALSE
       )
@@ -154,7 +154,7 @@ tune_keras_rnn_bayesoptim <- function(
     }, otherwise = NULL, quiet = FALSE)
   )
 
-  purrr::set_names(resample, rolling_origin_resamples$id)
+  resample <- purrr::set_names(resample, rolling_origin_resamples$id)
   return(resample)
 }
 
