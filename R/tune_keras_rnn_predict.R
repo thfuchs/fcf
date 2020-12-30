@@ -56,7 +56,7 @@ tune_keras_rnn_predict <- function(
   data.table::setDT(data)
   if (
     !is.null(col_id) && is.null(data[[col_id]]) ||
-    !is.null(col_id) && !inherits(data[[col_id]], "numeric")
+    !is.null(col_id) && !inherits(data[[col_id]], "character")
   ) rlang::abort(
     message = "Variable specified by `col_id` must be class \"character\".",
     class = "tune_keras_rnn_predict_col_id_error"
