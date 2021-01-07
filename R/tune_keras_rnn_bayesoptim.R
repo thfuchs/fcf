@@ -34,16 +34,15 @@
 #' @return list of Bayes Optimization results per split
 #' @export
 tune_keras_rnn_bayesoptim <- function(
-  data,
-  model_type,
-  cv_setting,
-  tuning_bounds,
-  col_id = NULL,
-  col_date = "index",
-  col_value = "value",
-  save = NULL,
-  save_id = NULL
-) {
+                                      data,
+                                      model_type,
+                                      cv_setting,
+                                      tuning_bounds,
+                                      col_id = NULL,
+                                      col_date = "index",
+                                      col_value = "value",
+                                      save = NULL,
+                                      save_id = NULL) {
 
   # Checks ---------------------------------------------------------------------
   testr::check_class(data, "data.frame", "tune_keras_rnn_bayesoptim")
@@ -59,23 +58,28 @@ tune_keras_rnn_bayesoptim <- function(
   data.table::setDT(data)
   if (
     !is.null(col_id) && is.null(data[[col_id]]) ||
-    !is.null(col_id) && !inherits(data[[col_id]], "character")
-  ) rlang::abort(
-    message = "Variable specified by `col_id` must be class \"character\".",
-    class = "tune_keras_rnn_bayesoptim_col_id_error"
-  )
+      !is.null(col_id) && !inherits(data[[col_id]], "character")
+  ) {
+    rlang::abort(
+      message = "Variable specified by `col_id` must be class \"character\".",
+      class = "tune_keras_rnn_bayesoptim_col_id_error"
+    )
+  }
   if (
     is.null(data[[col_date]]) ||
-    !rlang::inherits_any(data[[col_date]], c("Date", "POSIXct"))
-  ) rlang::abort(
-    message = "Variable specified by `col_date` must be class \"Date\" or \"POSIXct\".",
-    class = "tune_keras_rnn_bayesoptim_col_date_error"
-  )
-  if (is.null(data[[col_value]]) || !inherits(data[[col_value]], "numeric"))
+      !rlang::inherits_any(data[[col_date]], c("Date", "POSIXct"))
+  ) {
+    rlang::abort(
+      message = "Variable specified by `col_date` must be class \"Date\" or \"POSIXct\".",
+      class = "tune_keras_rnn_bayesoptim_col_date_error"
+    )
+  }
+  if (is.null(data[[col_value]]) || !inherits(data[[col_value]], "numeric")) {
     rlang::abort(
       message = "Variable specified by `col_value` must be class \"numeric\".",
       class = "tune_keras_rnn_bayesoptim_col_value_error"
     )
+  }
 
   # "model_type" must be one of "simple", "gru" or "lstm"
   model_type <- rlang::arg_match(model_type, c("simple", "gru", "lstm"))
@@ -83,7 +87,7 @@ tune_keras_rnn_bayesoptim <- function(
   # "cv_setting" contains "periods_train", "periods_val", "periods_test" and
   # "skip_span"
   if (all(names(cv_setting)[order(names(cv_setting))] !=
-          c("periods_test", "periods_train", "periods_val", "skip_span"))) {
+    c("periods_test", "periods_train", "periods_val", "skip_span"))) {
     rlang::abort(
       message = "`data` must be a data.frame with 2 columns only: \"index\" and \"value\"",
       class = "tune_keras_rnn_bayesoptim_data_error"
@@ -91,10 +95,12 @@ tune_keras_rnn_bayesoptim <- function(
   }
 
   # Check whether directory exists
-  if (!is.null(save) && !dir.exists(save)) rlang::abort(
-    message = "Directory specified in `save` does not exist",
-    class = "tune_keras_rnn_bayesoptim_save_error"
-  )
+  if (!is.null(save) && !dir.exists(save)) {
+    rlang::abort(
+      message = "Directory specified in `save` does not exist",
+      class = "tune_keras_rnn_bayesoptim_save_error"
+    )
+  }
 
   # Function -------------------------------------------------------------------
   n_train <- cv_setting$periods_train
@@ -135,7 +141,7 @@ tune_keras_rnn_bayesoptim <- function(
         bounds = tuning_bounds,
         init_points = 5,
         n_iter = 30,
-        acq = "ucb", #ei,
+        acq = "ucb", # ei,
         verbose = FALSE
       )
       if (!is.null(save)) {
@@ -150,7 +156,6 @@ tune_keras_rnn_bayesoptim <- function(
       }
 
       return(bayes)
-
     }, otherwise = NULL, quiet = FALSE)
   )
 
@@ -160,10 +165,8 @@ tune_keras_rnn_bayesoptim <- function(
 
 # Internal Function ------------------------------------------------------------
 internal_keras_fun <- function(
-  n_units, n_epochs, lag_1, lag_2, dropout, recurrent_dropout,
-  optimizer_type, learning_rate
-) {
-
+                               n_units, n_epochs, lag_1, lag_2, dropout, recurrent_dropout,
+                               optimizer_type, learning_rate) {
   lag_setting <- sort(lag_1:lag_2)
   optimizer <- switch(
     optimizer_type,
@@ -185,42 +188,45 @@ internal_keras_fun <- function(
 
   recurrent_layer <- if (model_type == "simple") {
     layer_simple_rnn(
-      units             = n_units,
-      input_shape       = c(length(lag_setting), 1),
+      units = n_units,
+      input_shape = c(length(lag_setting), 1),
       recurrent_dropout = recurrent_dropout
     )
   } else if (model_type == "gru") {
     layer_gru(
-      units             = n_units,
-      input_shape       = c(length(lag_setting), 1),
+      units = n_units,
+      input_shape = c(length(lag_setting), 1),
       recurrent_dropout = recurrent_dropout
     )
   } else if (model_type == "lstm") {
     layer_lstm(
-      units             = n_units,
-      input_shape       = c(length(lag_setting), 1),
+      units = n_units,
+      input_shape = c(length(lag_setting), 1),
       recurrent_dropout = recurrent_dropout
     )
   }
 
   dropout_layer <- layer_dropout(rate = dropout)
 
-  output <- input %>% recurrent_layer %>% dropout_layer %>% layer_dense(units = 1)
+  output <- input %>%
+    recurrent_layer() %>%
+    dropout_layer() %>%
+    layer_dense(units = 1)
 
   model <- keras_model(input, output)
 
   model %>% compile(optimizer = optimizer, loss = "mse")
 
   history <- model %>% fit(
-    x               = X$train,
-    y               = Y$train,
+    x = X$train,
+    y = Y$train,
     steps_per_epoch = 1,
-    epochs          = n_epochs,
-    batch_size      = NULL,
-    verbose         = 0,
-    shuffle         = FALSE,
+    epochs = n_epochs,
+    batch_size = NULL,
+    verbose = 0,
+    shuffle = FALSE,
     validation_data = list(X$val, Y$val),
-    view_metrics    = FALSE
+    view_metrics = FALSE
   )
 
   return(list(Score = -history$metrics$val_loss[n_epochs], Pred = 0))

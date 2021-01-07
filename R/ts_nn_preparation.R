@@ -29,22 +29,30 @@ ts_nn_preparation <- function(data, tsteps, length_val = 16L, length_test = 8L) 
   testr::check_class(length_val, "integer", "ts_nn_preparation")
   testr::check_class(length_test, "integer", "ts_nn_preparation")
 
-  if (sum(names(data) %like% "value_lag[0-9]") < tsteps) rlang::abort(
-    message = "`data` must be a data.table with at least `tsteps` lagged columns",
-    class = "ts_nn_preparation_data_error"
-  )
-  if (length(tsteps) != 1) rlang::abort(
-    message = "`tsteps` must be an integer of length 1.",
-    class = "ts_nn_preparation_tsteps_error"
-  )
-  if (length(length_val) != 1) rlang::abort(
-    message = "`length_val` must be an integer of length 1.",
-    class = "ts_nn_preparation_length_val_error"
-  )
-  if (length(length_test) != 1) rlang::abort(
-    message = "`length_test` must be an integer of length 1.",
-    class = "ts_nn_preparation_length_test_error"
-  )
+  if (sum(names(data) %like% "value_lag[0-9]") < tsteps) {
+    rlang::abort(
+      message = "`data` must be a data.table with at least `tsteps` lagged columns",
+      class = "ts_nn_preparation_data_error"
+    )
+  }
+  if (length(tsteps) != 1) {
+    rlang::abort(
+      message = "`tsteps` must be an integer of length 1.",
+      class = "ts_nn_preparation_tsteps_error"
+    )
+  }
+  if (length(length_val) != 1) {
+    rlang::abort(
+      message = "`length_val` must be an integer of length 1.",
+      class = "ts_nn_preparation_length_val_error"
+    )
+  }
+  if (length(length_test) != 1) {
+    rlang::abort(
+      message = "`length_test` must be an integer of length 1.",
+      class = "ts_nn_preparation_length_test_error"
+    )
+  }
 
   ### Function -----------------------------------------------------------------
   n <- nrow(data)

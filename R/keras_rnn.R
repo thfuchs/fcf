@@ -22,19 +22,18 @@
 #' @return evaluation scores for training, validation and test set
 #' @export
 keras_rnn <- function(
-  X, Y,
-  model_type,
-  tsteps,
-  n_epochs = 200,
-  n_units = 32,
-  loss = "mse",
-  metrics = NULL,
-  dropout_in_test = FALSE,
-  optimizer = optimizer_rmsprop(),
-  dropout = 0,
-  recurrent_dropout = 0,
-  live_plot = FALSE
-) {
+                      X, Y,
+                      model_type,
+                      tsteps,
+                      n_epochs = 200,
+                      n_units = 32,
+                      loss = "mse",
+                      metrics = NULL,
+                      dropout_in_test = FALSE,
+                      optimizer = optimizer_rmsprop(),
+                      dropout = 0,
+                      recurrent_dropout = 0,
+                      live_plot = FALSE) {
 
   # Hyperparameter -------------------------------------------------------------
 
@@ -50,22 +49,22 @@ keras_rnn <- function(
 
   recurrent_layer <- if (model_type == "simple") {
     layer_simple_rnn(
-      units             = n_units,
-      input_shape       = c(tsteps, 1),
+      units = n_units,
+      input_shape = c(tsteps, 1),
       # dropout           = dropout,
       recurrent_dropout = recurrent_dropout
     )
   } else if (model_type == "gru") {
     layer_gru(
-      units             = n_units,
-      input_shape       = c(tsteps, 1),
+      units = n_units,
+      input_shape = c(tsteps, 1),
       # dropout           = dropout,
       recurrent_dropout = recurrent_dropout
     )
   } else if (model_type == "lstm") {
     layer_lstm(
-      units             = n_units,
-      input_shape       = c(tsteps, 1),
+      units = n_units,
+      input_shape = c(tsteps, 1),
       # dropout           = dropout,
       recurrent_dropout = recurrent_dropout
     )
@@ -75,9 +74,15 @@ keras_rnn <- function(
 
   # Apply dropout only during training (Keras default) or during testing also?
   output <- if (dropout_in_test) {
-    input %>% recurrent_layer %>% dropout_layer(training = TRUE) %>% layer_dense(units = 1)
+    input %>%
+      recurrent_layer() %>%
+      dropout_layer(training = TRUE) %>%
+      layer_dense(units = 1)
   } else {
-    input %>% recurrent_layer %>% dropout_layer %>% layer_dense(units = 1)
+    input %>%
+      recurrent_layer() %>%
+      dropout_layer() %>%
+      layer_dense(units = 1)
   }
 
   model <- keras_model(input, output)
@@ -85,15 +90,15 @@ keras_rnn <- function(
   model %>% compile(optimizer = optimizer, loss = loss, metrics = metrics)
 
   model %>% fit(
-    x               = X$train,
-    y               = Y$train,
+    x = X$train,
+    y = Y$train,
     steps_per_epoch = 1,
-    epochs          = n_epochs,
-    batch_size      = NULL,
-    verbose         = 0,
-    shuffle         = FALSE,
+    epochs = n_epochs,
+    batch_size = NULL,
+    verbose = 0,
+    shuffle = FALSE,
     validation_data = if (dim(X$val)[1] > 0) list(X$val, Y$val),
-    view_metrics    = live_plot
+    view_metrics = live_plot
   )
 
   return(model)

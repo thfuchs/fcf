@@ -23,16 +23,15 @@
 #' }
 #'
 mase <- function(data, forecast, m) {
-
   n <- length(data)
   h <- length(forecast)
-  n_train <- n-h
+  n_train <- n - h
   train <- data[1:n_train]
-  test <- data[(n_train+1):n]
+  test <- data[(n_train + 1):n]
 
-  scale <- 1/(n_train-m) * sum(abs(train[(m+1):n_train] - train[1:(n_train-m)]))
+  scale <- 1 / (n_train - m) * sum(abs(train[(m + 1):n_train] - train[1:(n_train - m)]))
 
-  MASE <- mean(abs(as.vector(test)-as.vector(forecast)),na.rm=TRUE)/scale
+  MASE <- mean(abs(as.vector(test) - as.vector(forecast)), na.rm = TRUE) / scale
   return(MASE)
 }
 
@@ -49,7 +48,7 @@ mase <- function(data, forecast, m) {
 mape <- function(actual, forecast) {
   stopifnot(identical(length(actual), length(forecast)))
 
-  MAPE <- mean(abs((as.vector(actual)-as.vector(forecast))/as.vector(actual)),na.rm=TRUE)
+  MAPE <- mean(abs((as.vector(actual) - as.vector(forecast)) / as.vector(actual)), na.rm = TRUE)
   return(MAPE * 100)
 }
 
@@ -69,6 +68,6 @@ smape <- function(actual, forecast) {
 
   h <- length(forecast)
 
-  sMAPE <- 2/h * sum(abs(actual - forecast) / (abs(actual) + abs(forecast)))
+  sMAPE <- 2 / h * sum(abs(actual - forecast) / (abs(actual) + abs(forecast)))
   return(sMAPE * 100)
 }

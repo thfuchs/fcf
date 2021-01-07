@@ -8,8 +8,8 @@
 #' @import data.table
 #'
 #' @return nothing returned, DT edited by reference
-add_shift <- function(DT, cols, nlags, type = "lag"){
-  for (colname in cols){
+add_shift <- function(DT, cols, nlags, type = "lag") {
+  for (colname in cols) {
     new_name <- paste0(colname, "_", type, nlags)
     DT[, (new_name) := shift(get(colname), type = type, n = nlags)]
   }
@@ -24,8 +24,8 @@ add_shift <- function(DT, cols, nlags, type = "lag"){
 #' @import data.table
 #'
 #' @return nothing returned, DT edited by reference
-add_diffs <- function(DT, cols, ndiff){
-  for (colname in cols){
+add_diffs <- function(DT, cols, ndiff) {
+  for (colname in cols) {
     new_name <- paste0(colname, "_diff", ndiff)
     DT[, (new_name) := get(colname) - shift(get(colname), type = "lag", n = ndiff)]
   }
@@ -40,8 +40,8 @@ add_diffs <- function(DT, cols, ndiff){
 #' @import data.table
 #'
 #' @return nothing returned, DT edited by reference
-add_growth_rates <- function(DT, cols, ndiff){
-  for (colname in cols){
+add_growth_rates <- function(DT, cols, ndiff) {
+  for (colname in cols) {
     new_name <- paste0(colname, "_pctchg", ndiff)
     DT[, (new_name) := (get(colname) / shift(get(colname), type = "lag", n = ndiff)) - 1]
   }

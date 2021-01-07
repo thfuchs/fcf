@@ -11,9 +11,8 @@
 #'   "metrics" (center and scale)
 #' @export
 ts_normalization <- function(DT, length_val, length_test, metrics = FALSE) {
-
   n <- nrow(DT) - length_val - length_test
-  train <- DT[1:n,]
+  train <- DT[1:n, ]
 
   mean <- mean(train$value)
   std <- stats::sd(train$value)
@@ -21,9 +20,11 @@ ts_normalization <- function(DT, length_val, length_test, metrics = FALSE) {
   data <- data.table::copy(DT)
 
   cols <- names(data)[grepl("^value", names(data))]
-  data[, (cols) := lapply(.SD, function(x) scale(x, center = mean, scale = std)[,1]), .SDcols = cols]
+  data[, (cols) := lapply(.SD, function(x) scale(x, center = mean, scale = std)[, 1]), .SDcols = cols]
 
-  if (!metrics) return(data)
+  if (!metrics) {
+    return(data)
+  }
 
   return(list(data = data, metrics = list(center = mean, scale = std)))
 }

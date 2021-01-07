@@ -56,22 +56,21 @@ acd <- function(actual, lower, upper, level) {
 #' }
 #'
 smis <- function(data, lower, upper, h, m, level) {
-
   n <- length(data)
-  n_train <- n-h
+  n_train <- n - h
   train <- data[1:n_train]
-  test <- data[(n_train+1):n]
+  test <- data[(n_train + 1):n]
 
   alpha <- 1 - level
-  scale <- 1/(n_train-m) * sum(abs(train[(m+1):n_train] - train[1:(n_train-m)]))
+  scale <- 1 / (n_train - m) * sum(abs(train[(m + 1):n_train] - train[1:(n_train - m)]))
 
   MIS <-
-    sum(as.vector(upper) - as.vector(lower)) + 2/alpha * (
+    sum(as.vector(upper) - as.vector(lower)) + 2 / alpha * (
       sum((as.vector(lower) - as.vector(test)) * (as.vector(test) < as.vector(lower))) +
         sum((as.vector(test) - as.vector(upper)) * (as.vector(test) > as.vector(upper)))
     )
-  MIS <- MIS/h
-  SMIS <- MIS/scale
+  MIS <- MIS / h
+  SMIS <- MIS / scale
 
   return(SMIS)
 }
