@@ -20,11 +20,9 @@ jobs:
       matrix:
         config:
           - {os: windows-latest, r: 'release'}
-#          - {os: macOS-latest, r: 'release'}
+          - {os: macOS-latest, r: 'release'}
           - {os: ubuntu-18.04, r: 'release', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
-#          - {os: ubuntu-18.04, r: 'devel', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
-#        tf: ['1.15.2', '2.0.1', '2.1.0', '2.2.0', '2.3.0', 'nightly']
-        tf: ['2.3.1']
+        tf: ['2.2.0', '2.3.1', '2.4.0', 'nightly']
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
