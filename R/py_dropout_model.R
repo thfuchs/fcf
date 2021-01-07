@@ -17,15 +17,15 @@
 #' # Load Model with permanently activated dropout and generate test data
 #' model <- keras::load_model_hdf5(
 #'   system.file("tinytest_data/simple_rnn_dropout.hdf5", package = "tsRNN"))
-#' test <- array(runif(18, 0.1, 3), dim = c(6L, 3L, 1L))
+#' test <- array(runif(18, 0.1, 3), dim = c(6L, 2L, 1L))
 #'
 #' # 1. Deactivate dropout for testing
 #' model_01 <- py_dropout_model(model, 0)
-#' stats::predict(model_01, test)
+#' dropout_predict(model_01, test)
 #'
 #' # 2. Change dropout level
 #' model_02 <- py_dropout_model(model, 0.8)
-#' stats::predict(model_02, test)
+#' dropout_predict(model_02, test)
 py_dropout_model <- function(model, dropout = 0.1) {
 
   # for R binding
@@ -36,5 +36,5 @@ py_dropout_model <- function(model, dropout = 0.1) {
   reticulate::source_python(python_path)
 
   # Output
-  reticulate::py_suppress_warnings(dropout_model(model, dropout))
+  dropout_model(model, dropout)
 }

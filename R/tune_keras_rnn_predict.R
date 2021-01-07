@@ -142,7 +142,7 @@ tune_keras_rnn_predict <- function(
       c(X, Y) %<-% ts_nn_preparation(
         data_split,
         tsteps = length(best_lag_setting),
-        length_val = 0L,
+        length_val = as.integer(n_val),
         length_test = as.integer(n_test)
       )
       best_optimizer <- switch(
@@ -190,8 +190,8 @@ tune_keras_rnn_predict <- function(
 
       fc_mc <- lapply(best_models, function(model) {
         model_mean <- py_dropout_model(model, 0)
-        prediction_test <- stats::predict(model_mean, X$test)
-        prediction_train <- stats::predict(model_mean, X$train)
+        prediction_test <- dropout_predict(model_mean, X$test)
+        prediction_train <- dropout_predict(model_mean, X$train)
 
         list(
           predict = prediction_test,
@@ -218,7 +218,7 @@ tune_keras_rnn_predict <- function(
         fc_dropout_dist <- lapply(best_models, function(model) {
           model_dropout <- py_dropout_model(model, dropout_rate)
           predict <- vapply(1:100, function(i) {
-            stats::predict(model_dropout, X$train)[,1]
+            dropout_predict(model_dropout, X$train)[,1]
           }, FUN.VALUE = numeric(n_train_internal))
           predict_median <- apply(predict, 1, stats::median)
 
@@ -237,7 +237,7 @@ tune_keras_rnn_predict <- function(
       fc_dropout_mc <- lapply(best_models, function(model) {
         model_dropout <- py_dropout_model(model, test_dropout)
         vapply(1:iter_dropout, function(i) {
-          stats::predict(model_dropout, X$test)[,1]
+          dropout_predict(model_dropout, X$test)[,1]
         }, FUN.VALUE = numeric(n_test))
       })
 
