@@ -2,8 +2,12 @@ Package: tsRNN
 Title: Time Series Forecasting using Recurrent Neural Networks by Keras
 Version: 0.1.4
 Authors@R: person("Thomas", "Fuchs", email = "thomasfuchs-re@web.de", role = c("aut", "cre"))
-Description: Time series forecasting using naive forecasting methods, ARIMA and
-    recurrent neural networks.
+Description: `tsRNN` tries to provide a ready-to-use time series forecasting suite
+    for recurrent neural networks. The package is enhanced by basic implementations
+    of "simple" algorithms like ARIMA for comparison and provides accuracy 
+    measures as well as basic chart options for model comparisons.  
+    Note that `tsRNN` heavily depends on Keras and the TensorFlow Deep Learning 
+    framework.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -28,4 +32,6 @@ RoxygenNote: 7.1.1
 URL: https://github.com/thfuchs/tsRNN
 BugReports: https://github.com/thfuchs/tsRNN/issues
 Depends: R (>= 4.0.0)
-Suggests: tinytest (>= 1.2.0)
+Suggests: 
+    tinytest (>= 1.2.0),
+    covr
