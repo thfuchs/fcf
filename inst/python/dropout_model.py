@@ -1,5 +1,5 @@
-from keras.models import Model, Sequential, clone_model
-from keras.layers import Dropout
+from tensorflow.keras.models import clone_model
+from tensorflow.keras.layers import Dropout
 
 def dropout_model(model, dropout):
     """
@@ -12,7 +12,7 @@ def dropout_model(model, dropout):
     dropout : fraction dropout to apply to all layers
     
     Returns
-    predict_with_dropout : keras function for predicting with dropout
+    model_new : model with updated dropout rate
     """
     
     # 1. Use keras.models.clone_model
