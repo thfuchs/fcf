@@ -51,8 +51,8 @@ Plot multiple splits from list with forecast results
 \examples{
 data <- tsRNN::fc_arima
 plot_prediction_samples(
-   splits = list(data, data),
-   ncol = 2L
+  splits = list(data, data),
+  ncol = 2L
 )
 
 # with Prediction Interval

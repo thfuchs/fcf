@@ -19,7 +19,6 @@
 #'
 #' # Significance level to 0.01 and 1 to 5 lags
 #' check_acf(apple, level = 0.01, lag_grid = 1:5)
-#'
 check_acf <- function(data, level = 0.05, lag_grid = c(8, 12, 16)) {
 
   ### Checks -------------------------------------------------------------------
@@ -74,5 +73,4 @@ check_acf <- function(data, level = 0.05, lag_grid = c(8, 12, 16)) {
     ),
     pass = all(c(ljung, box) < level)
   )
-
 }

@@ -33,22 +33,29 @@ forecast_baseline <- function(data, test_size = NULL, acc_measure) {
 
   # Variable `test_size`
   if (is.null(test_size)) test_size <- 2 * stats::frequency(data)
-  if (!rlang::inherits_any(test_size, c("numeric", "integer"))) {rlang::abort(
-    message = sprintf(
-      "`test_size` must be numeric or integer, not of class \"%s\".",
-      paste(class(test_size), collapse = " / ")
-    ),
-    class = "forecast_baseline_test_size_error"
-  )}
-  if (length(test_size) != 1) {rlang::abort(
-    message = "`test_size` must be a vector of length 1.",
-    class = "forecast_baseline_test_size_error"
-  )}
-  if (test_size < 0) {rlang::abort(
-    message = sprintf(
-      "`test_size` must be NULL or a positive numeric, not \"%s\".", test_size),
-    class = "forecast_baseline_test_size_error"
-  )}
+  if (!rlang::inherits_any(test_size, c("numeric", "integer"))) {
+    rlang::abort(
+      message = sprintf(
+        "`test_size` must be numeric or integer, not of class \"%s\".",
+        paste(class(test_size), collapse = " / ")
+      ),
+      class = "forecast_baseline_test_size_error"
+    )
+  }
+  if (length(test_size) != 1) {
+    rlang::abort(
+      message = "`test_size` must be a vector of length 1.",
+      class = "forecast_baseline_test_size_error"
+    )
+  }
+  if (test_size < 0) {
+    rlang::abort(
+      message = sprintf(
+        "`test_size` must be NULL or a positive numeric, not \"%s\".", test_size
+      ),
+      class = "forecast_baseline_test_size_error"
+    )
+  }
 
   # Variable `acc_measure`
   testr::check_class(acc_measure, "character", "forecast_baseline")
@@ -65,7 +72,7 @@ forecast_baseline <- function(data, test_size = NULL, acc_measure) {
 
   ### Function -----------------------------------------------------------------
 
-  train_end <- stats::time(data)[length(data)-test_size]
+  train_end <- stats::time(data)[length(data) - test_size]
   train <- stats::window(data, end = train_end)
 
   fc_list <- list(

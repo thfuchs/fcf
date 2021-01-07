@@ -7,9 +7,10 @@ name: test-coverage
 
 jobs:
   test-coverage:
-    runs-on: macOS-latest
+    runs-on: windows-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      TF_VERSION: '2.3.1'
     steps:
       - uses: actions/checkout@v2
 
@@ -36,6 +37,19 @@ jobs:
           install.packages(c("remotes"))
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("covr")
+        shell: Rscript {0}
+
+      - name: Install Miniconda
+        run: |
+          remotes::install_cran("reticulate")
+          reticulate::install_miniconda()
+        shell: Rscript {0}
+
+      - name: Install TensorFlow
+        run: |
+          reticulate::conda_create('r-reticulate', packages = c('python==3.6.12'))
+          remotes::install_local()
+          keras::install_keras(tensorflow = Sys.getenv('TF_VERSION'), extra_packages = c('IPython', 'requests', 'certifi', 'urllib3', 'h5py'))
         shell: Rscript {0}
 
       - name: Test coverage

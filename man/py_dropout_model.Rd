@@ -26,7 +26,8 @@ warning
 \examples{
 # Load Model with permanently activated dropout and generate test data
 model <- keras::load_model_hdf5(
-  system.file("tinytest_data/simple_rnn_dropout.hdf5", package = "tsRNN"))
+  system.file("tinytest_data/simple_rnn_dropout.hdf5", package = "tsRNN")
+)
 test <- array(runif(18, 0.1, 3), dim = c(6L, 2L, 1L))
 
 # 1. Deactivate dropout for testing

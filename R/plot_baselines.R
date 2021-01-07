@@ -23,17 +23,16 @@
 #'   colors = c("Actual" = "black", "Snaive" = "blue", "Holt" = "green")
 #' )
 plot_baselines <- function(
-  data,
-  col_date = "index",
-  col_value = "value",
-  col_group = "type",
-  title = NULL,
-  size = 0.6,
-  alpha = 0.8,
-  colors = NULL,
-  legend = "bottom",
-  scale = NULL
-) {
+                           data,
+                           col_date = "index",
+                           col_value = "value",
+                           col_group = "type",
+                           title = NULL,
+                           size = 0.6,
+                           alpha = 0.8,
+                           colors = NULL,
+                           legend = "bottom",
+                           scale = NULL) {
 
   ### Checks -------------------------------------------------------------------
   testr::check_class(data, "data.frame", "plot_baselines")
@@ -47,27 +46,30 @@ plot_baselines <- function(
   testr::check_class(scale, "Date", "plot_baselines", allowNULL = TRUE)
 
   # Check column's fit
-  if (is.null(data[[col_date]]) || !inherits(data[[col_date]], "Date"))
+  if (is.null(data[[col_date]]) || !inherits(data[[col_date]], "Date")) {
     rlang::abort(
       message = "Variable specified by `col_date` must be class \"Date\".",
       class = "plot_baselines_col_date_error"
     )
-  if (is.null(data[[col_value]]) || !inherits(data[[col_value]], "numeric"))
+  }
+  if (is.null(data[[col_value]]) || !inherits(data[[col_value]], "numeric")) {
     rlang::abort(
       message = "Variable specified by `col_value` must be class \"numeric\".",
       class = "plot_baselines_col_value_error"
     )
-  if (is.null(data[[col_group]]) || !inherits(data[[col_group]], "character"))
+  }
+  if (is.null(data[[col_group]]) || !inherits(data[[col_group]], "character")) {
     rlang::abort(
       message = "Variable specified by `col_group` must be class \"character\".",
       class = "plot_baselines_col_group_error"
     )
+  }
 
   ### Function -----------------------------------------------------------------
   g <- ggplot(data, aes_string(x = col_date, y = col_value, color = col_group)) +
     geom_line(size = size, alpha = alpha) +
     labs(
-      title    = title,
+      title = title,
       subtitle = sprintf("%s to %s", min(data[[col_date]]), max(data[[col_date]])),
       y = NULL, x = NULL
     )
@@ -111,16 +113,15 @@ plot_baselines <- function(
 #'   ncol = 2L
 #' )
 plot_baselines_samples <- function(
-  splits,
-  col_date = "index",
-  col_value = "value",
-  col_group = "type",
-  title = NULL,
-  colors = NULL,
-  date_type = "datetime",
-  ncol = 3L,
-  scale = NULL
-) {
+                                   splits,
+                                   col_date = "index",
+                                   col_value = "value",
+                                   col_group = "type",
+                                   title = NULL,
+                                   colors = NULL,
+                                   date_type = "datetime",
+                                   ncol = 3L,
+                                   scale = NULL) {
 
   ### Checks -------------------------------------------------------------------
 
@@ -156,11 +157,14 @@ plot_baselines_samples <- function(
   combined <- patchwork::wrap_plots(plot_list, ncol = ncol, guides = "collect") &
     theme(legend.position = "bottom")
 
-  if (is.null(title)) return(combined)
+  if (is.null(title)) {
+    return(combined)
+  }
 
   combined + patchwork::plot_annotation(
     title = title,
     theme = ggplot2::theme(
-      plot.title = element_text(size = 14, face = "bold", hjust = 0.5))
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5)
+    )
   )
 }

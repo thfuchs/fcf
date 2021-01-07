@@ -4,7 +4,9 @@
 <!-- badges: start -->
 [![DOI](https://zenodo.org/badge/290276771.svg)](https://zenodo.org/badge/latestdoi/290276771)
 [![Codecov test coverage](https://codecov.io/gh/thfuchs/tsRNN/branch/master/graph/badge.svg)](https://codecov.io/gh/thfuchs/tsRNN?branch=master)
+
 [![R build status](https://github.com/thfuchs/tsRNN/workflows/R-CMD-check/badge.svg)](https://github.com/thfuchs/tsRNN/actions)
+[![test-coverage](https://github.com/thfuchs/tsRNN/workflows/test-coverage/badge.svg)](https://github.com/thfuchs/tsRNN/actions)
 <!-- badges: end -->
 
 Time Series Forecasting using Recurrent Neural Networks by Keras

@@ -29,5 +29,4 @@ check_acf(apple)
 
 # Significance level to 0.01 and 1 to 5 lags
 check_acf(apple, level = 0.01, lag_grid = 1:5)
-
 }
