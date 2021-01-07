@@ -12,8 +12,12 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
 <script src="pkgdown.js"></script><meta property="og:title" content="Time Series Forecasting using Recurrent Neural Networks by Keras">
-<meta property="og:description" content="Time series forecasting using naive forecasting methods, ARIMA and
-    recurrent neural networks.">
+<meta property="og:description" content='`tsRNN` tries to provide a ready-to-use time series forecasting suite
+    for recurrent neural networks. The package is enhanced by basic implementations
+    of "simple" algorithms like ARIMA for comparison and provides accuracy 
+    measures as well as basic chart options for model comparisons.  
+    Note that `tsRNN` heavily depends on Keras and the TensorFlow Deep Learning 
+    framework.'>
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -76,6 +80,8 @@
 <!-- badges: start -->
 
 <p>Time Series Forecasting using Recurrent Neural Networks by Keras</p>
+<p><code>tsRNN</code> tries to provide a ready-to-use time series forecasting suite for recurrent neural networks. The package is enhanced by basic implementations of “simple” algorithms like ARIMA for comparison and provides accuracy measures as well as basic chart options for model comparisons.</p>
+<p>Note that <code>tsRNN</code> heavily depends on Keras and the TensorFlow Deep Learning</p>
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
@@ -83,11 +89,37 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"thfuchs/tsRNN"</span><span class="op">)</span></code></pre></div>
 </div>
+<div id="dependencies" class="section level2">
+<h2 class="hasAnchor">
+<a href="#dependencies" class="anchor"></a>Dependencies</h2>
+<p><code>tsRNN</code> highly depends on <a href="https://keras.io/">Keras</a> and <a href="https://www.tensorflow.org/">TensorFlow</a>. We currently guarantee the package to work with the following versions:</p>
+<table class="table">
+<thead><tr class="header">
+<th>Software Package</th>
+<th>Version</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Keras</td>
+<td>2.4</td>
+</tr>
+<tr class="even">
+<td>TensorFlow</td>
+<td>2.3.1</td>
+</tr>
+</tbody>
+</table>
+<p>Try to install both Keras and TensorFlow through the <a href="https://cran.r-project.org/package=keras">R package <code>keras</code></a> to avoid difficulties due to misspecified installations:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://keras.rstudio.com">keras</a></span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/pkg/keras/man/install_keras.html">install_keras</a></span><span class="op">(</span>version <span class="op">=</span> <span class="st">"2.4"</span>, tensorflow <span class="op">=</span> <span class="st">"2.3.1"</span><span class="op">)</span></code></pre></div>
+<p>Note: If you have a CUDA-enabled GPU set up on your machine, install the gpu-version of TensorFlow by specifiying <code>tensorflow = "2.3.1-gpu"</code>.</p>
+</div>
 <div id="example" class="section level2">
 <h2 class="hasAnchor">
 <a href="#example" class="anchor"></a>Example</h2>
 <p>This is a basic example which shows you how to solve a common problem:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/thfuchs/tsRNN">tsRNN</a></span><span class="op">)</span>
 <span class="co">## basic example code</span></code></pre></div>
 </div>
@@ -122,6 +154,8 @@
 <h2>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://zenodo.org/badge/latestdoi/290276771"><img src="https://zenodo.org/badge/290276771.svg" alt="DOI"></a></li>
+<li><a href="https://codecov.io/gh/thfuchs/tsRNN?branch=master"><img src="https://codecov.io/gh/thfuchs/tsRNN/branch/master/graph/badge.svg" alt="Codecov test coverage"></a></li>
+<li><a href="https://github.com/thfuchs/tsRNN/actions"><img src="https://github.com/thfuchs/tsRNN/workflows/R-CMD-check/badge.svg" alt="R build status"></a></li>
 </ul>
 </div>
 </div>
