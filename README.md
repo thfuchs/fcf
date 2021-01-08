@@ -1,12 +1,11 @@
-
-# tsRNN
+tsRNN <img src="man/figures/logo.png" align="right" width="250px" />
+======================
 
 <!-- badges: start -->
 [![DOI](https://zenodo.org/badge/290276771.svg)](https://zenodo.org/badge/latestdoi/290276771)
-[![Codecov test coverage](https://codecov.io/gh/thfuchs/tsRNN/branch/master/graph/badge.svg)](https://codecov.io/gh/thfuchs/tsRNN?branch=master)
-
 [![R build status](https://github.com/thfuchs/tsRNN/workflows/R-CMD-check/badge.svg)](https://github.com/thfuchs/tsRNN/actions)
-[![test-coverage](https://github.com/thfuchs/tsRNN/workflows/test-coverage/badge.svg)](https://github.com/thfuchs/tsRNN/actions)
+[![Codecov](https://codecov.io/gh/thfuchs/tsRNN/branch/master/graph/badge.svg)](https://codecov.io/gh/thfuchs/tsRNN?branch=master)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
 <!-- badges: end -->
 
 Time Series Forecasting using Recurrent Neural Networks by Keras
