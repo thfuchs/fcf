@@ -84,13 +84,13 @@ expect_error(
 expect_error(
   plot_prediction(tsRNN::fc_arima, size = TRUE),
   class = "plot_prediction_size_error",
-  pattern = "^`size` must be numeric, not of class \"logical\"\\.$"
+  pattern = "^`size` must be numeric or integer, not of class \"logical\"\\.$"
 )
 
 expect_error(
   plot_prediction(tsRNN::fc_arima, alpha = "5"),
   class = "plot_prediction_alpha_error",
-  pattern = "^`alpha` must be numeric, not of class \"character\"\\.$"
+  pattern = "^`alpha` must be numeric or integer, not of class \"character\"\\.$"
 )
 
 expect_error(

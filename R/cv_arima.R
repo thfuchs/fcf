@@ -1,23 +1,39 @@
-#' Forecast the next n steps by ARIMA for each split
+#' Cross validated prediction and evaluation with ARIMA forecasts
+#'
+#' Time-series cross-validation wrapper for \link[forecast]{auto.arima}
 #'
 #' @param data data.table object
-#' @param cv_setting cross valudation settings. List Requiring \itemize{
-#'   \item periods_train
-#'   \item periods_val
-#'   \item periods_test
-#'   \item skip_span
-#' }
+#' @param cv_setting cross validation settings. Named list requiring `periods_train`,
+#'   `periods_val` `periods_test` and `skip_span`. See section "Cross validation
+#'   settings" for details.
 #' @param col_id Optional ID column in `data`, default to "ticker"
 #' @param col_date Date column in `data`, default to "index"
 #' @param col_value Value column in `data`, default to "value"
-#' @param transform One of NULL (default) and "normalize"
+#' @param transform Transform data before estimation? One of NULL (default)
+#'   and "normalize"
 #' @param frequency time series frequency, e.g. 4 for quarters and 12 for months
 #' @param multiple_h NULL if forecast horizon equals cv_setting$n_test, else
 #'   named list of forecast horizons for accuracy measures
 #'
 #' @import data.table
+#' @importFrom zeallot %<-%
 #'
-#' @return list with accuracy and forecasts (point forecast and PI)
+#' @section Cross validation settings:
+#' Using \link[rsample]{rolling_origin} to split the time series. Requiring:
+#' \itemize{
+#'   \item `periods_train`: Length of training set per split
+#'   \item `periods_val`: Length of validation set per split
+#'   \item `periods_test`: Length of test/hold-out set per split
+#'   \item `skip_span`: Gaps between overlapping splits to reduce computational
+#'    intensity and recundancy between data splits.\cr \cr
+#' }
+#' Note: `periods_val` only relevant for deep learning models.
+#' \link{cv_baselines} and \link{cv_arima} use sum of `periods_train` and
+#' `periods_val` for training and only `periods_test` as hold-out test set (no
+#' learning and feedback through validation by traditional statistical models)
+#'
+#' @return list of `type` (model), `h` (forecast horizon, if specified),
+#'   \link{mape}, \link{smape}, \link{mase}, \link{smis} and \link{acd}
 #' @export
 #'
 #' @examples
@@ -29,21 +45,21 @@
 #'   skip_span = 5
 #' )
 #'
-#' fc_01 <- predict_arima(
-#'   data = tsRNN::DT_unh,
+#' fc_01 <- cv_arima(
+#'   data = tsRNN::DT_apple,
 #'   cv_setting = cv_setting
 #' )
 #' fc_01
 #'
 #' # Multiple forecast horizons
-#' fc_02 <- predict_arima(
-#'   data = tsRNN::DT_unh,
+#' fc_02 <- cv_arima(
+#'   data = tsRNN::DT_apple,
 #'   cv_setting = cv_setting,
 #'   multiple_h = list(short = 1:2, long = 3:4)
 #' )
 #' fc_02
 #' }
-predict_arima <- function(
+cv_arima <- function(
                           data,
                           cv_setting,
                           col_id = NULL,
@@ -54,46 +70,22 @@ predict_arima <- function(
                           multiple_h = NULL) {
 
   ### Checks -------------------------------------------------------------------
-  testr::check_class(data, "data.frame", "predict_arima")
-  testr::check_class(cv_setting, "list", "predict_arima")
-  testr::check_class(col_id, "character", "predict_arima", allowNULL = TRUE)
-  testr::check_class(col_date, "character", "predict_arima")
-  testr::check_class(col_value, "character", "predict_arima")
-  testr::check_class(transform, "character", "predict_arima", allowNULL = TRUE)
-  testr::check_class(frequency, "numeric", "predict_arima")
-  testr::check_class(multiple_h, "list", "predict_arima", allowNULL = TRUE)
+  testr::check_class(data, "data.frame")
+  testr::check_class(cv_setting, "list")
+  testr::check_class(col_id, "character", allowNULL = TRUE)
+  testr::check_class(col_date, "character")
+  testr::check_class(col_value, "character")
+  testr::check_class(transform, "character", allowNULL = TRUE)
+  testr::check_num_int(frequency)
+  testr::check_class(multiple_h, "list", allowNULL = TRUE)
 
-  # Check column's fit in "data"
   data.table::setDT(data)
-  if (
-    !is.null(col_id) && is.null(data[[col_id]]) ||
-      !is.null(col_id) && !inherits(data[[col_id]], "character")
-  ) {
-    rlang::abort(
-      message = "Variable specified by `col_id` must be class \"character\".",
-      class = "predict_arima_col_id_error"
-    )
-  }
-  if (
-    is.null(data[[col_date]]) ||
-      !rlang::inherits_any(data[[col_date]], c("Date", "POSIXct"))
-  ) {
-    rlang::abort(
-      message = "Variable specified by `col_date` must be class \"Date\" or \"POSIXct\".",
-      class = "predict_arima_col_date_error"
-    )
-  }
-  if (is.null(data[[col_value]]) || !inherits(data[[col_value]], "numeric")) {
-    rlang::abort(
-      message = "Variable specified by `col_value` must be class \"numeric\".",
-      class = "predict_arima_col_value_error"
-    )
-  }
+
+  check_data_structure(data, col_id, col_date, col_value)
+  check_cv_setting(cv_setting)
 
   ### Settings -----------------------------------------------------------------
-  n_train <- cv_setting$periods_train
-  n_val <- cv_setting$periods_val
-  n_initial <- n_train + n_val
+  n_initial <- cv_setting$periods_train + cv_setting$periods_val
   n_test <- cv_setting$periods_test
   if (is.null(multiple_h)) multiple_h <- list(1:n_test)
 
@@ -116,10 +108,11 @@ predict_arima <- function(
       DT <- rbind(DT_train, DT_test)
 
       # Normalization
-      data <- if (!is.null(transform) && transform == "normalize") {
-        ts_normalization(DT, n_val, n_test, metrics = FALSE)
+      metrics_norm <- NULL
+      if (!is.null(transform) && transform == "normalize") {
+        c(data, metrics_norm) %<-% ts_normalization(DT, 0, n_test, metrics = TRUE)
       } else {
-        DT
+        data <- DT
       }
       data[, key := "actual"]
 
@@ -171,6 +164,13 @@ predict_arima <- function(
       fc[, `:=`(key = "predict", type = "ARIMA")]
       fc <- rbind(data, fc, fill = TRUE)
       if (!is.null(col_id)) fc[, paste(col_id) := unique(DT[[col_id]])]
+
+      if (!is.null(transform) && transform == "normalize") {
+        norm_cols <- c("value", "lo95", "hi95")
+        fc[, (norm_cols) := lapply(
+          .SD, function(x) x * metrics_norm$scale + metrics_norm$center
+        ), .SDcols = norm_cols]
+      }
 
       ### Accuracy Measures
       fc_values <- fc[key == "predict"]

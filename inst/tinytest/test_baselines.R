@@ -4,7 +4,7 @@ apple <- tsRNN::ts_apple
 ### Check successful -----------------------------------------------------------
 
 expect_equivalent(
-  forecast_baseline(apple, test_size = NULL, acc_measure = "MAE"),
+  baselines(apple, test_size = NULL, acc_measure = "MAE"),
   list(
     fc_naive = c(1526.4020990991, 4100.125),
     fc_snaive = c(1030.41442592593, 2025.375),
@@ -14,8 +14,7 @@ expect_equivalent(
   )
 )
 
-output <-
-  forecast_baseline(apple, test_size = NULL, acc_measure = c("MAE", "ACF1"))
+output <- baselines(apple, test_size = NULL, acc_measure = c("MAE", "ACF1"))
 
 expect_equivalent(
   output$fc_snaive,
@@ -36,35 +35,35 @@ expect_equivalent(
 
 # Wrong Classes
 expect_error(
-  forecast_baseline(TRUE),
-  class = "forecast_baseline_data_error",
+  baselines(TRUE),
+  class = "baselines_data_error",
   pattern = "^`data` must be ts, not of class \"logical\"\\.$"
 )
 expect_error(
-  forecast_baseline(apple, test_size = TRUE),
-  class = "forecast_baseline_test_size_error",
+  baselines(apple, test_size = TRUE),
+  class = "baselines_test_size_error",
   pattern = "^`test_size` must be numeric or integer, not of class \"logical\"\\.$"
 )
 expect_error(
-  forecast_baseline(apple, acc_measure = TRUE),
-  class = "forecast_baseline_acc_measure_error",
+  baselines(apple, acc_measure = TRUE),
+  class = "baselines_acc_measure_error",
   pattern = "^`acc_measure` must be character, not of class \"logical\"\\.$"
 )
 
 # Wrong data types
 expect_error(
-  forecast_baseline(apple, test_size = c(1, 2), acc_measure = "MAE"),
-  class = "forecast_baseline_test_size_error",
+  baselines(apple, test_size = c(1, 2), acc_measure = "MAE"),
+  class = "baselines_test_size_error",
   pattern = "^`test_size` must be a vector of length 1\\.$"
 )
 expect_error(
-  forecast_baseline(apple, test_size = -1),
-  class = "forecast_baseline_test_size_error",
+  baselines(apple, test_size = -1),
+  class = "baselines_test_size_error",
   pattern = "`test_size` must be NULL or a positive numeric, not \"-1\"\\.$"
 )
 
 expect_error(
-  forecast_baseline(apple, acc_measure = ""),
-  class = "forecast_baseline_acc_measure_error",
+  baselines(apple, acc_measure = ""),
+  class = "baselines_acc_measure_error",
   pattern = "^`acc_measure` must be one of.*$"
 )

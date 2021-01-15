@@ -26,7 +26,7 @@ expect_error(
 expect_error(
   check_acf(apple, level = TRUE),
   class = "check_acf_level_error",
-  pattern = "^`level` must be numeric, not of class \"logical\"\\.$"
+  pattern = "^`level` must be numeric or integer, not of class \"logical\"\\.$"
 )
 expect_error(
   check_acf(apple, lag_grid = TRUE),

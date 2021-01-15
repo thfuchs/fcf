@@ -73,13 +73,13 @@ expect_error(
 expect_error(
   plot_baselines(tsRNN::fc_baseline, size = TRUE),
   class = "plot_baselines_size_error",
-  pattern = "`size` must be numeric, not of class \"logical\"\\.$"
+  pattern = "`size` must be numeric or integer, not of class \"logical\"\\.$"
 )
 
 expect_error(
   plot_baselines(tsRNN::fc_baseline, alpha = NULL),
   class = "plot_baselines_alpha_error",
-  pattern = "`alpha` must be numeric, not of class \"NULL\"\\.$"
+  pattern = "`alpha` must be numeric or integer, not of class \"NULL\"\\.$"
 )
 
 expect_error(
