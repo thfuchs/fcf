@@ -57,3 +57,27 @@ list of forecasts per split
 Use tuned recurrent neural network parameters with Keras functional API and
 to train best performing model(s) and forecast
 }
+\examples{
+\dontrun{
+apple <- tsRNN::DT_apple
+
+bayes_best_par <- purrr::map(
+  readRDS(system.file("tinytest_data/apple_bayesoptim.rds", package = "tsRNN")),
+  "Best_Par"
+)
+cv_setting <- list(
+  periods_train = 90,
+  periods_val = 10,
+  periods_test = 10,
+  skip_span = 5
+)
+
+result <- tune_keras_rnn_predict(
+  data = apple,
+  model_type = "simple",
+  cv_setting = cv_setting,
+  bayes_best_par = bayes_best_par
+)
+result
+}
+}

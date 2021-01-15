@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_baselines.R
 \name{plot_baselines_samples}
 \alias{plot_baselines_samples}
-\title{Plot cross validated samples of forecasts by baseline methods}
+\title{Plot cross validated samples of baseline forecasts}
 \usage{
 plot_baselines_samples(
   splits,
@@ -40,7 +40,7 @@ plot_baselines_samples(
 ggplot2 object
 }
 \description{
-Plot cross validated samples of forecasts by baseline methods
+Plot results of \link{cv_baselines} (by \code{ggplot2})
 }
 \examples{
 data <- tsRNN::fc_baseline

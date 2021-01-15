@@ -22,12 +22,27 @@
 #'
 #' # 1. Deactivate dropout for testing
 #' model_01 <- py_dropout_model(model, 0)
-#' dropout_predict(model_01, test)
+#' model_01(test)
 #'
 #' # 2. Change dropout level
 #' model_02 <- py_dropout_model(model, 0.8)
-#' dropout_predict(model_02, test)
+#' model_02(test)
 py_dropout_model <- function(model, dropout = 0.1) {
+
+  ### Checks -------------------------------------------------------------------
+
+  # TensorFlow version
+  tf_v <- parse_tf_version()
+  if (tf_v < 2.3) rlang::abort(
+    message = "TensorFlow version below 2.3 detected. Please update to at least version 2.3.0",
+    class = "py_dropout_model_tensorflow_error"
+  )
+  # Class of arguments
+  testr::check_class(model, "python.builtin.object")
+  testr::check_class(model, "keras.engine.training.Model")
+  testr::check_num_int(dropout)
+
+  ### Function -----------------------------------------------------------------
 
   # for R binding
   dropout_model <- NULL

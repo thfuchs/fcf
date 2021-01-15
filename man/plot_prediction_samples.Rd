@@ -46,7 +46,7 @@ plot_prediction_samples(
 ggplot2 object
 }
 \description{
-Plot multiple splits from list with forecast results
+Plot results from \link{cv_arima} (by \code{ggplot2})
 }
 \examples{
 data <- tsRNN::fc_arima

@@ -26,6 +26,30 @@
 #'
 #' @return list of forecasts per split
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' apple <- tsRNN::DT_apple
+#'
+#' bayes_best_par <- purrr::map(
+#'   readRDS(system.file("tinytest_data/apple_bayesoptim.rds", package = "tsRNN")),
+#'   "Best_Par"
+#' )
+#' cv_setting <- list(
+#'   periods_train = 90,
+#'   periods_val = 10,
+#'   periods_test = 10,
+#'   skip_span = 5
+#' )
+#'
+#' result <- tune_keras_rnn_predict(
+#'   data = apple,
+#'   model_type = "simple",
+#'   cv_setting = cv_setting,
+#'   bayes_best_par = bayes_best_par
+#' )
+#' result
+#' }
 tune_keras_rnn_predict <- function(
                                    data,
                                    model_type,
@@ -41,73 +65,89 @@ tune_keras_rnn_predict <- function(
                                    save_model_id = NULL) {
 
   # Checks ---------------------------------------------------------------------
-  testr::check_class(data, "data.frame", "tune_keras_rnn_predict")
-  testr::check_class(model_type, "character", "tune_keras_rnn_predict")
-  testr::check_class(cv_setting, "list", "tune_keras_rnn_predict")
-  testr::check_class(col_id, "character", "tune_keras_rnn_predict", allowNULL = TRUE)
-  testr::check_class(col_date, "character", "tune_keras_rnn_predict")
-  testr::check_class(col_value, "character", "tune_keras_rnn_predict")
-  testr::check_class(bayes_best_par, "list", "tune_keras_rnn_predict")
-  testr::check_class(level, "numeric", "tune_keras_rnn_predict")
 
-  # "data" contains columns "index" and "value" (and optionally "id")
-  # (univariate time series)
-  data.table::setDT(data)
-  if (
-    !is.null(col_id) && is.null(data[[col_id]]) ||
-      !is.null(col_id) && !inherits(data[[col_id]], "character")
-  ) {
-    rlang::abort(
-      message = "Variable specified by `col_id` must be class \"character\".",
-      class = "tune_keras_rnn_predict_col_id_error"
-    )
-  }
-  if (
-    is.null(data[[col_date]]) ||
-      !rlang::inherits_any(data[[col_date]], c("Date", "POSIXct"))
-  ) {
-    rlang::abort(
-      message = "Variable specified by `col_date` must be class \"Date\" or \"POSIXct\".",
-      class = "tune_keras_rnn_predict_col_date_error"
-    )
-  }
-  if (is.null(data[[col_value]]) || !inherits(data[[col_value]], "numeric")) {
-    rlang::abort(
-      message = "Variable specified by `col_value` must be class \"numeric\".",
-      class = "tune_keras_rnn_predict_col_value_error"
-    )
-  }
-
-  # "model_type" must be one of "simple", "gru" or "lstm"
+  testr::check_class(data, "data.frame")
+  testr::check_class(model_type, "character", n = 1)
   model_type <- rlang::arg_match(model_type, c("simple", "gru", "lstm"))
+  testr::check_class(cv_setting, "list")
+  testr::check_class(bayes_best_par, "list")
+  testr::check_class(col_id, "character", n = 1, allowNULL = TRUE)
+  testr::check_class(col_date, "character", n = 1)
+  testr::check_class(col_value, "character", n = 1)
+  testr::check_num_int(level, n = 1)
+  testr::check_num_int(iter, n = 1)
+  testr::check_num_int(iter_dropout, n = 1)
+  testr::check_class(save_model, "character", n = 1, allowNULL = TRUE)
+  testr::check_class(save_model_id, "character", n = 1, allowNULL = TRUE)
 
-  # "cv_setting" contains "periods_train", "periods_val", "periods_test" and
-  # "skip_span"
-  if (all(names(cv_setting)[order(names(cv_setting))] !=
-    c("periods_test", "periods_train", "periods_val", "skip_span"))) {
-    rlang::abort(
-      message = "`data` must be a data.frame with 2 columns only: \"index\" and \"value\"",
-      class = "tune_keras_rnn_predict_data_error"
-    )
-  }
+  data.table::setDT(data)
 
-  # `bayes_best_par` must be split-named list
+  check_data_structure(data, col_id, col_date, col_value)
+  check_cv_setting(cv_setting)
+
+  # check "bayes_best_par"
   if (names(bayes_best_par)[1] != "Slice1") {
     rlang::abort(
-      message = "`bayes_best_par` must be a list named by each `rsample` split",
+      message = "`bayes_best_par` must be a list named by each `rsample` split.",
+      class = "tune_keras_rnn_predict_bayes_best_par_error"
+    )
+  }
+  for(bayes_i in 1:length(bayes_best_par)) {
+    bayes_name <- names(bayes_best_par)[bayes_i]
+    bayes_slice <- bayes_best_par[[bayes_i]]
+
+    # 1. check class numeric
+    if (!inherits(bayes_slice, "numeric")) {
+      rlang::abort(
+        message = sprintf(
+          "`bayes_best_par[[\"%s\"]]` must be numeric, not of class \"%s\".",
+          bayes_name, paste(class(bayes_slice), collapse = " / ")
+        ),
+        class = "tune_keras_rnn_predict_bayes_best_par_error"
+      )
+    }
+    # 2. check for completeness
+    bayes_slice_names <- c(
+      "lag_1", "lag_2", "n_units", "n_epochs", "optimizer_type", "dropout",
+      "recurrent_dropout", "learning_rate"
+    )
+    bayes_slice_check <- bayes_slice_names %in% names(bayes_slice)
+    if (!all(bayes_slice_check)) rlang::abort(
+      message = sprintf(
+        "`bayes_best_par[[\"%s\"]] must contain all required parameters.\nMisses \"%s\".",
+        bayes_name,
+        paste(bayes_slice_names[!bayes_slice_check], collapse = "\", \"")
+      ),
       class = "tune_keras_rnn_predict_bayes_best_par_error"
     )
   }
 
+  # `level` in range (0, 100)
+  if (level <= 0 || level >= 100) rlang::abort(
+    message = "`level` must be within interval (0, 100).",
+    class = "tune_keras_rnn_predict_level_error"
+  )
+
+  # `iter` and `iter_dropout` positive
+  if (iter < 1) rlang::abort(
+    message = "`iter` must be a positive integer.",
+    class = "tune_keras_rnn_predict_iter_error"
+  )
+  if (iter_dropout < 1) rlang::abort(
+    message = "`iter_dropout` must be a positive integer.",
+    class = "tune_keras_rnn_predict_iter_dropout_error"
+  )
+
   # Check whether directory exists
   if (!is.null(save_model) && !dir.exists(save_model)) {
     rlang::abort(
-      message = "Directory specified in `save_model` does not exist",
+      message = "Directory specified in `save_model` does not exist.",
       class = "tune_keras_rnn_predict_save_model_error"
     )
   }
 
   # Function -------------------------------------------------------------------
+
   patterns <- function(...) NULL # to address data.table R CMD check Note
 
   n_train <- cv_setting$periods_train
@@ -197,12 +237,12 @@ tune_keras_rnn_predict <- function(
 
       fc_mc <- lapply(best_models, function(model) {
         model_mean <- py_dropout_model(model, 0)
-        prediction_test <- dropout_predict(model_mean, X$test)
-        prediction_train <- dropout_predict(model_mean, X$train)
+        prediction_test <- model_mean(X$test)
+        prediction_train <- model_mean(X$train)
 
         list(
-          predict = prediction_test,
-          resid = prediction_train - Y$train
+          predict = as.matrix(prediction_test),
+          resid = as.matrix(prediction_train) - Y$train
         )
       })
 
@@ -229,7 +269,7 @@ tune_keras_rnn_predict <- function(
         fc_dropout_dist <- lapply(best_models, function(model) {
           model_dropout <- py_dropout_model(model, dropout_rate)
           predict <- vapply(1:100, function(i) {
-            dropout_predict(model_dropout, X$train)[, 1]
+            as.numeric(model_dropout(X$train)[, 1])
           }, FUN.VALUE = numeric(n_train_internal))
           predict_median <- apply(predict, 1, stats::median)
 
@@ -248,20 +288,20 @@ tune_keras_rnn_predict <- function(
       fc_dropout_mc <- lapply(best_models, function(model) {
         model_dropout <- py_dropout_model(model, test_dropout)
         vapply(1:iter_dropout, function(i) {
-          dropout_predict(model_dropout, X$test)[, 1]
+          as.numeric(model_dropout(X$test)[, 1])
         }, FUN.VALUE = numeric(n_test))
       })
 
-      fc_dropout_predict <- matrix(unlist(fc_dropout_mc), nrow = n_test, byrow = FALSE)
+      fc_keras_predict <- matrix(unlist(fc_dropout_mc), nrow = n_test, byrow = FALSE)
 
       # Use dropout rate to predict lower and upper prediction bound
       fc_lower <- apply(
-        fc_dropout_predict, 1, stats::quantile, 0.5 - level / 200,
+        fc_keras_predict, 1, stats::quantile, 0.5 - level / 200,
         type = 8
       ) *
         metrics_norm$scale + metrics_norm$center
       fc_upper <- apply(
-        fc_dropout_predict, 1, stats::quantile, 0.5 + level / 200,
+        fc_keras_predict, 1, stats::quantile, 0.5 + level / 200,
         type = 8
       ) *
         metrics_norm$scale + metrics_norm$center

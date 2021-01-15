@@ -9,7 +9,7 @@ tune_keras_rnn_bayesoptim(
   data,
   model_type,
   cv_setting,
-  tuning_bounds,
+  tuning_bounds = list(),
   col_id = NULL,
   col_date = "index",
   col_value = "value",
@@ -37,7 +37,7 @@ specified in \code{col_date} and \code{col_value}}
 \item{save}{Automatically save tuning results? Specify NULL if not or
 character vector with path to directory for yes}
 
-\item{save_id}{optional id for model filename}
+\item{save_id}{optional character id for model filename}
 }
 \value{
 list of Bayes Optimization results per split
@@ -48,17 +48,34 @@ Optimization to select best performing model
 }
 \section{Tuning Bounds}{
 
-The following parameters are (currently) available for tuning.
+The following parameters are (currently) available for tuning.\cr
 \itemize{
-\item lag_1 (integer(2)) lower bounds
-\item lag_2 (integer(2)) upper bounds
-\item n_units (integer(2)) lower and upper bound for rnn units (cells)
-\item n_epochs (integer(2)) lower and upper bound for epochs
+\item lag_1 (integer(2)) lower bounds - default \code{c(1L, 2L)}
+\item lag_2 (integer(2)) upper bounds - default \code{c(1L, 2L)}
+\item n_units (integer(2)) lower and upper bound for rnn units (cells) - default \code{c(8L, 32L)}
+\item n_epochs (integer(2)) lower and upper bound for epochs - default \code{c(20L, 50L)}
 \item optimizer_type (integer(2)) lower and upper bound for optimizer:
-1 = "rmsprop", 2 = "adam", 3 = "adagrad"
-\item dropout = (numeric(2)) lower and upper bound for dropout rate
-\item recurrent_dropout = (numeric(2)) lower and upper bound for recurrent dropout rate
-\item learning_rate = (numeric(2)) lower and upper bound for learning rate
+1 = "rmsprop", 2 = "adam", 3 = "adagrad" - default \code{c(1L, 3L)}
+\item dropout = (numeric(2)) lower and upper bound for dropout rate - default \code{c(0, 0.5)}
+\item recurrent_dropout = (numeric(2)) lower and upper bound for recurrent dropout rate - default \code{c(0, 0.5)}
+\item learning_rate = (numeric(2)) lower and upper bound for learning rate - default \code{c(0.001, 0.01)}
+Keep attention to the correct type (numeric length 2 / integer length 2).
+All bounds are to be set, otherwise default serves as fallback.
 }
 }
 
+\examples{
+\dontrun{
+apple <- tsRNN::DT_apple
+
+cv_setting <- list(
+  periods_train = 90,
+  periods_val = 10,
+  periods_test = 10,
+  skip_span = 5
+)
+
+bayes <- tune_keras_rnn_bayesoptim(apple, model_type = "simple", cv_setting)
+bayes
+}
+}

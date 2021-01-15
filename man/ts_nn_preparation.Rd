@@ -4,7 +4,14 @@
 \alias{ts_nn_preparation}
 \title{Timeseries data preparation for neural network Keras models}
 \usage{
-ts_nn_preparation(data, tsteps, length_val = 16L, length_test = 8L)
+ts_nn_preparation(
+  data,
+  tsteps,
+  length_val = 16L,
+  length_test = 8L,
+  value_col = "value",
+  value_lag_col = "value_lag"
+)
 }
 \arguments{
 \item{data}{balanced univariate time series as data.table object. Lagged
@@ -15,6 +22,12 @@ columns in the form \code{value_lagX} required, where X represents number of lag
 \item{length_val}{length of validation set}
 
 \item{length_test}{length of test set}
+
+\item{value_col}{name of column with value to prepare}
+
+\item{value_lag_col}{name of lagged value column(s) to prepare, searched by
+starting pattern. E.g. \code{value_lag_col = "value_lag"} will catch column
+"value_lag" and "value_lag1" but not "2_value_lag"}
 }
 \value{
 list of "X" and "Y" each containing "train", "val" and "test" arrays
@@ -27,7 +40,7 @@ The following steps are proceeded:
 }
 }
 \examples{
-data <- tsRNN::DT_unh
+data <- tsRNN::DT_apple
 
 data[, value_lag1 := data.table::shift(value, type = "lag", n = 1)]
 data[, value_lag2 := data.table::shift(value, type = "lag", n = 2)]

@@ -1,4 +1,6 @@
-#' Plot timeseries and forecast for single split and company
+#' Plot time series (incl. forecasts) for single cross validation split
+#'
+#' E.g. plot result for selected split from \link{cv_arima} (by `ggplot2`)
 #'
 #' @param data data.frame containing "index" (Date), "value" (numeric) and key
 #'   (character - "actual" and "predict")
@@ -47,18 +49,18 @@ plot_prediction <- function(
                             col_pi_low = "lo95") {
 
   ### Checks -------------------------------------------------------------------
-  testr::check_class(data, "data.frame", "plot_prediction")
-  testr::check_class(col_date, "character", "plot_prediction")
-  testr::check_class(col_value, "character", "plot_prediction")
-  testr::check_class(col_group, "character", "plot_prediction")
-  testr::check_class(size, "numeric", "plot_prediction")
-  testr::check_class(alpha, "numeric", "plot_prediction")
-  testr::check_class(legend, "character", "plot_prediction", allowNULL = TRUE)
-  testr::check_class(scale, "Date", "plot_prediction", allowNULL = TRUE)
-  testr::check_class(PI, "logical", "plot_prediction")
+  testr::check_class(data, "data.frame")
+  testr::check_class(col_date, "character")
+  testr::check_class(col_value, "character")
+  testr::check_class(col_group, "character")
+  testr::check_num_int(size)
+  testr::check_num_int(alpha)
+  testr::check_class(legend, "character", allowNULL = TRUE)
+  testr::check_class(scale, "Date", allowNULL = TRUE)
+  testr::check_class(PI, "logical")
   if (PI) {
-    testr::check_class(col_pi_high, "character", "plot_prediction")
-    testr::check_class(col_pi_low, "character", "plot_prediction")
+    testr::check_class(col_pi_high, "character")
+    testr::check_class(col_pi_low, "character")
   }
 
   # Check column's fit
@@ -127,6 +129,8 @@ plot_prediction <- function(
 
 #' Plot multiple splits from list with forecast results
 #'
+#' Plot results from \link{cv_arima} (by `ggplot2`)
+#'
 #' @param splits list of prediction data.frames
 #' @param col_date Date column, default to "index"
 #' @param col_value Value column, default to "value"
@@ -171,12 +175,12 @@ plot_prediction_samples <- function(
 
   ### Checks -------------------------------------------------------------------
 
-  testr::check_class(splits, "list", "plot_prediction_samples")
-  testr::check_class(date_type, "character", "plot_prediction_samples")
+  testr::check_class(splits, "list")
+  testr::check_class(date_type, "character")
   date_type <- rlang::arg_match(date_type, c("Date", "datetime", "character"))
-  testr::check_class(ncol, "integer", "plot_prediction_samples")
-  testr::check_class(scale, "Date", "plot_prediction_samples", allowNULL = TRUE)
-  testr::check_class(PI, "logical", "plot_prediction_samples")
+  testr::check_class(ncol, "integer")
+  testr::check_class(scale, "Date", allowNULL = TRUE)
+  testr::check_class(PI, "logical")
 
   ### Function -----------------------------------------------------------------
 

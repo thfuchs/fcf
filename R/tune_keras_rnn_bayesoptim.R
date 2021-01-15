@@ -12,19 +12,21 @@
 #' @param col_value Value column in `data`, default to "value"
 #' @param save Automatically save tuning results? Specify NULL if not or
 #' character vector with path to directory for yes
-#' @param save_id optional id for model filename
+#' @param save_id optional character id for model filename
 #'
 #' @section Tuning Bounds:
-#' The following parameters are (currently) available for tuning.
-#' - lag_1 (integer(2)) lower bounds
-#' - lag_2 (integer(2)) upper bounds
-#' - n_units (integer(2)) lower and upper bound for rnn units (cells)
-#' - n_epochs (integer(2)) lower and upper bound for epochs
+#' The following parameters are (currently) available for tuning.\cr
+#' - lag_1 (integer(2)) lower bounds - default `c(1L, 2L)`
+#' - lag_2 (integer(2)) upper bounds - default `c(1L, 2L)`
+#' - n_units (integer(2)) lower and upper bound for rnn units (cells) - default `c(8L, 32L)`
+#' - n_epochs (integer(2)) lower and upper bound for epochs - default `c(20L, 50L)`
 #' - optimizer_type (integer(2)) lower and upper bound for optimizer:
-#'   1 = "rmsprop", 2 = "adam", 3 = "adagrad"
-#' - dropout = (numeric(2)) lower and upper bound for dropout rate
-#' - recurrent_dropout = (numeric(2)) lower and upper bound for recurrent dropout rate
-#' - learning_rate = (numeric(2)) lower and upper bound for learning rate
+#'   1 = "rmsprop", 2 = "adam", 3 = "adagrad" - default `c(1L, 3L)`
+#' - dropout = (numeric(2)) lower and upper bound for dropout rate - default `c(0, 0.5)`
+#' - recurrent_dropout = (numeric(2)) lower and upper bound for recurrent dropout rate - default `c(0, 0.5)`
+#' - learning_rate = (numeric(2)) lower and upper bound for learning rate - default `c(0.001, 0.01)`
+#' Keep attention to the correct type (numeric length 2 / integer length 2).
+#' All bounds are to be set, otherwise default serves as fallback.
 #'
 #' @import data.table
 #' @import keras
@@ -33,11 +35,26 @@
 #'
 #' @return list of Bayes Optimization results per split
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' apple <- tsRNN::DT_apple
+#'
+#' cv_setting <- list(
+#'   periods_train = 90,
+#'   periods_val = 10,
+#'   periods_test = 10,
+#'   skip_span = 5
+#' )
+#'
+#' bayes <- tune_keras_rnn_bayesoptim(apple, model_type = "simple", cv_setting)
+#' bayes
+#' }
 tune_keras_rnn_bayesoptim <- function(
                                       data,
                                       model_type,
                                       cv_setting,
-                                      tuning_bounds,
+                                      tuning_bounds = list(),
                                       col_id = NULL,
                                       col_date = "index",
                                       col_value = "value",
@@ -45,59 +62,81 @@ tune_keras_rnn_bayesoptim <- function(
                                       save_id = NULL) {
 
   # Checks ---------------------------------------------------------------------
-  testr::check_class(data, "data.frame", "tune_keras_rnn_bayesoptim")
-  testr::check_class(model_type, "character", "tune_keras_rnn_bayesoptim")
-  testr::check_class(cv_setting, "list", "tune_keras_rnn_bayesoptim")
-  testr::check_class(col_id, "character", "tune_keras_rnn_bayesoptim", allowNULL = TRUE)
-  testr::check_class(col_date, "character", "tune_keras_rnn_bayesoptim")
-  testr::check_class(col_value, "character", "tune_keras_rnn_bayesoptim")
-  testr::check_class(tuning_bounds, "list", "tune_keras_rnn_bayesoptim")
-
-  # "data" contains columns "index" and "value" (and optionally "id")
-  # (univariate time series)
-  data.table::setDT(data)
-  if (
-    !is.null(col_id) && is.null(data[[col_id]]) ||
-      !is.null(col_id) && !inherits(data[[col_id]], "character")
-  ) {
-    rlang::abort(
-      message = "Variable specified by `col_id` must be class \"character\".",
-      class = "tune_keras_rnn_bayesoptim_col_id_error"
-    )
-  }
-  if (
-    is.null(data[[col_date]]) ||
-      !rlang::inherits_any(data[[col_date]], c("Date", "POSIXct"))
-  ) {
-    rlang::abort(
-      message = "Variable specified by `col_date` must be class \"Date\" or \"POSIXct\".",
-      class = "tune_keras_rnn_bayesoptim_col_date_error"
-    )
-  }
-  if (is.null(data[[col_value]]) || !inherits(data[[col_value]], "numeric")) {
-    rlang::abort(
-      message = "Variable specified by `col_value` must be class \"numeric\".",
-      class = "tune_keras_rnn_bayesoptim_col_value_error"
-    )
-  }
-
-  # "model_type" must be one of "simple", "gru" or "lstm"
+  testr::check_class(data, "data.frame")
+  testr::check_class(model_type, "character", n = 1)
   model_type <- rlang::arg_match(model_type, c("simple", "gru", "lstm"))
+  testr::check_class(cv_setting, "list")
+  testr::check_class(tuning_bounds, "list")
+  testr::check_class(col_id, "character", n = 1, allowNULL = TRUE)
+  testr::check_class(col_date, "character", n = 1)
+  testr::check_class(col_value, "character", n = 1)
+  testr::check_class(save, "character", n = 1, allowNULL = TRUE)
+  testr::check_class(save_id, "character", n = 1, allowNULL = TRUE)
 
-  # "cv_setting" contains "periods_train", "periods_val", "periods_test" and
-  # "skip_span"
-  if (all(names(cv_setting)[order(names(cv_setting))] !=
-    c("periods_test", "periods_train", "periods_val", "skip_span"))) {
-    rlang::abort(
-      message = "`data` must be a data.frame with 2 columns only: \"index\" and \"value\"",
-      class = "tune_keras_rnn_bayesoptim_data_error"
+  data.table::setDT(data)
+
+  check_data_structure(data, col_id, col_date, col_value)
+  check_cv_setting(cv_setting)
+
+  # set defaults for "tuning_bounds"
+  if (is.null(tuning_bounds[["lag_1"]])) tuning_bounds[["lag_1"]] <- c(1L, 2L)
+  if (is.null(tuning_bounds[["lag_2"]])) tuning_bounds[["lag_2"]] <- c(1L, 2L)
+  if (is.null(tuning_bounds[["n_units"]])) tuning_bounds[["n_units"]] <- c(8L, 32L)
+  if (is.null(tuning_bounds[["n_epochs"]])) tuning_bounds[["n_epochs"]] <- c(20L, 50L)
+  if (is.null(tuning_bounds[["optimizer_type"]])) tuning_bounds[["optimizer_type"]] <- c(1L, 3L)
+  if (is.null(tuning_bounds[["dropout"]])) tuning_bounds[["dropout"]] <- c(0, 0.5)
+  if (is.null(tuning_bounds[["recurrent_dropout"]])) tuning_bounds[["recurrent_dropout"]] <- c(0, 0.5)
+  if (is.null(tuning_bounds[["learning_rate"]])) tuning_bounds[["learning_rate"]] <- c(0.001, 0.01)
+
+  # check "tuning_bounds"
+  testr::check_class(tuning_bounds[["lag_1"]], "integer", n = 2)
+  testr::check_class(tuning_bounds[["lag_2"]], "integer", n = 2)
+  testr::check_class(tuning_bounds[["n_units"]], "integer", n = 2)
+  testr::check_class(tuning_bounds[["n_epochs"]], "integer", n = 2)
+  testr::check_class(tuning_bounds[["optimizer_type"]], "integer", n = 2)
+  testr::check_class(tuning_bounds[["dropout"]], "numeric", n = 2)
+  testr::check_class(tuning_bounds[["recurrent_dropout"]], "numeric", n = 2)
+  testr::check_class(tuning_bounds[["learning_rate"]], "numeric", n = 2)
+
+  with(tuning_bounds, {
+    if (any(lag_1 < 1)) rlang::abort(
+      message = "tuning_bounds[[\"lag_1\"]] must be a positive integer.",
+      class = "tune_keras_rnn_bayesoptim_tuning_bounds[[\"lag_1\"]]_error"
     )
-  }
+    if (any(lag_2 < 1)) rlang::abort(
+      message = "tuning_bounds[[\"lag_2\"]] must be a positive integer.",
+      class = "tune_keras_rnn_bayesoptim_tuning_bounds[[\"lag_2\"]]_error"
+    )
+    if (any(n_units < 1)) rlang::abort(
+      message = "tuning_bounds[[\"n_units\"]] must be a positive integer.",
+      class = "tune_keras_rnn_bayesoptim_tuning_bounds[[\"n_units\"]]_error"
+    )
+    if (any(n_epochs < 1)) rlang::abort(
+      message = "tuning_bounds[[\"n_epochs\"]] must be a positive integer.",
+      class = "tune_keras_rnn_bayesoptim_tuning_bounds[[\"n_epochs\"]]_error"
+    )
+    if (optimizer_type < 1 || optimizer_type > 3) rlang::abort(
+      message = "tuning_bounds[[\"optimizer_type\"]] must be within interval [1L, 3L].",
+      class = "tune_keras_rnn_bayesoptim_tuning_bounds[[\"optimizer_type\"]]_error"
+    )
+    if (dropout < 0 || dropout > 1) rlang::abort(
+      message = "tuning_bounds[[\"dropout\"]] must be within interval [0, 1].",
+      class = "tune_keras_rnn_bayesoptim_tuning_bounds[[\"dropout\"]]_error"
+    )
+    if (recurrent_dropout < 0 || recurrent_dropout > 1) rlang::abort(
+      message = "tuning_bounds[[\"recurrent_dropout\"]] must be within interval [0, 1].",
+      class = "tune_keras_rnn_bayesoptim_tuning_bounds[[\"recurrent_dropout\"]]_error"
+    )
+    if (learning_rate < 0 || learning_rate > 1) rlang::abort(
+      message = "tuning_bounds[[\"learning_rate\"]] must be within interval [0, 1].",
+      class = "tune_keras_rnn_bayesoptim_tuning_bounds[[\"learning_rate\"]]_error"
+    )
+  })
 
   # Check whether directory exists
   if (!is.null(save) && !dir.exists(save)) {
     rlang::abort(
-      message = "Directory specified in `save` does not exist",
+      message = "Directory specified in `save` does not exist.",
       class = "tune_keras_rnn_bayesoptim_save_error"
     )
   }
@@ -141,17 +180,17 @@ tune_keras_rnn_bayesoptim <- function(
         bounds = tuning_bounds,
         init_points = 5,
         n_iter = 30,
-        acq = "ucb", # ei,
+        acq = "ucb",
         verbose = FALSE
       )
       if (!is.null(save)) {
-        save(bayes, file = file.path(save, paste0(
+        saveRDS(bayes, file = file.path(save, paste0(
           "bayes_",
           format(Sys.time(), "%Y%m%d_%H%M%S_"),
           if (!is.null(save_id)) paste0(save_id, "_"),
           model_type, "_",
           if (!is.null(col_id)) paste0(unique(data_split[[col_id]]), "_"),
-          split$id$id, ".rda"
+          split$id$id, ".rds"
         )))
       }
 
@@ -165,8 +204,15 @@ tune_keras_rnn_bayesoptim <- function(
 
 # Internal Function ------------------------------------------------------------
 internal_keras_fun <- function(
-                               n_units, n_epochs, lag_1, lag_2, dropout, recurrent_dropout,
-                               optimizer_type, learning_rate) {
+                               n_units,
+                               n_epochs,
+                               lag_1,
+                               lag_2,
+                               dropout,
+                               recurrent_dropout,
+                               optimizer_type,
+                               learning_rate) {
+
   lag_setting <- sort(lag_1:lag_2)
   optimizer <- switch(
     optimizer_type,

@@ -1,4 +1,6 @@
-#' Plot Forecasts by baseline methods
+#' Plot Baseline forecasts
+#'
+#' Plot results of \link{baselines} (by `ggplot2`)
 #'
 #' @param data data.frame containing "Date", "value" and "group"
 #' @param col_date Date column in `data`, default to "index"
@@ -35,15 +37,15 @@ plot_baselines <- function(
                            scale = NULL) {
 
   ### Checks -------------------------------------------------------------------
-  testr::check_class(data, "data.frame", "plot_baselines")
-  testr::check_class(col_date, "character", "plot_baselines")
-  testr::check_class(col_value, "character", "plot_baselines")
-  testr::check_class(col_group, "character", "plot_baselines")
-  testr::check_class(size, "numeric", "plot_baselines")
-  testr::check_class(alpha, "numeric", "plot_baselines")
-  testr::check_class(colors, "character", "plot_baselines", allowNULL = TRUE)
-  testr::check_class(legend, "character", "plot_baselines", allowNULL = TRUE)
-  testr::check_class(scale, "Date", "plot_baselines", allowNULL = TRUE)
+  testr::check_class(data, "data.frame")
+  testr::check_class(col_date, "character")
+  testr::check_class(col_value, "character")
+  testr::check_class(col_group, "character")
+  testr::check_num_int(size)
+  testr::check_num_int(alpha)
+  testr::check_class(colors, "character", allowNULL = TRUE)
+  testr::check_class(legend, "character", allowNULL = TRUE)
+  testr::check_class(scale, "Date", allowNULL = TRUE)
 
   # Check column's fit
   if (is.null(data[[col_date]]) || !inherits(data[[col_date]], "Date")) {
@@ -89,7 +91,9 @@ plot_baselines <- function(
   return(g)
 }
 
-#' Plot cross validated samples of forecasts by baseline methods
+#' Plot cross validated samples of baseline forecasts
+#'
+#' Plot results of \link{cv_baselines} (by `ggplot2`)
 #'
 #' @param splits list of prediction data.frames
 #' @param col_date Date column in data.frame, default to "index"
@@ -125,12 +129,12 @@ plot_baselines_samples <- function(
 
   ### Checks -------------------------------------------------------------------
 
-  testr::check_class(splits, "list", "plot_baselines_samples")
-  testr::check_class(colors, "character", "plot_baselines_samples", allowNULL = TRUE)
-  testr::check_class(date_type, "character", "plot_baselines_samples")
+  testr::check_class(splits, "list")
+  testr::check_class(colors, "character", allowNULL = TRUE)
+  testr::check_class(date_type, "character")
   date_type <- rlang::arg_match(date_type, c("Date", "datetime", "character"))
-  testr::check_class(ncol, "integer", "plot_baselines_samples")
-  testr::check_class(scale, "Date", "plot_baselines_samples", allowNULL = TRUE)
+  testr::check_class(ncol, "integer")
+  testr::check_class(scale, "Date", allowNULL = TRUE)
 
   ### Function -----------------------------------------------------------------
 

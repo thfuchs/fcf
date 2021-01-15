@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_baselines.R
 \name{plot_baselines}
 \alias{plot_baselines}
-\title{Plot Forecasts by baseline methods}
+\title{Plot Baseline forecasts}
 \usage{
 plot_baselines(
   data,
@@ -43,7 +43,7 @@ plot_baselines(
 ggplot2 object
 }
 \description{
-Plot Forecasts by baseline methods
+Plot results of \link{baselines} (by \code{ggplot2})
 }
 \examples{
 plot_baselines(

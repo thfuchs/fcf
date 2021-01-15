@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_prediction.R
 \name{plot_prediction}
 \alias{plot_prediction}
-\title{Plot timeseries and forecast for single split and company}
+\title{Plot time series (incl. forecasts) for single cross validation split}
 \usage{
 plot_prediction(
   data,
@@ -50,7 +50,7 @@ plot_prediction(
 ggplot2 object
 }
 \description{
-Plot timeseries and forecast for single split and company
+E.g. plot result for selected split from \link{cv_arima} (by \code{ggplot2})
 }
 \examples{
 plot_prediction(

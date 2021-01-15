@@ -32,9 +32,9 @@ test <- array(runif(18, 0.1, 3), dim = c(6L, 2L, 1L))
 
 # 1. Deactivate dropout for testing
 model_01 <- py_dropout_model(model, 0)
-dropout_predict(model_01, test)
+model_01(test)
 
 # 2. Change dropout level
 model_02 <- py_dropout_model(model, 0.8)
-dropout_predict(model_02, test)
+model_02(test)
 }

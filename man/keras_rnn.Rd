@@ -2,8 +2,7 @@
 % Please edit documentation in R/keras_rnn.R
 \name{keras_rnn}
 \alias{keras_rnn}
-\title{Train Recurrent Neural Network with Gated Recurrent Unit (GRU) or
-Long-Short Term Memory (LSTM) using Keras framework}
+\title{Train Recurrent Neural Network with Keras}
 \usage{
 keras_rnn(
   X,
@@ -18,6 +17,7 @@ keras_rnn(
   optimizer = optimizer_rmsprop(),
   dropout = 0,
   recurrent_dropout = 0,
+  history = FALSE,
   live_plot = FALSE
 )
 }
@@ -41,19 +41,59 @@ keras_rnn(
 \item{dropout_in_test}{apply dropout during training only (default) or during
 testing also? Required for dropout-based prediction intervals (bayesian RNN)}
 
-\item{optimizer}{from keras, e.g. \code{optimizer_rmsprop()}}
+\item{optimizer}{from keras, e.g. \link[keras]{optimizer_rmsprop}}
 
 \item{dropout}{dropout rate}
 
 \item{recurrent_dropout}{Dropout rate applied to reccurent layer. Default 0}
 
+\item{history}{in addition to model, return model history? Beware that output
+changes from \code{model} to \code{list(model, history)} if  \code{history = TRUE}}
+
 \item{live_plot}{plot loss and validation metric during training? False by
 default}
 }
 \value{
-evaluation scores for training, validation and test set
+Keras model by default (\code{history = FALSE}) else list with Keras model
+and history
 }
 \description{
-Train Recurrent Neural Network with Gated Recurrent Unit (GRU) or
-Long-Short Term Memory (LSTM) using Keras framework
+Currently supports "simple unit", "gated recurrent unit"
+(GRU) and "Long-Short Term Memory" (LSTM) using Keras framework (with
+TensorFlow backend)
+}
+\examples{
+data <- tsRNN::DT_apple
+data[, value_lag1 := data.table::shift(value, type = "lag", n = 1)]
+data <- data[!is.na(get(paste0("value_lag1")))]
+
+nn_arrays <- ts_nn_preparation(data, tsteps = 1L, length_val = 6L, length_test = 6L)
+keras_rnn(nn_arrays$x, nn_arrays$y, model_type = "simple", tsteps = 1, n_epochs = 20)
+
+# return model and history
+result <- keras_rnn(
+  nn_arrays$x, nn_arrays$y, model_type = "simple", tsteps = 1, n_epochs = 20, history = TRUE
+)
+
+result$model
+result$history
+
+\dontrun{
+# Plot result
+plot(result$history)
+}
+}
+\references{
+\itemize{
+\item Chollet, Francois and others (2015). Keras. \url{https://keras.io}
+\item Hochreiter, S., & Schmidhuber, J. (1997). Long Short-Term Memory.
+Neural Computation, 9 (8), 1735-1780.
+\url{https://doi.org/10.1162/neco.1997.9.8.1735}
+\item Chung, J., Gulcehre, C., Cho, K., & Bengio, Y. (2014). Empirical
+Evaluation of Gated Recurrent Neural Networks on Sequence Modeling.
+\url{https://arxiv.org/pdf/1412.3555}
+}
+}
+\seealso{
+\href{https://keras.io/api/layers/recurrent_layers/}{Keras Documentation}
 }
