@@ -12,8 +12,6 @@ Time Series Forecasting using Recurrent Neural Networks by Keras
 
 `tsRNN` tries to provide a ready-to-use time series forecasting suite for recurrent neural networks. The package is enhanced by basic implementations of "simple" algorithms like ARIMA for comparison and provides accuracy measures as well as basic chart options for model comparisons.  
 
-Note that `tsRNN` heavily depends on Keras and the TensorFlow Deep Learning
-    
 ## Installation
 
 You can install the released version of tsRNN from [GitHub](https://github.com/thfuchs/tsRNN) with:
@@ -24,7 +22,7 @@ remotes::install_github("thfuchs/tsRNN")
 
 ## Dependencies
 
-`tsRNN` highly depends on [Keras](https://keras.io/) and [TensorFlow](https://www.tensorflow.org/). We currently guarantee the package to work with the following versions:
+Note that `tsRNN` heavily depends on [Keras](https://keras.io/) and the [TensorFlow](https://www.tensorflow.org/) Deep Learning Framework. We currently guarantee the package to work with the following versions:
 
 Software Package | Version
 ---------------- | --------

@@ -47,11 +47,13 @@ tune_keras_rnn_eval <- function(
   }
   # "cv_setting" contains "periods_train", "periods_val", "periods_test" and
   # "skip_span"
-  if (all(names(cv_setting)[order(names(cv_setting))] !=
-    c("periods_test", "periods_train", "periods_val", "skip_span"))) {
+  if (any(names(cv_setting)[order(names(cv_setting))] !=
+          c("periods_test", "periods_train", "periods_val", "skip_span"))) {
     rlang::abort(
-      message = "`data` must be a data.frame with 2 columns only: \"index\" and \"value\"",
-      class = "tune_keras_rnn_eval_data_error"
+      message = paste0(
+        "`cv_setting` must be a named list containing \"periods_test\", ",
+        "\"periods_train\", \"periods_val\", \"skip_span\"."),
+      class = "tune_keras_rnn_eval_cv_setting_error"
     )
   }
   # `bayes_best_par` must be split-named list
