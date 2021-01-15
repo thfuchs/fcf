@@ -3,7 +3,7 @@
 \docType{data}
 \name{fc_baseline}
 \alias{fc_baseline}
-\title{Baseline Forecast (data.table object) with SNAIVE and Holt's Trend}
+\title{Baseline forecast results (data.table object) by SNAIVE and Holt's Trend}
 \format{
 A data.table with 34 rows and 3 variables:
 \describe{
@@ -16,6 +16,6 @@ A data.table with 34 rows and 3 variables:
 data(fc_baseline)
 }
 \description{
-Baseline Forecast (data.table object) with SNAIVE and Holt's Trend
+Baseline forecast results (data.table object) by SNAIVE and Holt's Trend
 }
 \keyword{datasets}

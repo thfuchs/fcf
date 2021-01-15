@@ -1,6 +1,6 @@
 #' Check for autocorrelation
 #'
-#' Ljung-Box tests for 8, 12 and 16 lags
+#' Ljung-Box tests for given lags
 #'
 #' @param data a numeric vector or univariate time series object
 #' @param level significance level
@@ -32,7 +32,7 @@ check_acf <- function(data, level = 0.05, lag_grid = c(8, 12, 16)) {
   }
 
   # level
-  testr::check_class(level, "numeric", fun_name = "check_acf")
+  testr::check_num_int(level)
   if (level < 0 || level > 1) {
     rlang::abort(
       message = sprintf("`level` must be between 0 and 1, not \"%s\".", level),

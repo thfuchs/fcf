@@ -54,25 +54,7 @@
 #' @format A quarterly data.table object from 1995 to 2020
 "DT_apple"
 
-#' Quarterly reported EBIT from UNH as ts object from 1995 to 2020.
-#'
-#' @docType data
-#' @usage data(ts_unh)
-#' @keywords datasets
-#'
-#' @format A quarterly ts object from 1995 to 2020
-"ts_unh"
-
-#' Quarterly reported EBIT from UNH as data.table object from 1995 to 2020.
-#'
-#' @docType data
-#' @usage data(DT_unh)
-#' @keywords datasets
-#'
-#' @format A quarterly data.table object from 1995 to 2020
-"DT_unh"
-
-#' Baseline Forecast (data.table object) with SNAIVE and Holt's Trend
+#' Baseline forecast results (data.table object) by SNAIVE and Holt's Trend
 #'
 #' @docType data
 #' @usage data(fc_baseline)

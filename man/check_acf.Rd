@@ -19,7 +19,7 @@ list with data.frames of p-values for both \code{Ljung-Box} and
 tests passes and FALSE otherwise
 }
 \description{
-Ljung-Box tests for 8, 12 and 16 lags
+Ljung-Box tests for given lags
 }
 \examples{
 apple <- tsRNN::ts_apple
