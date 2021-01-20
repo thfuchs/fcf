@@ -4,16 +4,18 @@
 \alias{smis}
 \title{scaled Mean Interval Score (sMIS)}
 \usage{
-smis(data, lower, upper, h, m, level)
+smis(data, forecast, lower, upper, h, m, level)
 }
 \arguments{
-\item{data}{actual values (containing both train and evaluation values)}
+\item{data}{actual values (only train set)}
+
+\item{forecast}{forecasted values}
 
 \item{lower}{lower bound of prediction interval}
 
 \item{upper}{upper bound of prediction interval}
 
-\item{h}{forecast horizon}
+\item{h}{forecast horizon (maximum index of \code{forecast})}
 
 \item{m}{frequency, e.g. 12 for monthly and 4 for quarterly series}
 

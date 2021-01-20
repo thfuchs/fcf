@@ -12,8 +12,8 @@
 #' @param transform Transform data before estimation? One of NULL (default)
 #'   and "normalize"
 #' @param frequency time series frequency, e.g. 4 for quarters and 12 for months
-#' @param multiple_h NULL if forecast horizon equals cv_setting$n_test, else
-#'   named list of forecast horizons for accuracy measures
+#' @param h NULL if forecast horizon equals cv_setting$n_test, else named list
+#'   of forecast horizons for accuracy measures
 #'
 #' @import data.table
 #' @importFrom zeallot %<-%
@@ -55,7 +55,7 @@
 #' fc_02 <- cv_arima(
 #'   data = tsRNN::DT_apple,
 #'   cv_setting = cv_setting,
-#'   multiple_h = list(short = 1:2, long = 3:4)
+#'   h = list(short = 1:2, long = 3:6)
 #' )
 #' fc_02
 #' }
@@ -67,7 +67,7 @@ cv_arima <- function(
                           col_value = "value",
                           transform = NULL,
                           frequency = 4,
-                          multiple_h = NULL) {
+                          h = NULL) {
 
   ### Checks -------------------------------------------------------------------
   testr::check_class(data, "data.frame")
@@ -77,17 +77,41 @@ cv_arima <- function(
   testr::check_class(col_value, "character")
   testr::check_class(transform, "character", allowNULL = TRUE)
   testr::check_num_int(frequency)
-  testr::check_class(multiple_h, "list", allowNULL = TRUE)
 
   data.table::setDT(data)
 
   check_data_structure(data, col_id, col_date, col_value)
   check_cv_setting(cv_setting)
 
+  # `h`: If NULL: periods_test, else numeric or list of numeric vectors
+  if (is.null(h)) h <- list(1:cv_setting$periods_test)
+  if (!rlang::inherits_any(h, c("list", "numeric", "integer"))) rlang::abort(
+    message = sprintf(
+      "`h` must be list, numeric or integer, not of class \"%s\".",
+      paste(class(h), collapse = " / ")
+    ),
+    class = "cv_arima_h_error"
+  )
+  if (is.numeric(h)) h <- list(h)
+  if (inherits(h, "list")) for (single_h in h) {
+    if (!rlang::inherits_any(single_h, c("numeric", "integer"))) rlang::abort(
+      message = sprintf(
+        "Elements of `h` must be numeric or integer, not of class \"%s\".",
+        paste(class(single_h), collapse = " / ")
+      ),
+      class = "cv_arima_h_error"
+    )
+    # warning if `h > cv_setting$periods_test`
+    if (any(single_h > cv_setting[["periods_test"]])) rlang::warn(
+      message = "At least one element of `h` is larger than cv_setting[[\"periods_test\"]].",
+      class = "cv_arima_h_warning"
+    )
+  }
+
   ### Settings -----------------------------------------------------------------
   n_initial <- cv_setting$periods_train + cv_setting$periods_val
   n_test <- cv_setting$periods_test
-  if (is.null(multiple_h)) multiple_h <- list(1:n_test)
+  if (is.null(h)) h <- list(1:n_test)
 
   rolling_origin_resamples <- rsample::rolling_origin(
     data,
@@ -177,54 +201,41 @@ cv_arima <- function(
       index <- value <- lo95 <- hi95 <- NULL
 
       # Point Forecast Measures
-      acc_MAPE <- sapply(
-        multiple_h,
-        function(h) {
-          mape(
-            actual = DT_test[h, get(col_value)], forecast = fc_values[h, value]
-          )
-        }
+      acc_MAPE <- sapply(h, function(y)
+        mape(actual = DT_test[y, get(col_value)], forecast = fc_values[y, value])
       )
-      acc_sMAPE <- sapply(
-        multiple_h,
-        function(h) {
-          smape(
-            actual = DT_test[h, get(col_value)], forecast = fc_values[h, value]
-          )
-        }
+      acc_sMAPE <- sapply(h, function(y)
+        smape(actual = DT_test[y, get(col_value)], forecast = fc_values[y, value])
       )
-      acc_MASE <- sapply(
-        multiple_h, function(h) {
-          mase(
-            data = DT[1:(n_initial + max(h)), get(col_value)],
-            forecast = fc_values[h, value], m = frequency
-          )
-        }
+      acc_MASE <- sapply(h, function(y)
+        mase(
+          data = DT[1:(n_initial + max(y)), get(col_value)],
+          forecast = fc_values[y, value], m = frequency
+        )
       )
 
       # Prediction Interval Measures
-      acc_SMIS <- sapply(
-        multiple_h, function(h) {
-          smis(
-            data = DT[1:(n_initial + max(h)), get(col_value)],
-            lower = fc_values[h, lo95],
-            upper = fc_values[h, hi95],
-            h = max(h), m = frequency, level = 0.95
-          )
-        }
+      acc_SMIS <- sapply(h, function(y)
+        smis(
+          data = DT[1:n_initial, get(col_value)],
+          forecast = fc_values[y, value],
+          lower = fc_values[y, lo95],
+          upper = fc_values[y, hi95],
+          h = max(y), m = frequency, level = 0.95
+        )
       )
-      acc_ACD <- sapply(multiple_h, function(h) {
+      acc_ACD <- sapply(h, function(y)
         acd(
-          actual = DT_test[h, get(col_value)],
-          lower = fc_values[h, lo95],
-          upper = fc_values[h, hi95],
+          actual = DT_test[y, get(col_value)],
+          lower = fc_values[y, lo95],
+          upper = fc_values[y, hi95],
           level = 0.95
         )
-      })
+      )
 
       # Accuracy result
       acc <- data.table::data.table(
-        type = "ARIMA", h = names(multiple_h),
+        type = "ARIMA", h = names(h),
         mape = acc_MAPE, smape = acc_sMAPE, mase = acc_MASE,
         smis = acc_SMIS, acd = acc_ACD
       )

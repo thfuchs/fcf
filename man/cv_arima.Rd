@@ -12,7 +12,7 @@ cv_arima(
   col_value = "value",
   transform = NULL,
   frequency = 4,
-  multiple_h = NULL
+  h = NULL
 )
 }
 \arguments{
@@ -33,8 +33,8 @@ and "normalize"}
 
 \item{frequency}{time series frequency, e.g. 4 for quarters and 12 for months}
 
-\item{multiple_h}{NULL if forecast horizon equals cv_setting$n_test, else
-named list of forecast horizons for accuracy measures}
+\item{h}{NULL if forecast horizon equals cv_setting$n_test, else named list
+of forecast horizons for accuracy measures}
 }
 \value{
 list of \code{type} (model), \code{h} (forecast horizon, if specified),
@@ -78,7 +78,7 @@ fc_01
 fc_02 <- cv_arima(
   data = tsRNN::DT_apple,
   cv_setting = cv_setting,
-  multiple_h = list(short = 1:2, long = 3:4)
+  h = list(short = 1:2, long = 3:6)
 )
 fc_02
 }

@@ -283,6 +283,12 @@ expect_error(
   class = "tune_keras_rnn_predict_col_id_error",
   pattern = "^Variable specified by `col_id` must be class \"character\"\\.$"
 )
+data_fail <- data.table::copy(apple)[, ticker := 12]
+expect_error(
+  tune_keras_rnn_predict(data_fail, "simple", cv_setting, bayes_best_par, col_id = "index"),
+  class = "tune_keras_rnn_predict_col_id_error",
+  pattern = "^Variable specified by `col_id` must be class \"character\"\\.$"
+)
 
 ### "col_date"
 expect_error(

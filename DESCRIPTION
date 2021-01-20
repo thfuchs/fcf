@@ -1,6 +1,6 @@
 Package: tsRNN
 Title: Time Series Forecasting using Recurrent Neural Networks by Keras
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: person("Thomas", "Fuchs", email = "thomasfuchs-re@web.de", role = c("aut", "cre"))
 Description: `tsRNN` tries to provide a ready-to-use time series forecasting suite
     for recurrent neural networks. The package is enhanced by basic implementations

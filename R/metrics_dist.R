@@ -27,10 +27,11 @@ acd <- function(actual, lower, upper, level) {
 #'
 #' sMIS scaled according to M4 Forecasting competition (see references)
 #'
-#' @param data actual values (containing both train and evaluation values)
+#' @param data actual values (only train set)
+#' @param forecast forecasted values
 #' @param lower lower bound of prediction interval
 #' @param upper upper bound of prediction interval
-#' @param h forecast horizon
+#' @param h forecast horizon (maximum index of `forecast`)
 #' @param m frequency, e.g. 12 for monthly and 4 for quarterly series
 #' @param level level used for prediction interval construction
 #'
@@ -49,19 +50,18 @@ acd <- function(actual, lower, upper, level) {
 #'   Journal of Forecasting, 36(1), 54–74. \url{https://doi.org/10.1016/j.ijforecast.2019.04.014}
 #' }
 #'
-smis <- function(data, lower, upper, h, m, level) {
-  n <- length(data)
-  n_train <- n - h
-  train <- data[1:n_train]
-  test <- data[(n_train + 1):n]
+smis <- function(data, forecast, lower, upper, h, m, level) {
+  stopifnot(identical(length(forecast), length(lower), length(upper)))
+
+  n_train <- length(data)
 
   alpha <- 1 - level
-  scale <- 1 / (n_train - m) * sum(abs(train[(m + 1):n_train] - train[1:(n_train - m)]))
+  scale <- 1 / (n_train - m) * sum(abs(data[(m + 1):n_train] - data[1:(n_train - m)]))
 
   MIS <-
     sum(as.vector(upper) - as.vector(lower)) + 2 / alpha * (
-      sum((as.vector(lower) - as.vector(test)) * (as.vector(test) < as.vector(lower))) +
-        sum((as.vector(test) - as.vector(upper)) * (as.vector(test) > as.vector(upper)))
+      sum((as.vector(lower) - as.vector(forecast)) * (as.vector(forecast) < as.vector(lower))) +
+        sum((as.vector(forecast) - as.vector(upper)) * (as.vector(forecast) > as.vector(upper)))
     )
   MIS <- MIS / h
   SMIS <- MIS / scale

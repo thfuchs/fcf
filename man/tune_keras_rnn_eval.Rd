@@ -11,7 +11,7 @@ tune_keras_rnn_eval(
   col_id = NULL,
   col_date = "index",
   col_value = "value",
-  multiple_h = NULL,
+  h = NULL,
   frequency = 4,
   level = 95
 )
@@ -30,8 +30,8 @@ tune_keras_rnn_eval(
 
 \item{col_value}{Value column in \code{data}, default to "value"}
 
-\item{multiple_h}{NULL if forecast horizon equals cv_setting$n_test, else
-named list of forecast horizons for accuracy measures}
+\item{h}{NULL if forecast horizon equals cv_setting$n_test, else named list
+of forecast horizons for accuracy measures}
 
 \item{frequency}{time series frequency, e.g. 4 for quarters and 12 for months}
 
@@ -39,8 +39,39 @@ named list of forecast horizons for accuracy measures}
 }
 \value{
 list of time series accuracy measures (MAPE, sMAPE, MASE, sMIS, ACD)
-optionally for different forecast horizons (if \code{multiple_h} specified)
+optionally for different forecast horizons (if \code{h} specified)
 }
 \description{
 Evaluate (tuned) recurrent neural networks per split/sample
+}
+\examples{
+result_predict <- readRDS(system.file(
+"tinytest_data/test_tune_keras_rnn_predict_simple.rds", package = "tsRNN"
+))
+cv_setting <- list(
+  periods_train = 90,
+  periods_val = 10,
+  periods_test = 10,
+  skip_span = 5
+)
+bayes_best_par <- purrr::map(
+  readRDS(system.file("tinytest_data/apple_bayesoptim.rds", package = "tsRNN")),
+  "Best_Par"
+)
+
+# Result
+tune_keras_rnn_eval(
+  fc_sample = result_predict,
+  cv_setting = cv_setting,
+  bayes_best_par = bayes_best_par
+)
+
+# Specify multiple forecast horizons
+tune_keras_rnn_eval(
+  fc_sample = result_predict,
+  cv_setting = cv_setting,
+  bayes_best_par = bayes_best_par,
+  h = list(short = 1:2, long = 3:6)
+)
+
 }

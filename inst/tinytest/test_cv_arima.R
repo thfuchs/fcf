@@ -65,8 +65,8 @@ expect_identical(
   purrr::map(output_01d, ~.x[["accuracy"]][, .SD, .SDcols = -c("smis", "acd")])
 )
 
-# Check with "multiple_h"
-output_02 <- cv_arima(apple, cv_setting, multiple_h = list(short = 1:2, long = 3:4))
+# Check with "h"
+output_02 <- cv_arima(apple, cv_setting, h = list(short = 1:2, long = 3:6))
 expect_identical(names(output_02[[1]]), c("forecast", "accuracy"))
 output_02_vars <- which(sapply(output_02[[2]]$accuracy, is.numeric))
 output_02_compare <- copy(output_02[[2]]$accuracy)[
@@ -75,7 +75,7 @@ expect_equivalent(
   output_02_compare[, .SD, .SDcols = -c("smis", "acd")],
   structure(list(
     type = c("ARIMA", "ARIMA"), h = c("short", "long"),
-    mape = c(67.75, 77.5), smape = c(102.79, 127.77), mase = c(7.96, 14.97)
+    mape = c(67.75, 74.75), smape = c(102.79, 120.24), mase = c(7.96, 12.38)
   ), row.names = c(NA, -2L), class = c("data.table", "data.frame"))
 )
 
@@ -105,6 +105,18 @@ expect_equivalent(
     key = c("actual", "actual", "actual", "predict", "predict"),
     type = c(NA, NA, NA, "ARIMA", "ARIMA")
   ), row.names = c(NA, -5L), class = c("data.table", "data.frame"))
+)
+
+### Warning --------------------------------------------------------------------
+
+# `h > cv_setting$periods_test`
+expect_warning(
+  cv_arima(apple, cv_setting, h = c(9:11)),
+  class = "cv_arima_h_warning"
+)
+expect_warning(
+  cv_arima(apple, cv_setting, h = list(A = c(12:13))),
+  class = "cv_arima_h_warning"
 )
 
 ### Error ----------------------------------------------------------------------
@@ -147,14 +159,14 @@ expect_error(
   pattern = "^`frequency` must be numeric or integer, not of class \"logical\"\\.$"
 )
 expect_error(
-  cv_arima(apple, cv_setting, multiple_h = TRUE),
-  class = "cv_arima_multiple_h_error",
-  pattern = "^`multiple_h` must be list, not of class \"logical\"\\.$"
+  cv_arima(apple, cv_setting, h = TRUE),
+  class = "cv_arima_h_error",
+  pattern = "^`h` must be list, numeric or integer, not of class \"logical\"\\.$"
 )
 expect_error(
-  cv_arima(apple, cv_setting, multiple_h = 1),
-  class = "cv_arima_multiple_h_error",
-  pattern = "^`multiple_h` must be list, not of class \"numeric\"\\.$"
+  cv_arima(apple, cv_setting, h = "1"),
+  class = "cv_arima_h_error",
+  pattern = "^`h` must be list, numeric or integer, not of class \"character\"\\.$"
 )
 
 # Wrong data types
@@ -276,4 +288,11 @@ expect_error(
   cv_arima(apple, cv_setting_fail),
   class = "cv_arima_cv_setting_error",
   pattern = "^`skip_span` in `cv_setting` must be numeric\\(1\\), not numeric\\(0\\)\\.$"
+)
+
+### "h"
+expect_error(
+  cv_arima(apple, cv_setting, h = list(A = c(1, 2), B = c("1", "2"))),
+  class = "cv_arima_h_error",
+  pattern = "^Elements of `h` must be numeric or integer, not of class \"character\"\\.$"
 )

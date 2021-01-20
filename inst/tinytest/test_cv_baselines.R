@@ -62,18 +62,17 @@ expect_identical(
   purrr::map(output_01d, ~.x[["accuracy"]][, .SD, .SDcols = -c("smis", "acd")])
 )
 
-# Check with "multiple_h"
-output_02 <- cv_baselines(apple, cv_setting, multiple_h = list(short = 1:2, long = 3:4))
+# Check with "h"
+output_02 <- cv_baselines(apple, cv_setting, h = list(short = 1:2, long = 3:6))
 expect_identical(names(output_02[[1]]), c("forecast", "accuracy"))
 expect_equivalent(
   output_02[[2]]$accuracy[2:3, .SD, .SDcols = -c("smis", "acd")],
   structure(list(
-    type = c("Naive", "Snaive"),
-    h = c("long", "short"),
-    mape = c(44.5678883951862, 3.46872005530352),
-    smape = c(33.9413122412535, 3.56803432193035),
-    mase = c(6.24595114158099, 0.36226871014052)
-  ), row.names = c(NA, -2L), class = c("data.table", "data.frame"))
+    type = c("Naive", "Snaive"), h = c("long", "short"),
+    mape = c(55.3289204777709, 3.46872005530352),
+    smape = c(41.4179060896227, 3.56803432193035),
+    mase = c(7.44680338706209, 0.36226871014052)),
+    row.names = c(NA, -2L), class = c("data.table", "data.frame"))
 )
 
 selection <- c("index", "value", "key", "type")
@@ -140,14 +139,9 @@ expect_error(
   pattern = "^`frequency` must be numeric or integer, not of class \"logical\"\\.$"
 )
 expect_error(
-  cv_baselines(apple, cv_setting, multiple_h = TRUE),
-  class = "cv_baselines_multiple_h_error",
-  pattern = "^`multiple_h` must be list, not of class \"logical\"\\.$"
-)
-expect_error(
-  cv_baselines(apple, cv_setting, multiple_h = 1),
-  class = "cv_baselines_multiple_h_error",
-  pattern = "^`multiple_h` must be list, not of class \"numeric\"\\.$"
+  cv_baselines(apple, cv_setting, h = TRUE),
+  class = "cv_baselines_h_error",
+  pattern = "^`h` must be list, numeric or integer, not of class \"logical\"\\.$"
 )
 
 # Wrong data types
@@ -269,4 +263,16 @@ expect_error(
   cv_baselines(apple, cv_setting_fail),
   class = "cv_baselines_cv_setting_error",
   pattern = "^`skip_span` in `cv_setting` must be numeric\\(1\\), not numeric\\(0\\)\\.$"
+)
+
+### "h"
+expect_error(
+  cv_baselines(apple, cv_setting, h = list(A = c(1, 2), B = c("1", "2"))),
+  class = "cv_baselines_h_error",
+  pattern = "^Elements of `h` must be numeric or integer, not of class \"character\"\\.$"
+)
+# `h > cv_setting$periods_test`: Warning
+expect_warning(
+  cv_baselines(apple, cv_setting, h = list(A = c(12:13))),
+  class = "cv_baselines_h_warning"
 )
