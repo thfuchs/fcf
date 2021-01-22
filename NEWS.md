@@ -13,9 +13,6 @@
 ### New Features
 * Created `parse_tf_version` to get TensorFlow version
 
-### Breaking Changes
-* 
-
 ### Minor Changes
 * (Finished) unit testing by tinytest
 * Created internal function `check_cv_setting` for automated check of `cv_setting` in functions including cross-validation
