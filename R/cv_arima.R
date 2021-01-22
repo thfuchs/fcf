@@ -111,7 +111,6 @@ cv_arima <- function(
   ### Settings -----------------------------------------------------------------
   n_initial <- cv_setting$periods_train + cv_setting$periods_val
   n_test <- cv_setting$periods_test
-  if (is.null(h)) h <- list(1:n_test)
 
   rolling_origin_resamples <- rsample::rolling_origin(
     data,
