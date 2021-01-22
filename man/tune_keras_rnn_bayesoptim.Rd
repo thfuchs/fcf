@@ -2,8 +2,8 @@
 % Please edit documentation in R/tune_keras_rnn_bayesoptim.R
 \name{tune_keras_rnn_bayesoptim}
 \alias{tune_keras_rnn_bayesoptim}
-\title{Tune recurrent neural network with Keras functional API and Bayes
-Optimization to select best performing model}
+\title{Automatic cross-validated tuning of recurrent neural networks for time series
+data}
 \usage{
 tune_keras_rnn_bayesoptim(
   data,
@@ -79,3 +79,9 @@ bayes <- tune_keras_rnn_bayesoptim(apple, model_type = "simple", cv_setting)
 bayes
 }
 }
+\seealso{
+Other RNN tuning by Keras: 
+\code{\link{tune_keras_rnn_eval}()},
+\code{\link{tune_keras_rnn_predict}()}
+}
+\concept{RNN tuning by Keras}

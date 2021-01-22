@@ -2,7 +2,8 @@
 % Please edit documentation in R/tune_keras_rnn_eval.R
 \name{tune_keras_rnn_eval}
 \alias{tune_keras_rnn_eval}
-\title{Evaluate (tuned) recurrent neural networks per split/sample}
+\title{Evaluate (tuned) recurrent neural networks per cross-validation split/sample
+for time series data}
 \usage{
 tune_keras_rnn_eval(
   fc_sample,
@@ -42,7 +43,8 @@ list of time series accuracy measures (MAPE, sMAPE, MASE, sMIS, ACD)
 optionally for different forecast horizons (if \code{h} specified)
 }
 \description{
-Evaluate (tuned) recurrent neural networks per split/sample
+Evaluate (tuned) recurrent neural networks per cross-validation split/sample
+for time series data
 }
 \examples{
 result_predict <- readRDS(system.file(
@@ -75,3 +77,9 @@ tune_keras_rnn_eval(
 )
 
 }
+\seealso{
+Other RNN tuning by Keras: 
+\code{\link{tune_keras_rnn_bayesoptim}()},
+\code{\link{tune_keras_rnn_predict}()}
+}
+\concept{RNN tuning by Keras}

@@ -1,4 +1,5 @@
-#' Evaluate (tuned) recurrent neural networks per split/sample
+#' Evaluate (tuned) recurrent neural networks per cross-validation split/sample
+#' for time series data
 #'
 #' @param fc_sample forecasts per `rsample` split
 #' @param cv_setting list of "periods_train", "periods_val", "periods_test" and
@@ -12,6 +13,7 @@
 #' @param frequency time series frequency, e.g. 4 for quarters and 12 for months
 #' @param level level for prediction interval in percentage
 #'
+#' @family RNN tuning with Keras
 #' @return list of time series accuracy measures (MAPE, sMAPE, MASE, sMIS, ACD)
 #'   optionally for different forecast horizons (if `h` specified)
 #' @export

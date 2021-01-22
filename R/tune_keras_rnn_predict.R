@@ -1,5 +1,8 @@
-#' Use tuned recurrent neural network parameters with Keras functional API and
-#' to train best performing model(s) and forecast
+#' Automatic cross-validated training and prediction process for recurrent
+#' neural networks for time series data
+#'
+#' Use tuned RNN parameters with Keras functional API to train best performing
+#' model(s) and generate forecasts
 #'
 #' @param data Univariate time series (data.frame) with date and value column,
 #'   specified in `col_date` and `col_value`
@@ -24,6 +27,7 @@
 #' @import reticulate
 #' @importFrom zeallot %<-%
 #'
+#' @family RNN tuning with Keras
 #' @return list of forecasts per split
 #' @export
 #'

@@ -1,3 +1,6 @@
+#' Automatic cross-validated tuning of recurrent neural networks for time series
+#' data
+#'
 #' Tune recurrent neural network with Keras functional API and Bayes
 #' Optimization to select best performing model
 #'
@@ -33,6 +36,7 @@
 #' @importFrom magrittr %>%
 #' @importFrom zeallot %<-%
 #'
+#' @family RNN tuning with Keras
 #' @return list of Bayes Optimization results per split
 #' @export
 #'

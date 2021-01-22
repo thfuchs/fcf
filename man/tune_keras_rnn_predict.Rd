@@ -2,8 +2,8 @@
 % Please edit documentation in R/tune_keras_rnn_predict.R
 \name{tune_keras_rnn_predict}
 \alias{tune_keras_rnn_predict}
-\title{Use tuned recurrent neural network parameters with Keras functional API and
-to train best performing model(s) and forecast}
+\title{Automatic cross-validated training and prediction process for recurrent
+neural networks for time series data}
 \usage{
 tune_keras_rnn_predict(
   data,
@@ -54,8 +54,8 @@ character vector with path to directory for yes}
 list of forecasts per split
 }
 \description{
-Use tuned recurrent neural network parameters with Keras functional API and
-to train best performing model(s) and forecast
+Use tuned RNN parameters with Keras functional API to train best performing
+model(s) and generate forecasts
 }
 \examples{
 \dontrun{
@@ -81,3 +81,9 @@ result <- tune_keras_rnn_predict(
 result
 }
 }
+\seealso{
+Other RNN tuning by Keras: 
+\code{\link{tune_keras_rnn_bayesoptim}()},
+\code{\link{tune_keras_rnn_eval}()}
+}
+\concept{RNN tuning by Keras}
