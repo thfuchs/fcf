@@ -1,3 +1,29 @@
+## tsRNN 0.2.1
+
+### Breaking Changes
+* Finished function `tune_keras_rnn_eval` incl. internal argument checks, unit testing and examples
+* Renamed argument `multiple_h` to `h` in following functions:
+  - `cv_arima`
+  - `cv_baselines`
+  - `tune_keras_rnn_eval`
+* Fixed `smis` calculation for differing forecast horizons. Directly affecting output of `cv_arima`, `cv_baselines` and `tune_keras_rnn_eval`
+
+# tsRNN 0.2.0
+
+### New Features
+* Created `parse_tf_version` to get TensorFlow version
+
+### Breaking Changes
+* 
+
+### Minor Changes
+* (Finished) unit testing by tinytest
+* Created internal function `check_cv_setting` for automated check of `cv_setting` in functions including cross-validation
+* Enhanced functions with (better) intenal argument checks. `keras_rnn`-function family in particular
+* Enhanced functions with examples
+* Reconstruct metrics (metrics_dist and metrics_point) documentation
+* Remove documentation of internal utils functions
+
 ## tsRNN 0.1.4
 
 ### Important Fix
