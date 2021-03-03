@@ -34,7 +34,7 @@ expect_equivalent(
     Slice1 = structure(list(
       type = "simple", h = "short",
       mape = 1.25390756764597, smape = 1.26181858702229,
-      mase = 0.193946896881937, smis = 4.47187505990253, acd = 0.05
+      mase = 0.193946896881937, smis = 5.23871058734102, acd = 0.05 #0.165557206616377
     ), row.names = c(NA, -1L), class = c("data.table", "data.frame")),
     Slice2 = structure(list(
       type = "simple", h = "short",
@@ -57,16 +57,16 @@ expect_equivalent(
       type = c("simple", "simple"), h = c("short", "long"),
       mape = c(13.982625707239, 32.7442254094141),
       smape = c(16.0452730723047, 29.385645866966),
-      mase = c(3.51158411392178, 4.66875895310105),
-      smis = c(4.1896282332441, 3.73391784998063),
+      mase = c(3.51158411392178, 4.75503224457779),
+      smis = c(99.2051675445495, 105.395085922768),
       acd = c(0.45, 0.7)
     ), row.names = c(NA, -2L), class = c("data.table", "data.frame")),
     Slice2 = structure(list(
       type = c("simple", "simple"), h = c("short", "long"),
       mape = c(7.80512868465893, 9.81678401378092),
       smape = c(7.50887808223224, 11.1892813526112),
-      mase = c(0.863647095138919, 2.11110227283782),
-      smis = c(10.6116062875539, 6.82214930051058),
+      mase = c(0.863647095138919, 2.08186018337986),
+      smis = c(10.6116062875539, 10.2332239507659),
       acd = c(0.05, 0.05)
     ), row.names = c(NA, -2L), class = c("data.table", "data.frame"))
   )

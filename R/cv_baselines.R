@@ -257,7 +257,7 @@ cv_baselines <- function(
           )
           acc_MASE <- sapply(h, function(y) {
               mase(
-                data = DT[1:n_initial, get(col_value)],
+                data = DT_train[, get(col_value)],
                 actual = DT_test[y, get(col_value)],
                 forecast = x[y, get(col_value)],
                 m = frequency
@@ -268,9 +268,8 @@ cv_baselines <- function(
           # Prediction Interval Measures
           acc_SMIS <- sapply(h, function(y) {
               smis(
-                data = DT[1:n_initial, get(col_value)],
+                data = DT_train[, get(col_value)],
                 actual = DT_test[y, get(col_value)],
-                forecast = x[y, value],
                 lower = x[y, lo95],
                 upper = x[y, hi95],
                 m = frequency,

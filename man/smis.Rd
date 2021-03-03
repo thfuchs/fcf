@@ -27,9 +27,9 @@ sMIS scaled according to M4 Forecasting competition (see references)
 }
 \examples{
 data <- tsRNN::fc_arima[key == "actual", value]
+forecast <- tsRNN::fc_arima[key == "predict", value]
 data_train <- data[1:(length(data) - length(forecast))]
 data_test <- data[(length(data) - length(forecast) + 1):length(data)]
-forecast <- tsRNN::fc_arima[key == "predict", value]
 lower <- tsRNN::fc_arima[key == "predict", lo95]
 upper <- tsRNN::fc_arima[key == "predict", hi95]
 

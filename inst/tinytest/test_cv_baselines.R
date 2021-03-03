@@ -71,7 +71,7 @@ expect_equivalent(
     type = c("Naive", "Snaive"), h = c("long", "short"),
     mape = c(55.3289204777709, 3.46872005530352),
     smape = c(41.4179060896227, 3.56803432193035),
-    mase = c(7.44680338706209, 0.36226871014052)),
+    mase = c(7.34988380483023, 0.36226871014052)),
     row.names = c(NA, -2L), class = c("data.table", "data.frame"))
 )
 

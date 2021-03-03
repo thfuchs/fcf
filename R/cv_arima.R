@@ -208,7 +208,7 @@ cv_arima <- function(
       )
       acc_MASE <- sapply(h, function(y)
         mase(
-          data = DT[1:n_initial, get(col_value)],
+          data = DT_train[, get(col_value)],
           actual = DT_test[y, get(col_value)],
           forecast = fc_values[y, get(col_value)],
           m = frequency
@@ -218,7 +218,7 @@ cv_arima <- function(
       # Prediction Interval Measures
       acc_SMIS <- sapply(h, function(y)
         smis(
-          data = DT[1:n_initial, get(col_value)],
+          data = DT_train[, get(col_value)],
           actual = DT_test[y, get(col_value)],
           lower = fc_values[y, lo95],
           upper = fc_values[y, hi95],

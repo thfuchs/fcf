@@ -75,7 +75,7 @@ expect_equivalent(
   output_02_compare[, .SD, .SDcols = -c("smis", "acd")],
   structure(list(
     type = c("ARIMA", "ARIMA"), h = c("short", "long"),
-    mape = c(67.75, 74.75), smape = c(102.79, 120.24), mase = c(7.96, 12.38)
+    mape = c(67.75, 74.75), smape = c(102.79, 120.24), mase = c(7.96, 12.22)
   ), row.names = c(NA, -2L), class = c("data.table", "data.frame"))
 )
 

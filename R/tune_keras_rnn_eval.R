@@ -61,7 +61,7 @@ tune_keras_rnn_eval <- function(
 
   # Checks ---------------------------------------------------------------------
   testr::check_class(fc_sample, "list")
-  for (DT in fc_sample) testr::check_class(DT, "data.frame")
+  for (DT_intern in fc_sample) testr::check_class(DT_intern, "data.frame")
   testr::check_class(cv_setting, "list")
   testr::check_class(bayes_best_par, "list")
   testr::check_class(col_id, "character", n = 1, allowNULL = TRUE)
@@ -78,9 +78,9 @@ tune_keras_rnn_eval <- function(
     )
   }
 
-  for (DT in fc_sample) {
-    data.table::setDT(DT)
-    check_data_structure(DT, col_id, col_date, col_value)
+  for (DT_intern in fc_sample) {
+    data.table::setDT(DT_intern)
+    check_data_structure(DT_intern, col_id, col_date, col_value)
   }
   check_cv_setting(cv_setting)
 
@@ -185,7 +185,7 @@ tune_keras_rnn_eval <- function(
       })
       acc_MASE <- sapply(h, function(x) {
         mase(
-          data = DT[1:n_initial, get(col_value)],
+          data = DT_actual[1:n_initial, get(col_value)],
           actual = DT_test[x, get(col_value)],
           forecast = DT_predict[x, get(col_value)],
           m = frequency
@@ -195,7 +195,7 @@ tune_keras_rnn_eval <- function(
       # Prediction Interval Measures
       acc_SMIS <- sapply(h, function(x) {
         smis(
-          data = DT[1:n_initial, get(col_value)],
+          data = DT_actual[1:n_initial, get(col_value)],
           actual = DT_test[x, get(col_value)],
           lower = DT_predict[x, lo95],
           upper = DT_predict[x, hi95],

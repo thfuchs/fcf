@@ -119,19 +119,19 @@ tune_keras_rnn_bayesoptim <- function(
       message = "tuning_bounds[[\"n_epochs\"]] must be a positive integer.",
       class = "tune_keras_rnn_bayesoptim_tuning_bounds[[\"n_epochs\"]]_error"
     )
-    if (optimizer_type < 1 || optimizer_type > 3) rlang::abort(
+    if (any(optimizer_type < 1) || any(optimizer_type > 3)) rlang::abort(
       message = "tuning_bounds[[\"optimizer_type\"]] must be within interval [1L, 3L].",
       class = "tune_keras_rnn_bayesoptim_tuning_bounds[[\"optimizer_type\"]]_error"
     )
-    if (dropout < 0 || dropout > 1) rlang::abort(
+    if (any(dropout < 0) || any(dropout > 1)) rlang::abort(
       message = "tuning_bounds[[\"dropout\"]] must be within interval [0, 1].",
       class = "tune_keras_rnn_bayesoptim_tuning_bounds[[\"dropout\"]]_error"
     )
-    if (recurrent_dropout < 0 || recurrent_dropout > 1) rlang::abort(
+    if (any(recurrent_dropout < 0) || any(recurrent_dropout > 1)) rlang::abort(
       message = "tuning_bounds[[\"recurrent_dropout\"]] must be within interval [0, 1].",
       class = "tune_keras_rnn_bayesoptim_tuning_bounds[[\"recurrent_dropout\"]]_error"
     )
-    if (learning_rate < 0 || learning_rate > 1) rlang::abort(
+    if (any(learning_rate < 0) || any(learning_rate > 1)) rlang::abort(
       message = "tuning_bounds[[\"learning_rate\"]] must be within interval [0, 1].",
       class = "tune_keras_rnn_bayesoptim_tuning_bounds[[\"learning_rate\"]]_error"
     )
