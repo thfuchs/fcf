@@ -1,3 +1,16 @@
+## tsRNN 0.2.2
+
+### Breaking Changes
+* Bug in `smis()` calculation. Function compared prediction interval with prediction instead of actual values. Argument `data` now requires train set only and `actual` equivalent to lower/upper bounds. Argument `forecast` and `h` therefore removed.
+* Bug in `mase()` calculation. Fixed scaling for forecast horizons not immediately following the train set, e.g. when evaluating only on `h = 5:6`. Therefore changed arguments to 
+  * `data` for train set
+  * `actual` for actual values, the equivalent of forecast values
+  * `forecast` for predictions
+* The arguments are finally consistent across all metrics
+
+### Minor Changes
+* sMIS and MASE fixes with direct impact on `cv_arima`, `cv_baselines` and `tune_keras_rnn_eval`
+
 ## tsRNN 0.2.1
 
 ### Breaking Changes

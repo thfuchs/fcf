@@ -1,6 +1,6 @@
 #' Absolute coverage difference (ACD)
 #'
-#' @param actual actual values (only test set)
+#' @param actual actual values (Equivalent of upper/lower)
 #' @param lower lower bound of prediction interval
 #' @param upper upper bound of prediction interval
 #' @param level level used for prediction interval construction
@@ -27,17 +27,15 @@ acd <- function(actual, lower, upper, level) {
 #'
 #' sMIS scaled according to M4 Forecasting competition (see references)
 #'
-#' @param data actual values (only train set)
-#' @param forecast forecasted values
+#' @param data time series (only train set)
+#' @param actual actual values (Equivalent of upper/lower)
 #' @param lower lower bound of prediction interval
 #' @param upper upper bound of prediction interval
-#' @param h forecast horizon (maximum index of `forecast`)
 #' @param m frequency, e.g. 12 for monthly and 4 for quarterly series
 #' @param level level used for prediction interval construction
 #'
 #' @family PI accuracy measures
 #' @return numeric vector of length 1
-#' @export
 #'
 #' @references \itemize{
 #'   \item 	Svetunkov, I., Sagaert, Y. R. (2020). greybox: Toolbox for Model
@@ -49,21 +47,37 @@ acd <- function(actual, lower, upper, level) {
 #'   Competition: 100,000 time series and 61 forecasting methods. International
 #'   Journal of Forecasting, 36(1), 54–74. \url{https://doi.org/10.1016/j.ijforecast.2019.04.014}
 #' }
+#' @export
 #'
-smis <- function(data, forecast, lower, upper, h, m, level) {
-  stopifnot(identical(length(forecast), length(lower), length(upper)))
+#' @examples
+#' data <- tsRNN::fc_arima[key == "actual", value]
+#' data_train <- data[1:(length(data) - length(forecast))]
+#' data_test <- data[(length(data) - length(forecast) + 1):length(data)]
+#' forecast <- tsRNN::fc_arima[key == "predict", value]
+#' lower <- tsRNN::fc_arima[key == "predict", lo95]
+#' upper <- tsRNN::fc_arima[key == "predict", hi95]
+#'
+#' tsRNN::smis(
+#'   data = data_train,
+#'   actual = data_test,
+#'   lower = lower,
+#'   upper = upper,
+#'   m = 4,
+#'   level = 0.95
+#' )
+#'
+smis <- function(data, actual, lower, upper, m, level) {
+
+  stopifnot(identical(length(actual), length(lower), length(upper)))
 
   n_train <- length(data)
-
   alpha <- 1 - level
   scale <- 1 / (n_train - m) * sum(abs(data[(m + 1):n_train] - data[1:(n_train - m)]))
 
-  MIS <-
-    sum(as.vector(upper) - as.vector(lower)) + 2 / alpha * (
-      sum((as.vector(lower) - as.vector(forecast)) * (as.vector(forecast) < as.vector(lower))) +
-        sum((as.vector(forecast) - as.vector(upper)) * (as.vector(forecast) > as.vector(upper)))
-    )
-  MIS <- MIS / h
+  MIS <- mean(
+    upper - lower +
+      2 / alpha * (lower - actual) * (actual < lower) +
+      2 / alpha * (actual - upper) * (actual > upper))
   SMIS <- MIS / scale
 
   return(SMIS)

@@ -250,15 +250,17 @@ cv_baselines <- function(
 
           # Point Forecast Measures
           acc_MAPE <- sapply(h, function(y)
-            mape(actual = DT_test[y, get(col_value)], forecast = x[y, value])
+            mape(actual = DT_test[y, get(col_value)], forecast = x[y, get(col_value)])
           )
           acc_sMAPE <- sapply(h, function(y)
-            smape(actual = DT_test[y, get(col_value)], forecast = x[y, value])
+            smape(actual = DT_test[y, get(col_value)], forecast = x[y, get(col_value)])
           )
           acc_MASE <- sapply(h, function(y) {
               mase(
-                data = DT[1:(n_initial + max(y)), get(col_value)],
-                forecast = x[y, value], m = frequency
+                data = DT[1:n_initial, get(col_value)],
+                actual = DT_test[y, get(col_value)],
+                forecast = x[y, get(col_value)],
+                m = frequency
               )
             }
           )
@@ -267,10 +269,12 @@ cv_baselines <- function(
           acc_SMIS <- sapply(h, function(y) {
               smis(
                 data = DT[1:n_initial, get(col_value)],
+                actual = DT_test[y, get(col_value)],
                 forecast = x[y, value],
                 lower = x[y, lo95],
                 upper = x[y, hi95],
-                h = max(y), m = frequency, level = 0.95
+                m = frequency,
+                level = 0.95
               )
             }
           )

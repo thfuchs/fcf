@@ -3,7 +3,7 @@
 \docType{data}
 \name{dow30}
 \alias{dow30}
-\title{US index Dow Jones 30 quarterly cashflow data from 1990 to 2020.}
+\title{US index Dow Jones 30 quarterly earnings data from 1990 to 2020.}
 \format{
 A data.table with 3600 rows and 9 variables (xz-compressed):
 \describe{
@@ -23,6 +23,6 @@ Month and year of interest}
 data(dow30)
 }
 \description{
-US index Dow Jones 30 quarterly cashflow data from 1990 to 2020.
+US index Dow Jones 30 quarterly earnings data from 1990 to 2020.
 }
 \keyword{datasets}

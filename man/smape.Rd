@@ -7,9 +7,9 @@
 smape(actual, forecast)
 }
 \arguments{
-\item{actual}{actual values (only test set)}
+\item{actual}{actual values (Equivalent of forecast)}
 
-\item{forecast}{forecasted values}
+\item{forecast}{predicted values}
 }
 \value{
 numeric vector of length 1

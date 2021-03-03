@@ -4,18 +4,16 @@
 \alias{smis}
 \title{scaled Mean Interval Score (sMIS)}
 \usage{
-smis(data, forecast, lower, upper, h, m, level)
+smis(data, actual, lower, upper, m, level)
 }
 \arguments{
-\item{data}{actual values (only train set)}
+\item{data}{time series (only train set)}
 
-\item{forecast}{forecasted values}
+\item{actual}{actual values (Equivalent of upper/lower)}
 
 \item{lower}{lower bound of prediction interval}
 
 \item{upper}{upper bound of prediction interval}
-
-\item{h}{forecast horizon (maximum index of \code{forecast})}
 
 \item{m}{frequency, e.g. 12 for monthly and 4 for quarterly series}
 
@@ -26,6 +24,24 @@ numeric vector of length 1
 }
 \description{
 sMIS scaled according to M4 Forecasting competition (see references)
+}
+\examples{
+data <- tsRNN::fc_arima[key == "actual", value]
+data_train <- data[1:(length(data) - length(forecast))]
+data_test <- data[(length(data) - length(forecast) + 1):length(data)]
+forecast <- tsRNN::fc_arima[key == "predict", value]
+lower <- tsRNN::fc_arima[key == "predict", lo95]
+upper <- tsRNN::fc_arima[key == "predict", hi95]
+
+tsRNN::smis(
+  data = data_train,
+  actual = data_test,
+  lower = lower,
+  upper = upper,
+  m = 4,
+  level = 0.95
+)
+
 }
 \references{
 \itemize{

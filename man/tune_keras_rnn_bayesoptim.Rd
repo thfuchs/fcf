@@ -80,8 +80,8 @@ bayes
 }
 }
 \seealso{
-Other RNN tuning by Keras: 
+Other RNN tuning with Keras: 
 \code{\link{tune_keras_rnn_eval}()},
 \code{\link{tune_keras_rnn_predict}()}
 }
-\concept{RNN tuning by Keras}
+\concept{RNN tuning with Keras}

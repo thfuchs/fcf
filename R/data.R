@@ -1,4 +1,4 @@
-#' US index Dow Jones 30 quarterly cashflow data from 1990 to 2020.
+#' US index Dow Jones 30 quarterly earnings data from 1990 to 2020.
 #'
 #' @docType data
 #' @usage data(dow30)

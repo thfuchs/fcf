@@ -7,7 +7,7 @@
 acd(actual, lower, upper, level)
 }
 \arguments{
-\item{actual}{actual values (only test set)}
+\item{actual}{actual values (Equivalent of upper/lower)}
 
 \item{lower}{lower bound of prediction interval}
 

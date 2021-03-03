@@ -4,12 +4,14 @@
 \alias{mase}
 \title{Mean Absolute Scaled Error (MASE)}
 \usage{
-mase(data, forecast, m)
+mase(data, actual, forecast, m)
 }
 \arguments{
-\item{data}{actual values (containing both train and evaluation values)}
+\item{data}{time series (only train set)}
 
-\item{forecast}{forecasted values}
+\item{actual}{actual values (Equivalent of forecast)}
+
+\item{forecast}{predicted values}
 
 \item{m}{frequency, e.g. 12 for monthly and 4 for quarterly series}
 }
@@ -19,6 +21,15 @@ numeric vector of length 1
 \description{
 Mean Absolute Scaled Error (MASE), scaled according to M4 Forecasting
 competition
+}
+\examples{
+data <- tsRNN::fc_arima[key == "actual", value]
+forecast <- tsRNN::fc_arima[key == "predict", value]
+data_train <- data[1:(length(data) - length(forecast))]
+data_test <- data[(length(data) - length(forecast) + 1):length(data)]
+
+mase(data = data_train, actual = data_test, forecast = forecast, m = 4)
+
 }
 \references{
 \itemize{

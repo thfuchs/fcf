@@ -185,8 +185,10 @@ tune_keras_rnn_eval <- function(
       })
       acc_MASE <- sapply(h, function(x) {
         mase(
-          data = DT_actual[1:(n_initial + max(x)), get(col_value)],
-          forecast = DT_predict[x, get(col_value)], m = frequency
+          data = DT[1:n_initial, get(col_value)],
+          actual = DT_test[x, get(col_value)],
+          forecast = DT_predict[x, get(col_value)],
+          m = frequency
         )
       })
 
@@ -194,10 +196,11 @@ tune_keras_rnn_eval <- function(
       acc_SMIS <- sapply(h, function(x) {
         smis(
           data = DT[1:n_initial, get(col_value)],
-          forecast = DT_predict[x, value],
+          actual = DT_test[x, get(col_value)],
           lower = DT_predict[x, lo95],
           upper = DT_predict[x, hi95],
-          h = max(x), m = frequency, level = level / 100
+          m = frequency,
+          level = level / 100
         )
       })
       acc_ACD <- sapply(h, function(x) {
