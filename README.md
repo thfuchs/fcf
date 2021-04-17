@@ -2,7 +2,7 @@ tsRNN <img src="man/figures/logo.png" align="right" width="250px" />
 ======================
 
 <!-- badges: start -->
-[![DOI](https://zenodo.org/badge/290276771.svg)](https://zenodo.org/badge/latestdoi/290276771)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4322726.svg)](https://doi.org/10.5281/zenodo.4322726)
 [![R build status](https://github.com/thfuchs/tsRNN/workflows/R-CMD-check/badge.svg)](https://github.com/thfuchs/tsRNN/actions)
 [![Codecov](https://codecov.io/gh/thfuchs/tsRNN/branch/master/graph/badge.svg)](https://codecov.io/gh/thfuchs/tsRNN?branch=master)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE.md)
